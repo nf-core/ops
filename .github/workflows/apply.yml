@@ -53,7 +53,7 @@ jobs:
 
       - name: Plan Terraform
         id: plan
-        run: terraform plan -no-color
+        run: terraform plan -no-color -input=false
         continue-on-error: true
 
       # Sed is taking all lines that begin with one or more spaces followed by a `+` or `-`.
