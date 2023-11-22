@@ -1,8 +1,3 @@
-# import {
-#   to = github_repository.modules
-#   id = "modules"
-# }
-
 resource "github_repository" "modules" {
   allow_auto_merge            = false
   allow_merge_commit          = false
@@ -11,7 +6,6 @@ resource "github_repository" "modules" {
   allow_update_branch         = true
   archived                    = false
   auto_init                   = false
-  default_branch              = "master"
   delete_branch_on_merge      = false
   description                 = "Repository to host tool-specific module files for the Nextflow DSL2 community!"
   has_discussions             = false
@@ -46,4 +40,14 @@ resource "github_repository" "modules" {
       status = "disabled"
     }
   }
+}
+
+resource "github_branch" "modules_master" {
+  repository = github_repository.modules.name
+  branch     = "master"
+}
+
+resource "github_branch_default" "modules" {
+  repository = github_repository.modules.name
+  branch     = github_branch.modules_master.branch
 }

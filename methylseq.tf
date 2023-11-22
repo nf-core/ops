@@ -6,7 +6,6 @@ resource "github_repository" "methylseq" {
   allow_update_branch = false
   archived            = false
   auto_init           = false
-  github_default_branch         = "master"
   delete_branch_on_merge = false
   description            = "Methylation (Bisulfite-Sequencing) analysis pipeline using Bismark or bwa-meth + MethylDackel"
   # etag                        = "W/\"7e9059e572593f0b3393b312a565a1612d91a06fb9450a48a197f0425fd87cb9\""
@@ -50,4 +49,23 @@ resource "github_repository" "methylseq" {
       status = "disabled"
     }
   }
+}
+
+resource "github_branch" "TEMPLATE" {
+  repository = github_repository.methylseq.name
+  branch     = "TEMPLATE"
+}
+resource "github_branch" "dev" {
+  repository = github_repository.methylseq.name
+  branch     = "dev"
+}
+
+resource "github_branch" "methylseq_master" {
+  repository = github_repository.methylseq.name
+  branch     = "master"
+}
+
+resource "github_branch_default" "methylseq" {
+  repository = github_repository.methylseq.name
+  branch     = github_branch.methylseq_master.branch
 }
