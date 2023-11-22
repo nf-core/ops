@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+env:
+  TF_IN_AUTOMATION: true
+  TF_VAR_gh_token: ${{ secrets.GITHUB_TOKEN }}
+
 jobs:
   inform_about_apply:
     name: Inform About Apply

@@ -8,7 +8,7 @@ terraform {
 }
 
 provider "github" {
-  token = ""
+  token = var.gh_token
   owner = "nf-core"
 }
 
