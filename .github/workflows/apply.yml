@@ -29,8 +29,6 @@ jobs:
     env:
       TF_VAR_allowed_account_id: ${{ secrets.ALLOWED_ACCOUNT_ID }}
     runs-on: ubuntu-latest
-    strategy:
-
     steps:
       - name: Check out code
         uses: actions/checkout@v2
