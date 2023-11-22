@@ -3,3 +3,9 @@ variable "gh_token" {
   type        = string
   sensitive   = true
 }
+
+variable "billing_email" {
+  description = "Who to send the bill to"
+  type        = string
+  sensitive   = true
+}
