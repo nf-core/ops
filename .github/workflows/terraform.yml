@@ -8,6 +8,7 @@ on:
 env:
   TF_IN_AUTOMATION: true
   TF_VAR_gh_token: ${{ secrets.GITHUB_TOKEN }}
+  TF_VAR_billing_email: ${{ secrets.TF_VAR_billing_email }}
 
 jobs:
   defaults:
