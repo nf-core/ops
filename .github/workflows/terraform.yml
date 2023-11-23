@@ -13,9 +13,9 @@ jobs:
   terraform:
     name: Run Terraform and Comment
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ${{ env.tf_actions_working_dir }}
+    # defaults:
+    #   run:
+    #     working-directory: ${{ env.tf_actions_working_dir }}
     permissions:
       pull-requests: write
     steps:
