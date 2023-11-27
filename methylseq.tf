@@ -1,11 +1,11 @@
 resource "github_repository" "methylseq" {
-  allow_auto_merge    = false
-  allow_merge_commit  = true
-  allow_rebase_merge  = true
-  allow_squash_merge  = true
-  allow_update_branch = false
-  archived            = false
-  auto_init           = false
+  allow_auto_merge       = false
+  allow_merge_commit     = true
+  allow_rebase_merge     = true
+  allow_squash_merge     = true
+  allow_update_branch    = false
+  archived               = false
+  auto_init              = false
   delete_branch_on_merge = false
   description            = "Methylation (Bisulfite-Sequencing) analysis pipeline using Bismark or bwa-meth + MethylDackel"
   # etag                        = "W/\"7e9059e572593f0b3393b312a565a1612d91a06fb9450a48a197f0425fd87cb9\""
@@ -38,8 +38,8 @@ resource "github_repository" "methylseq" {
     "rrbs",
     "workflow",
   ]
-  visibility           = "public"
-  vulnerability_alerts = true
+  visibility = "public"
+  # FIXME vulnerability_alerts = true
 
   security_and_analysis {
     secret_scanning {
