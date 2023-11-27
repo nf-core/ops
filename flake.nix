@@ -30,6 +30,14 @@
             {
               # https://devenv.sh/reference/options/
               languages.terraform.enable = true;
+              pre-commit.hooks = {
+                alejandra.enable = true;
+                editorconfig-checker.enable = true;
+                mdsh.enable = true;
+                prettier.enable = true;
+                shfmt.enable = true;
+                tflint.enable = true;
+              };
             }
           ];
         };
