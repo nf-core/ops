@@ -29,8 +29,8 @@ resource "github_repository" "modules" {
     "pipelines",
     "workflows",
   ]
-  visibility           = "public"
-  vulnerability_alerts = true
+  visibility = "public"
+  # FIXME vulnerability_alerts = true
 
   security_and_analysis {
     secret_scanning {
