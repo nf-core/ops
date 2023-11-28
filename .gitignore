@@ -1,6 +1,7 @@
 # Devenv
 .devenv
 .pre-commit-config.yaml
+!terraform.tfvars
 # https://github.com/github/gitignore/blob/main/Terraform.gitignore
 # Local .terraform directories
 **/.terraform/*

@@ -9,3 +9,8 @@ variable "billing_email" {
   type        = string
   sensitive   = true
 }
+
+variable "pipelines" {
+  description = "All of the pipelines"
+  type        = list(string)
+}
