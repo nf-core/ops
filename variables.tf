@@ -1,3 +1,9 @@
+variable "org_name" {
+  description = "The name of the organization"
+  type        = string
+  default     = "nf-core-tf"
+}
+
 variable "gh_token" {
   description = "Token for GitHub"
   type        = string
