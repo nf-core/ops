@@ -18,6 +18,17 @@
     "pre-commit": {
         enabled: true,
     },
+    customDatasources: [
+        "nextflow-plugin": {
+            "defaultRegistryUrlTemplate": "https://api.github.com/repos/nextflow-io/{{pluginName}}/releases"
+            "format": "json",
+            "versioning": "semver",
+            "transformTemplate": [
+                "{\"release\": \"{{version}}\", \"releaseTimestamp\": \"{{date}}\"}"
+            ]
+            
+        }
+    ],
     customManagers: [
         {
             customType: "regex",
@@ -48,6 +59,17 @@
             ],
             datasourceTemplate: "pypi"
         },
+        {
+            customType: "regex",
+            description: "Check that nf-valdiation plugin is pinned in nextflow.config, i.e. `plugins {id 'nf-validation@1.1.3'}`",
+            fileMatch: ["(^|/)nextflow\\.config$"],
+            matchStrings: [
+                "id\\s+'nf-validation@(?<currentValue>\\d+\\.\\d+\\.\\d+)'"
+            ],
+            datasourceTemplate: "github-release",
+            extractVersion: "/(?<version>\\d+\\.\\d+\\.\\d+)/"
+        },
+        }
     ],
     packageRules: [
         {
