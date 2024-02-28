@@ -54,5 +54,9 @@
             matchDatasources: ["docker"],
             registryUrls: ["quay.io"],
         },
+        {
+            "matchPackagePatterns": ["^actions/"],
+            "groupName": "GitHub Actions"
+        }
     ],
 }
