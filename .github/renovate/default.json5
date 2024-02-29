@@ -55,8 +55,10 @@
             registryUrls: ["quay.io"],
         },
         {
-            "matchPackagePatterns": ["^actions/"],
-            "groupName": "GitHub Actions"
+            matchManagers: ["github-actions"],
+            groupName: "GitHub Actions",
+            automerge: true,
+            schedule: ["before 9am"],
         }
     ],
 }
