@@ -57,7 +57,7 @@
         // don't use digest for actions coming from seqera(labs) or nf-core
         {
             matchPackagePrefix: ["nf-core/", "seqera"],
-            matchDepType: "action",
+            matchManagers: ["github-actions"],
             automerge: true,
             pinDigest: false,
         }
