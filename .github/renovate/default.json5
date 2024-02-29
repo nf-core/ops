@@ -60,6 +60,12 @@
             matchManagers: ["github-actions"],
             automerge: true,
             pinDigest: false,
-        }
+        },
+        {
+            matchManagers: ["github-actions"],
+            groupName: "GitHub Actions",
+            automerge: true,
+            schedule: ["before 9am"],
+        },
     ],
 }
