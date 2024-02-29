@@ -54,5 +54,11 @@
             matchDatasources: ["docker"],
             registryUrls: ["quay.io"],
         },
+        {
+            matchManagers: ["github-actions"],
+            groupName: "GitHub Actions",
+            automerge: true,
+            schedule: ["before 9am"],
+        }
     ],
 }
