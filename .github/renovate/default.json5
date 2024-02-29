@@ -54,5 +54,12 @@
             matchDatasources: ["docker"],
             registryUrls: ["quay.io"],
         },
+        // don't use digest for actions coming from seqera(labs) or nf-core
+        {
+            matchPackagePrefix: ["nf-core/", "seqera"],
+            matchDepType: "action",
+            automerge: true,
+            pinDigest: false,
+        }
     ],
 }
