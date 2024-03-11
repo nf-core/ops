@@ -20,13 +20,12 @@
     },
     customDatasources: [
         "nextflow-plugin": {
-            "defaultRegistryUrlTemplate": "https://api.github.com/repos/nextflow-io/{{pluginName}}/releases"
+            "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/nextflow-io/plugins/main/plugins.json"
             "format": "json",
             "versioning": "semver",
             "transformTemplate": [
-                "{\"release\": \"{{version}}\", \"releaseTimestamp\": \"{{date}}\"}"
+                "$[id = 'nf-validation']"
             ]
-            
         }
     ],
     customManagers: [
@@ -64,10 +63,9 @@
             description: "Check that nf-valdiation plugin is pinned in nextflow.config, i.e. `plugins {id 'nf-validation@1.1.3'}`",
             fileMatch: ["(^|/)nextflow\\.config$"],
             matchStrings: [
-                "id\\s+'nf-validation@(?<currentValue>\\d+\\.\\d+\\.\\d+)'"
+                "\\s+id\\s'<depName>@(?<currentValue>.*)'"
             ],
-            datasourceTemplate: "github-release",
-            extractVersion: "/(?<version>\\d+\\.\\d+\\.\\d+)/"
+            datasourceTemplate: "custom.nextflow-plugin",
         },
         }
     ],
