@@ -1,0 +1,10 @@
+name: AWSMegatests
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Tower AWSMegatests
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: https://www.pulumi.com/ai/api/project/4fe76aef-c1d6-4184-9e8e-7000f6c369bb.zip
