@@ -1,0 +1,2 @@
+config:
+  pulumi:template: https://www.pulumi.com/ai/api/project/71da8b11-6bf9-424b-afce-26ae180f2680.zip

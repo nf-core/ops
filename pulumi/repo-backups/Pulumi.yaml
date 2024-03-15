@@ -1,0 +1,10 @@
+name: repo-backups
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Backing up all of the repos in the org
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: https://www.pulumi.com/ai/api/project/71da8b11-6bf9-424b-afce-26ae180f2680.zip
