@@ -1,0 +1,2 @@
+pulumi>=3
+pulumi_github>=5.20.0
