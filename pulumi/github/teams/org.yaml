@@ -1,0 +1,32 @@
+---
+org: "test-nfcore"
+repositories:
+  - name: whatever
+    description: "random repo description"
+    # visibility: private  # private by default
+  - name: whatever2
+    visibility: public
+
+teams:
+  - name: "ops"
+    slug: "ops"
+    description: "A team in charge of ops"
+    members:
+      - name: bebosudo
+        role: admin
+      - name: edmundmiller
+        role: maintainer
+    permissions:
+      - repository: whatever
+        role: admin  # Can be 'pull', 'push', or 'admin'
+
+  - name: "docs"
+    slug: "docs"
+    description: "docs team"
+    members:
+      - name: bebosudo
+        role: member
+    permissions:
+      - repository: whatever2
+        role: push
+...
