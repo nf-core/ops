@@ -1,4 +1,7 @@
-
 *.pyc
 venv/
 __pycache__/
+
+# sensitive data
+Pulumi*yaml
+*.txt
