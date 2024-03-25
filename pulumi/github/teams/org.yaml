@@ -3,7 +3,7 @@ org: "test-nfcore"
 repositories:
   - name: whatever
     description: "random repo description"
-    # visibility: private  # private by default
+    # visibility: private  # Can be "private" (default) or "public".
   - name: whatever2
     visibility: public
 
@@ -13,19 +13,25 @@ teams:
     description: "A team in charge of ops"
     members:
       - name: bebosudo
-        role: admin
+        role: maintainer  # Can be "member" (default) or "maintainer"
       - name: edmundmiller
         role: maintainer
-    permissions:
-      - repository: whatever
-        role: admin  # Can be 'pull', 'push', or 'admin'
+    repositories:
+      - name: whatever
+        permission: admin  # Can be "pull" (default), "triage", "push", "maintain", "admin" or a custom repository role.
+    teams:
+      - name: "miniops"
+        slug: "miniops"
+        members:
+          - name: bebosudo
+            role: maintainer
 
   - name: "docs"
     slug: "docs"
     description: "docs team"
     members:
       - name: bebosudo
-        role: member
-    permissions:
-      - repository: whatever2
-        role: push
+        # role: member
+    repositories:
+      - name: whatever2
+        permission: push
