@@ -29,4 +29,3 @@ teams:
     permissions:
       - repository: whatever2
         role: push
-...
