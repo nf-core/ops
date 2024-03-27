@@ -5,6 +5,7 @@ import yaml
 import pulumi
 import pulumi_github as github
 
+
 class Organization:
     def setup_team(self, team, parent_team=None):
         team_resource = github.Team(
@@ -61,10 +62,11 @@ class Organization:
                 merge_commit_message=repo.get("merge_commit_message"),
                 merge_commit_title=repo.get("merge_commit_title"),
                 squash_merge_commit_message=repo.get("squash_merge_commit_message"),
-                squash_merge_commit_title=repo.get("squash_merge_commit_title")
+                squash_merge_commit_title=repo.get("squash_merge_commit_title"),
             )
 
         for team in self._org.get("teams", []):
             self.setup_team(team)
+
 
 Organization("org.yaml")
