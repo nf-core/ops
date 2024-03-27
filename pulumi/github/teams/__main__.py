@@ -16,7 +16,13 @@ class Organization:
             parent_team_id=parent_team,
         )
 
-        for user in team["members"]:
+        if team.get("membersYAML"):
+            with open(team.get("membersYAML")) as members_fd:
+                members = yaml.safe_load(members_fd)
+        else:
+            members = team["members"]
+
+        for user in members:
             # Add a user to the newly created team
             team_membership = github.TeamMembership(
                 f"{team['name']}-{user['name']}",

@@ -20,8 +20,8 @@ repositories:
     visibility: public
 
 teams:
-  # - name: "contributors"
-  #   membersYaml: "contributors.yaml"
+  - name: "contributors"
+    membersYAML: "contributors.yaml"
   - name: "ops"
     slug: "ops"
     description: "A team in charge of ops"
