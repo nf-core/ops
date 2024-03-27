@@ -1,11 +1,23 @@
 ---
 org: "test-nfcore"
-# repositories:
-#   - name: whatever
-#     description: "random repo description"
-#     # visibility: private  # Can be "private" (default) or "public".
-#   - name: whatever2
-#     visibility: public
+repositories:
+  - name: whatever
+    description: "random repo description"
+    # visibility: private  # Can be "private" (default) or "public".
+    # has_issues: true
+    # has_projects: true
+    # has_wiki: false
+    # has_downloads: false  # Deprecated downloads feature.
+    # allow_merge_commit: true
+    # allow_rebase_merge: true
+    # allow_squash_merge: true
+    # merge_commit_message: null
+    # merge_commit_title: null
+    # squash_merge_commit_message: null
+    # squash_merge_commit_title: null
+  - name: whatever2
+    description: "description"
+    visibility: public
 
 teams:
   # - name: "contributors"
@@ -13,14 +25,15 @@ teams:
   - name: "ops"
     slug: "ops"
     description: "A team in charge of ops"
+    privacy: "closed"  # Can be "closed" (default) or "secret". A secret team can only be seen by its members and may not be nested.
     members:
       - name: bebosudo
         role: maintainer  # Can be "member" (default) or "maintainer"
       - name: edmundmiller
         role: maintainer
-    # repositories:
-    #   - name: whatever
-    #     permission: admin  # Can be "pull" (default), "triage", "push", "maintain", "admin" or a custom repository role.
+    repositories:
+      - name: whatever
+        permission: admin  # Can be "pull" (default), "triage", "push", "maintain", "admin" or a custom repository role.
     teams:
       - name: "miniops"
         slug: "miniops"
@@ -35,6 +48,6 @@ teams:
       - name: bebosudo
       - name: edmundmiller
         # role: member
-    # repositories:
-    #   - name: whatever2
-    #     permission: push
+    repositories:
+      - name: whatever2
+        permission: push
