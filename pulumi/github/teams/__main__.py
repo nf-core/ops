@@ -6,11 +6,12 @@ import pulumi
 import pulumi_github as github
 
 class Organization:
-    def setup_team(self, team):
-        team_resource = github.Team(team["slug"],
+    def setup_team(self, team, parent_team=None):
+        team_resource = github.Team(team.get("slug", team["name"]),
             name=team["name"],
             description=team.get("description", ""),
             privacy="closed",
+            parent_team_id=parent_team
             # opts=pulumi.ResourceOptions(protect=True)
         )
 
@@ -33,14 +34,14 @@ class Organization:
             )
 
         for subteam in team.get("teams", []):
-            self.setup_team(subteam)
+            self.setup_team(subteam, parent_team=team_resource)
 
     def __init__(self, org_file):
         self._repos = {}
         with open(org_file) as org_fd:
             self._org = yaml.safe_load(org_fd)
 
-        for repo in self._org["repositories"]:
+        for repo in self._org.get("repositories", []):
             self._repos[repo["name"]] = github.Repository(
                 repo["name"],
                 name=repo["name"],
@@ -48,7 +49,7 @@ class Organization:
                 visibility=repo.get("visibility", "private")
             )
 
-        for team in self._org["teams"]:
+        for team in self._org.get("teams", []):
             self.setup_team(team)
 
 Organization('org.yaml')
