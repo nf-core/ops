@@ -21,15 +21,15 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
 
+    env:
+      TARBALL_FILENAME: ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz
+
     steps:
       - name: Clone the repository
         run: git clone --mirror https://github.com/nf-core/${{ matrix.pipeline }}.git
 
       - name: Make a tarball
-        run: tar czf ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz ${{ matrix.pipeline }}.git
-
-      - name: Remove the repository directory
-        run: rm -rf ${{ matrix.pipeline }}.git
+        run: tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
 
       - name: Upload dev branch to S3
         uses: jakejarvis/s3-sync-action@master
@@ -38,3 +38,4 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: 'eu-west-1'
+          SOURCE_DIR: $TARBALL_FILENAME
