@@ -6,44 +6,35 @@ on:
     - cron: '0 0 * * 0'
 
 jobs:
-  clone-and-upload:
+  get-pipelines:
+    runs-on: "ubuntu-latest"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: echo "matrix=$(curl https://nf-co.re/pipeline_names.json)" >> $GITHUB_OUTPUT
+
+  backup:
+    needs: get-pipelines
     runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
 
     steps:
-      - name: Checkout dev branch
-        uses: actions/checkout@v2
-        with:
-          ref: dev
+      - name: Clone the repository
+        run: git clone --mirror https://github.com/nf-core/${{ matrix.pipeline }}.git
 
-      - name: Zip dev branch
-        run: zip -r dev.zip .
+      - name: Make a tarball
+        run: tar czf ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz ${{ matrix.pipeline }}.git
+
+      - name: Remove the repository directory
+        run: rm -rf ${{ matrix.pipeline }}.git
 
       - name: Upload dev branch to S3
         uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --acl public-read --follow-symlinks
         env:
           AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-west-1' # Your S3 bucket region
-          SOURCE_DIR: './'
-
-      - name: Checkout master branch
-        uses: actions/checkout@v2
-        with:
-          ref: master
-
-      - name: Zip master branch
-        run: zip -r master.zip .
-
-      - name: Upload master branch to S3
-        uses: jakejarvis/s3-sync-action@master
-        with:
-          args: --acl public-read --follow-symlinks
-        env:
-          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-west-1' # Your S3 bucket region
-          SOURCE_DIR: './'
+          AWS_REGION: 'eu-west-1'
