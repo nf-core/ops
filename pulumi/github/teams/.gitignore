@@ -5,3 +5,4 @@ __pycache__/
 # sensitive data
 Pulumi*yaml
 *.txt
+!requirements.txt
