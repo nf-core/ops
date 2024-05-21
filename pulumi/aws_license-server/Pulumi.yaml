@@ -1,0 +1,5 @@
+name: aws_license-server
+runtime: python
+config:
+  aws:region:
+    value: 'TODO: var.aws_region'
