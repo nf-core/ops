@@ -4,7 +4,6 @@ Pulumi script converted from Terraform script for AWS License Server
 - https://github.com/Sentieon/terraform/blob/master/aws_license-server/main.tf
 - https://www.pulumi.com/docs/install/
 
-
 ```bash
 # install Pulumi
 brew install pulumi/tap/pulumi
@@ -21,4 +20,11 @@ pip3 install pulumi_terraform
 
 # do the conversion
 pulumi convert --from terraform --language python
+```
+
+## Manually created a "stack"
+
+```bash
+cd pulumi/aws_license-server
+pulumi stack
 ```
