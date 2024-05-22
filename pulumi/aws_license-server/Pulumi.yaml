@@ -5,4 +5,4 @@ runtime:
     virtualenv: venv
 config:
   aws:region:
-    value: "TODO: var.aws_region"
+    value: "eu-west-1"
