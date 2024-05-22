@@ -11,7 +11,8 @@ def not_implemented(msg):
 
 
 config = pulumi.Config()
-aws_region = config.require_object("awsRegion")
+aws_config = pulumi.Config("aws")
+aws_region = aws_config.require("region")
 licsrvr_fqdn = config.require_object("licsrvrFqdn")
 license_s3_uri = config.require_object("licenseS3Uri")
 kms_key = config.get_object("kmsKey")
