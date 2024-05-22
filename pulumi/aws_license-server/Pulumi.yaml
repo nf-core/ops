@@ -6,3 +6,21 @@ runtime:
 config:
   aws:region:
     value: "eu-west-1"
+  licsrvr_fqdn:
+    value: ""
+  license_s3_uri:
+    value: ""
+  kms_key:
+    value: ""
+  sentieon_version:
+    value: "202308.01"
+  locals:license_bucket_arn:
+    # format("arn:aws:s3:::%s", split("/", var.license_s3_uri)[2])
+    value: ""
+
+  locals:s3_uri_arr:
+    # split("/", var.license_s3_uri)
+    value: ""
+  locals:license_obj_arn:
+    # format("arn:aws:s3:::%s", join("/", slice(local.s3_uri_arr, 2, length(local.s3_uri_arr))))
+    value: ""
