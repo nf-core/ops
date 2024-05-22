@@ -1,5 +1,8 @@
 name: aws_license-server
-runtime: python
+runtime:
+  name: python
+  options:
+    virtualenv: venv
 config:
   aws:region:
-    value: 'TODO: var.aws_region'
+    value: "TODO: var.aws_region"
