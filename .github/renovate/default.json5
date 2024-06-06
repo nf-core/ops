@@ -11,7 +11,7 @@
     dependencyDashboard: true,
     dependencyDashboardTitle: "Renovate Dashboard 🤖",
     suppressNotifications: ["prIgnoreNotification"],
-    rebaseWhen: "conflicted",
+    rebaseWhen: "auto",
     reviewers: ["edmundmiller"],
     assigneesFromCodeOwners: true,
     gitAuthor: "nf-core-bot <renovate@nf-co.re>",
