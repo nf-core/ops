@@ -1,6 +1,6 @@
 {
     $schema: "https://docs.renovatebot.com/renovate-schema.json",
-    extends: ["config:best-practices", ":automergeDigest", ":automergeBranch"],
+    extends: ["config:best-practices", ":automergeDigest", ":automergeBranch", "schedule:monthly"],
     vulnerabilityAlerts: {
         labels: ["security"],
         schedule: "at any time",
@@ -58,7 +58,6 @@
             matchManagers: ["github-actions"],
             groupName: "GitHub Actions",
             automerge: true,
-            schedule: ["before 9am"],
         },
         // don't use digest for actions coming from seqera(labs) or nf-core
         {
