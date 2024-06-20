@@ -23,6 +23,7 @@
           # pulumi-language-* utilities
           # pulumi-resource-* utilities
           pulumi-bin
+          pulumi-esc
 
           # Python SDK
           python311
