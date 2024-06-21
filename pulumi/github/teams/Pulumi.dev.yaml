@@ -1,2 +1,2 @@
-config:
-  pulumi:template: https://www.pulumi.com/ai/api/project/3cb51e5f-2548-4d7b-9d9d-1ea680ac96ee.zip
+environment:
+  - github-teams-dev
