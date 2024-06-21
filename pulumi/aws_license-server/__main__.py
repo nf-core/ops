@@ -161,3 +161,45 @@ license_server = aws.ec2.SecurityGroup("license-server",
     },
     vpc_id="vpc-09544162c32f4affc",
     opts=pulumi.ResourceOptions(protect=True))c
+
+
+sentieon_license_server = aws.ec2.Instance("sentieon-license-server",
+    ami="ami-0551ce4d67096d606",
+    associate_public_ip_address=True,
+    availability_zone="eu-west-1b",
+    capacity_reservation_specification=aws.ec2.InstanceCapacityReservationSpecificationArgs(
+        capacity_reservation_preference="open",
+    ),
+    cpu_options=aws.ec2.InstanceCpuOptionsArgs(
+        core_count=1,
+        threads_per_core=2,
+    ),
+    credit_specification=aws.ec2.InstanceCreditSpecificationArgs(
+        cpu_credits="unlimited",
+    ),
+    ebs_optimized=True,
+    instance_initiated_shutdown_behavior="stop",
+    instance_type=aws.ec2.InstanceType.T3_NANO,
+    key_name="Edmund 1Password",
+    maintenance_options=aws.ec2.InstanceMaintenanceOptionsArgs(
+        auto_recovery="default",
+    ),
+    metadata_options=aws.ec2.InstanceMetadataOptionsArgs(
+        http_put_response_hop_limit=2,
+        http_tokens="required",
+        instance_metadata_tags="disabled",
+    ),
+    private_dns_name_options=aws.ec2.InstancePrivateDnsNameOptionsArgs(
+        hostname_type="ip-name",
+    ),
+    private_ip="10.0.30.227",
+    root_block_device=aws.ec2.InstanceRootBlockDeviceArgs(
+        iops=3000,
+        throughput=125,
+        volume_size=8,
+        volume_type="gp3",
+    ),
+    subnet_id="subnet-040e9b9afcb44f3f9",
+    tenancy=aws.ec2.Tenancy.DEFAULT,
+    vpc_security_group_ids=["sg-0050bb55ca1c6292c"],
+    opts=pulumi.ResourceOptions(protect=True))
