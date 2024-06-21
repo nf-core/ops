@@ -1,0 +1,10 @@
+name: AWSMegatests
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Pulling in the infrastructure that was pre-infra-as-code
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: ""
