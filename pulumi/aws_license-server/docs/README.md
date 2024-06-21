@@ -7,4 +7,5 @@ importing Maxine stuff and then just gonna pull it all in and just create EC2 in
 
 ```sh
 pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/vpc:Vpc sentieon-vpc vpc-09544162c32f4affc
+pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/securityGroup:SecurityGroup license-server sg-0050bb55ca1c6292c
 ```
