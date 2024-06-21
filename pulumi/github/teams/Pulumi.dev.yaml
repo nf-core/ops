@@ -1,2 +1,4 @@
+config:
+  github:owner: nf-core-tf
 environment:
   - github-teams-dev
