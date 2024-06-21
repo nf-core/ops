@@ -1,2 +1,2 @@
-config:
-  aws:region: eu-west-1
+environment:
+  - AWSMegatests-dev
