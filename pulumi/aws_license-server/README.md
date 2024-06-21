@@ -49,5 +49,10 @@ pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/instance:Instan
 Pulled from this line https://github.com/Sentieon/aws-benchmark-scripts/blob/88ab2845970a759048ceae99b3044617fb0b9348/misc/instance_setup.sh#L30C57-L30C69
 
 ```bash
+scp ~/Downloads/Seqera_Labs_cluster_eval.lic ec2-user@ec2-63-33-204-94.eu-west-1.compute.amazonaws.com:
+```
+
+```bash
 curl -L https://s3.amazonaws.com/sentieon-release/software/sentieon-genomics-202308.02.tar.gz | tar -zxf -
+sentieon-genomics-202308.02/bin/sentieon licsrvr --start Seqera_Labs_cluster_eval.lic
 ```
