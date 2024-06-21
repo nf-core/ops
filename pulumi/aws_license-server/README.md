@@ -43,3 +43,11 @@ pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/vpc:Vpc sentieo
 pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/securityGroup:SecurityGroup license-server sg-0050bb55ca1c6292c
 pulumi env run nf-core/AWSMegatests-dev -i pulumi import aws:ec2/instance:Instance sentieon-license-server i-0a2abbe9b7a32855e
 ```
+
+## Installing Sentieon Tools
+
+Pulled from this line https://github.com/Sentieon/aws-benchmark-scripts/blob/88ab2845970a759048ceae99b3044617fb0b9348/misc/instance_setup.sh#L30C57-L30C69
+
+```bash
+curl -L https://s3.amazonaws.com/sentieon-release/software/sentieon-genomics-202308.02.tar.gz | tar -zxf -
+```
