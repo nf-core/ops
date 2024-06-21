@@ -14,7 +14,8 @@ sentieon_vpc = aws.ec2.Vpc(
 )
 
 
-license_server = aws.ec2.SecurityGroup("license-server",
+license_server = aws.ec2.SecurityGroup(
+    "license-server",
     description="security group for sentieon license server",
     egress=[
         aws.ec2.SecurityGroupEgressArgs(
@@ -160,10 +161,12 @@ license_server = aws.ec2.SecurityGroup("license-server",
         "Name": "sentieon-license-server-security-group",
     },
     vpc_id="vpc-09544162c32f4affc",
-    opts=pulumi.ResourceOptions(protect=True))c
+    opts=pulumi.ResourceOptions(protect=True),
+)
 
 
-sentieon_license_server = aws.ec2.Instance("sentieon-license-server",
+sentieon_license_server = aws.ec2.Instance(
+    "sentieon-license-server",
     ami="ami-0551ce4d67096d606",
     associate_public_ip_address=True,
     availability_zone="eu-west-1b",
@@ -202,4 +205,5 @@ sentieon_license_server = aws.ec2.Instance("sentieon-license-server",
     subnet_id="subnet-040e9b9afcb44f3f9",
     tenancy=aws.ec2.Tenancy.DEFAULT,
     vpc_security_group_ids=["sg-0050bb55ca1c6292c"],
-    opts=pulumi.ResourceOptions(protect=True))
+    opts=pulumi.ResourceOptions(protect=True),
+)
