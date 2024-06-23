@@ -1,46 +1,53 @@
 {
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    systems.url = "github:nix-systems/default";
-    devenv.url = "github:cachix/devenv";
-  };
+  description = "A Nix-flake-based Pulumi development environment";
 
-  nixConfig = {
-    extra-trusted-public-keys = "devenv.cachix.org-1:w1cLUi8dv3hnoSPGAuibQv+f9TZLr6cv/Hm9XgU50cw=";
-    extra-substituters = "https://devenv.cachix.org";
-  };
+  inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1.*.tar.gz";
 
   outputs = {
     self,
     nixpkgs,
-    devenv,
-    systems,
-    ...
-  } @ inputs: let
-    forEachSystem = nixpkgs.lib.genAttrs (import systems);
+  }: let
+    supportedSystems = ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"];
+    forEachSupportedSystem = f:
+      nixpkgs.lib.genAttrs supportedSystems (system:
+        f {
+          pkgs = import nixpkgs {inherit system;};
+        });
   in {
-    devShells =
-      forEachSystem
-      (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in {
-        default = devenv.lib.mkShell {
-          inherit inputs pkgs;
-          modules = [
-            {
-              # https://devenv.sh/reference/options/
-              languages.terraform.enable = true;
-              pre-commit.hooks = {
-                alejandra.enable = true;
-                editorconfig-checker.enable = true;
-                mdsh.enable = true;
-                prettier.enable = true;
-                shfmt.enable = true;
-                tflint.enable = true;
-              };
-            }
-          ];
-        };
-      });
+    devShells = forEachSupportedSystem ({pkgs}: {
+      default = pkgs.mkShell {
+        packages = with pkgs; [
+          # Pulumi plus:
+          # pulumi-watch
+          # pulumi-analyzer-* utilities
+          # pulumi-language-* utilities
+          # pulumi-resource-* utilities
+          pulumi-bin
+          pulumi-esc
+
+          # Python SDK
+          python311
+
+          # Go SDK
+          # go_1_22
+
+          # Node.js SDK
+          # nodejs
+
+          # .NET SDK
+          # dotnet-sdk_6
+
+          # Java SDK
+          # jdk
+          # maven
+
+          # Kubernetes
+          kubectl
+
+          # Miscellaneous utilities
+          jq
+        ];
+      };
+    });
   };
 }
