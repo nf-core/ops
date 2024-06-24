@@ -209,4 +209,28 @@ sentieon_license_server = aws.ec2.Instance(
     tenancy=aws.ec2.Tenancy.DEFAULT,
     vpc_security_group_ids=["sg-0050bb55ca1c6292c"],
     opts=pulumi.ResourceOptions(protect=True),
+    user_data=licsrvr.name.apply(lambda name: f"""#!/usr/bin/bash -xv
+yum update -y
+yum install amazon-cloudwatch-agent -y
+mkdir -p /opt/aws/amazon-cloudwatch-agent/bin
+echo '{{ "agent": {{ "run_as_user": "root" }}, "logs": {{ "logs_collected": {{ "files": {{ "collect_list": [ {{ "file_path": "/opt/sentieon/licsrvr.log", "log_group_name": "{name}", "log_stream_name": "{{instance_id}}", "retention_in_days": 120 }} ] }} }} }} }}' > /opt/aws/amazon-cloudwatch-agent/bin/config.json
+amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
+mkdir -p /opt/sentieon
+cd /opt/sentieon
+aws s3 cp 's3://sentieon-release/software/sentieon-genomics-{sentieon_version}.tar.gz' - | tar -zxf -
+ln -s 'sentieon-genomics-{sentieon_version}' 'sentieon-genomics'
+aws s3 cp "{license_s3_uri}" "./sentieon.lic"
+i=0
+while true; do
+  if getent ahosts "{licsrvr_fqdn}"; then
+    break
+  fi
+  i=$((i + 1))
+  if [[ i -gt 300 ]]; then
+    exit 1
+  fi
+  sleep 1
+done
+sentieon-genomics/bin/sentieon licsrvr --start --log licsrvr.log ./sentieon.lic
+"""))
 )
