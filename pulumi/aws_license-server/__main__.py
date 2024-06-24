@@ -167,6 +167,9 @@ license_server = aws.ec2.SecurityGroup(
 
 sentieon_license_server = aws.ec2.Instance(
     "sentieon-license-server",
+    tags={
+        "Name": "Sentieon License Server",
+    },
     ami="ami-0551ce4d67096d606",
     associate_public_ip_address=True,
     availability_zone="eu-west-1b",
