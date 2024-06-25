@@ -3,7 +3,7 @@
 import pulumi
 import pulumi_aws as aws
 
-awsmegatests_bucket = aws.s3.Bucket(
+test_datasets_bucket = aws.s3.Bucket(
     "test-datasets-bucket",
     arn="arn:aws:s3:::nf-core-test-datasets",
     bucket="nf-core-test-datasets",
@@ -36,3 +36,33 @@ awsmegatests_bucket = aws.s3.Bucket(
         ),
     ),
 )
+
+# Define the policy which allows users to put objects in the S3 bucket
+policy = aws.iam.Policy(
+    "bucketPutPolicy",
+    description="Allow users to put objects in the S3 bucket",
+    policy=test_datasets_bucket.arn.apply(
+        lambda bucket_arn: f"""{{
+      "Version": "2012-10-17",
+      "Statement": [
+        {{
+          "Effect": "Allow",
+          "Action": "s3:PutObject",
+          "Resource": "{bucket_arn}/*"
+        }}
+      ]
+    }}"""
+    ),
+)
+
+# List of AWS user names to attach the policy to
+usernames = ["edmund", "maxime"]
+
+# Attach the policy to each user
+for username in usernames:
+    aws.iam.UserPolicyAttachment(
+        f"{username}-putPolicyAttachment", user=username, policy_arn=policy.arn
+    )
+
+# Export the bucket name
+pulumi.export("bucket_name", test_datasets_bucket.bucket)
