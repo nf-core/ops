@@ -1,4 +1,4 @@
-name: aws_license-server
+name: sentieon-license-server
 runtime:
   name: python
   options:
