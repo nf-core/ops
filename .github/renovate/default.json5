@@ -18,6 +18,16 @@
     "pre-commit": {
         enabled: true,
     },
+    customDatasources: [
+        "nextflow-plugin": {
+            "defaultRegistryUrlTemplate": "https://raw.githubusercontent.com/nextflow-io/plugins/main/plugins.json"
+            "format": "json",
+            "versioning": "semver",
+            "transformTemplate": [
+                "$[id = 'nf-validation']"
+            ]
+        }
+    ],
     customManagers: [
         {
             customType: "regex",
@@ -48,6 +58,16 @@
             ],
             datasourceTemplate: "pypi"
         },
+        {
+            customType: "regex",
+            description: "Check that nf-valdiation plugin is pinned in nextflow.config, i.e. `plugins {id 'nf-validation@1.1.3'}`",
+            fileMatch: ["(^|/)nextflow\\.config$"],
+            matchStrings: [
+                "\\s+id\\s'<depName>@(?<currentValue>.*)'"
+            ],
+            datasourceTemplate: "custom.nextflow-plugin",
+        },
+        }
     ],
     packageRules: [
         {
