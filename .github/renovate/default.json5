@@ -1,45 +1,50 @@
 {
-    $schema: "https://docs.renovatebot.com/renovate-schema.json",
-    extends: ["config:best-practices", ":automergeDigest", ":automergeBranch", "schedule:monthly"],
-    vulnerabilityAlerts: {
-        labels: ["security"],
-        schedule: "at any time",
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:best-practices",
+    ":automergeDigest",
+    ":automergeBranch",
+    "schedule:monthly",
+  ],
+  vulnerabilityAlerts: {
+    labels: ["security"],
+    schedule: "at any time",
+  },
+  prHourlyLimit: 3,
+  platform: "github",
+  onboarding: false,
+  dependencyDashboard: true,
+  dependencyDashboardTitle: "Renovate Dashboard 🤖",
+  suppressNotifications: ["prIgnoreNotification"],
+  rebaseWhen: "auto",
+  reviewers: ["edmundmiller"],
+  assigneesFromCodeOwners: true,
+  gitAuthor: "nf-core-bot <renovate@nf-co.re>",
+  "pre-commit": {
+    enabled: true,
+  },
+  packageRules: [
+    {
+      matchDatasources: ["docker"],
+      registryUrls: ["quay.io"],
     },
-    prHourlyLimit: 3,
-    platform: "github",
-    onboarding: false,
-    dependencyDashboard: true,
-    dependencyDashboardTitle: "Renovate Dashboard 🤖",
-    suppressNotifications: ["prIgnoreNotification"],
-    rebaseWhen: "auto",
-    reviewers: ["edmundmiller"],
-    assigneesFromCodeOwners: true,
-    gitAuthor: "nf-core-bot <renovate@nf-co.re>",
-    pre-commit: {
-        enabled: true,
+    {
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions",
+      automerge: true,
+      schedule: ["before 9am"],
     },
-    packageRules: [
-        {
-            matchDatasources: ["docker"],
-            registryUrls: ["quay.io"],
-        },
-        {
-            matchManagers: ["github-actions"],
-            groupName: "GitHub Actions",
-            automerge: true,
-            schedule: ["before 9am"],
-        },
-        // don't use digest for actions coming from seqera(labs) or nf-core
-        {
-            matchPackagePattern: ["^nf-core/", "^seqera"],
-            matchManagers: ["github-actions"],
-            automerge: true,
-            pinDigest: false,
-        },
-        {
-            matchPackagePatterns: ["renovate-config-validator"],
-            automerge: true,
-            schedule: ["before 9am on Monday"],
-        },
-    ],
+    // don't use digest for actions coming from seqera(labs) or nf-core
+    {
+      matchPackagePattern: ["^nf-core/", "^seqera"],
+      matchManagers: ["github-actions"],
+      automerge: true,
+      pinDigest: false,
+    },
+    {
+      matchPackagePatterns: ["renovate-config-validator"],
+      automerge: true,
+      schedule: ["before 9am on Monday"],
+    },
+  ],
 }
