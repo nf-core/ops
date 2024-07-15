@@ -100,3 +100,27 @@ awsmegatests_bucket = aws.s3.Bucket(
     ),
     opts=pulumi.ResourceOptions(protect=True),
 )
+
+awsmegatests_bucket_acl = aws.s3.BucketAclV2(
+    "awsmegatests-bucket-acl",
+    access_control_policy=aws.s3.BucketAclV2AccessControlPolicyArgs(
+        grants=[
+            aws.s3.BucketAclV2AccessControlPolicyGrantArgs(
+                grantee=aws.s3.BucketAclV2AccessControlPolicyGrantGranteeArgs(
+                    display_name="phil.ewels",
+                    email_address="",
+                    id="f1ab567ea0ccaf20e2165c9a69391bc9e0ad0517fb77cb733a54b37401b9aa74",
+                    type="CanonicalUser",
+                    uri="",
+                ),
+                permission="FULL_CONTROL",
+            )
+        ],
+        owner=aws.s3.BucketAclV2AccessControlPolicyOwnerArgs(
+            display_name="phil.ewels",
+            id="f1ab567ea0ccaf20e2165c9a69391bc9e0ad0517fb77cb733a54b37401b9aa74",
+        ),
+    ),
+    bucket="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(protect=True),
+)
