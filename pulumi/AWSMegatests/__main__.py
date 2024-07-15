@@ -101,9 +101,26 @@ awsmegatests_bucket = aws.s3.Bucket(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-megatests_bucket_policy = aws.s3.BucketPolicy(
-    "megatests-bucket-policy",
+awsmegatests_bucket_acl = aws.s3.BucketAclV2(
+    "awsmegatests-bucket-acl",
+    access_control_policy=aws.s3.BucketAclV2AccessControlPolicyArgs(
+        grants=[
+            aws.s3.BucketAclV2AccessControlPolicyGrantArgs(
+                grantee=aws.s3.BucketAclV2AccessControlPolicyGrantGranteeArgs(
+                    display_name="phil.ewels",
+                    email_address="",
+                    id="f1ab567ea0ccaf20e2165c9a69391bc9e0ad0517fb77cb733a54b37401b9aa74",
+                    type="CanonicalUser",
+                    uri="",
+                ),
+                permission="FULL_CONTROL",
+            )
+        ],
+        owner=aws.s3.BucketAclV2AccessControlPolicyOwnerArgs(
+            display_name="phil.ewels",
+            id="f1ab567ea0ccaf20e2165c9a69391bc9e0ad0517fb77cb733a54b37401b9aa74",
+        ),
+    ),
     bucket="nf-core-awsmegatests",
-    policy='{"Id":"Policy1509554491316","Statement":[{"Action":["s3:Get*","s3:List*"],"Effect":"Allow","Principal":"*","Resource":["arn:aws:s3:::nf-core-awsmegatests/*","arn:aws:s3:::nf-core-awsmegatests"],"Sid":"Stmt1509554486694"}],"Version":"2012-10-17"}',
     opts=pulumi.ResourceOptions(protect=True),
 )
