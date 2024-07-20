@@ -1,0 +1,4 @@
+config:
+  github:owner: nf-core-tf
+  github:token:
+    secure: AAABADQ5983Zkr3Cb5e3Ql44AV0OkR66r4aU1seWGmEhzkgBnSlL3WfSk+qcXrFPdelbLM05rnd0thzVjSWbaR5B0Kor/GUFgvWxoUDlXomH/mFpizDV9QsqBgSNRrKlYgAxt9n4SwQ1j0aH8MpDPLyetyhLHH/cJrI33BA=
