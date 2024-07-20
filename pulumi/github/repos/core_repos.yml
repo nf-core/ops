@@ -7,10 +7,10 @@
 - prettier-plugin-nextflow
 - references
 - setup-nextflow
+- setup-nf-test
 - sublime
 - test-datasets
 - tools
+- vale
 - vscode-extensionpack
 - website
-- vale
-- setup-nf-test
