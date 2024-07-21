@@ -16,6 +16,9 @@ TOPICS = [
     "workflows",
 ]
 
+CORE_TEAM_ID = 2649377
+MAINTAINERS_TEAM_ID = 4462882
+
 nfcore_testpipeline = github.Repository(
     NAME,
     description="A small example pipeline used to test new nf-core infrastructure and common code.",  # 'repo_description' => 'Description must be set',
@@ -74,16 +77,14 @@ branch_template_testpipeline = github.Branch(
 # TODO Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # NOTE This uses the new Rulesets instead of classic branch protection rule
 # TODO 'branch_master_strict_updates' => 'master branch: do not require branch to be up to date before merging',
-# TODO 'branch_master_required_ci' => 'master branch: minimum set of CI tests must pass',
 # TODO 'branch_master_stale_reviews' => 'master branch: reviews not marked stale after new commits',
 # TODO 'branch_master_code_owner_reviews' => 'master branch: code owner reviews not required',
-# TODO 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
-# TODO 'branch_master_enforce_admins' => 'master branch: do not enforce rules for admins',
 ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     "ruleset_branch_default_testpipeline",
     bypass_actors=[
+        # 'branch_master_enforce_admins' => 'master branch: do not enforce rules for admins',
         github.RepositoryRulesetBypassActorArgs(
-            actor_id=2649377,
+            actor_id=CORE_TEAM_ID,
             actor_type="Team",
             bypass_mode="always",
         )
@@ -101,8 +102,10 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
         deletion=True,
         non_fast_forward=True,
         pull_request=github.RepositoryRulesetRulesPullRequestArgs(
+            # 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
             required_approving_review_count=2,
         ),
+        # 'branch_master_required_ci' => 'master branch: minimum set of CI tests must pass',
         required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
             required_checks=[
                 github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
@@ -124,18 +127,17 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
 # TODO 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
 # TODO 'branch_dev_stale_reviews' => 'dev branch: reviews not marked stale after new commits',
 # TODO 'branch_dev_code_owner_reviews' => 'dev branch: code owner reviews not required',
-# TODO 'branch_dev_required_num_reviews' => 'dev branch: 1 review required',
-# TODO 'branch_dev_enforce_admins' => 'dev branch: do not enforce rules for admins',
 ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
     "ruleset_branch_dev_testpipeline",
+    # 'branch_dev_enforce_admins' => 'dev branch: do not enforce rules for admins',
     bypass_actors=[
         github.RepositoryRulesetBypassActorArgs(
-            actor_id=2649377,
+            actor_id=CORE_TEAM_ID,
             actor_type="Team",
             bypass_mode="always",
         ),
         github.RepositoryRulesetBypassActorArgs(
-            actor_id=4462882,
+            actor_id=MAINTAINERS_TEAM_ID,
             actor_type="Team",
             bypass_mode="always",
         ),
@@ -153,6 +155,7 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
         deletion=True,
         non_fast_forward=True,
         pull_request=github.RepositoryRulesetRulesPullRequestArgs(
+            # 'branch_dev_required_num_reviews' => 'dev branch: 1 review required',
             required_approving_review_count=1,
         ),
     ),
@@ -161,15 +164,15 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
 )
 # TODO Double check
 # Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
-# TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
 ruleset_branch_template_testpipeline = github.RepositoryRuleset(
     "ruleset_branch_TEMPLATE_testpipeline",
     bypass_actors=[
         github.RepositoryRulesetBypassActorArgs(
-            actor_id=2649377,
+            actor_id=CORE_TEAM_ID,
             actor_type="Team",
             bypass_mode="always",
         )
+        # TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
     ],
     conditions=github.RepositoryRulesetConditionsArgs(
         ref_name=github.RepositoryRulesetConditionsRefNameArgs(
