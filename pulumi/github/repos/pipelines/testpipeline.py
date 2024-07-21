@@ -124,9 +124,6 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     opts=pulumi.ResourceOptions(protect=True),
 )
 # TODO 'branch_dev_strict_updates' => 'dev branch: do not require branch to be up to date before merging',
-# TODO 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
-# TODO 'branch_dev_stale_reviews' => 'dev branch: reviews not marked stale after new commits',
-# TODO 'branch_dev_code_owner_reviews' => 'dev branch: code owner reviews not required',
 ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
     "ruleset_branch_dev_testpipeline",
     # 'branch_dev_enforce_admins' => 'dev branch: do not enforce rules for admins',
@@ -155,8 +152,25 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
         deletion=True,
         non_fast_forward=True,
         pull_request=github.RepositoryRulesetRulesPullRequestArgs(
-            # 'branch_dev_required_num_reviews' => 'dev branch: 1 review required',
-            required_approving_review_count=1,
+            dismiss_stale_reviews_on_push=False,  # 'branch_dev_stale_reviews' => 'dev branch: reviews not marked stale after new commits',
+            require_code_owner_review=False,  # 'branch_dev_code_owner_reviews' => 'dev branch: code owner reviews not required',
+            # TODO require_last_push_approval=True,
+            required_approving_review_count=1,  # 'branch_dev_required_num_reviews' => 'dev branch: 1 review required',
+            # TODO required_review_thread_resolution=True,
+        ),
+        # 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
+        required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
+            required_checks=[
+                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+                    context="nf-core",
+                    integration_id=0,
+                ),
+                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+                    context="pre-commit",
+                    integration_id=0,
+                ),
+            ],
+            strict_required_status_checks_policy=True,
         ),
     ),
     target="branch",
