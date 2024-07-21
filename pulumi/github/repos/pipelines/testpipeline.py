@@ -1,6 +1,8 @@
 import pulumi
 import pulumi_github as github
 
+NAME = "testpipeline"
+
 TOPICS = [
     "nextflow",
     "pipelines",
@@ -12,14 +14,15 @@ TOPICS = [
 ]
 
 nfcore_testpipeline = github.Repository(
-    "testpipeline",
+    NAME,
     default_branch="master",
     description="A small example pipeline used to test new nf-core infrastructure and common code.",
     has_downloads=True,
     has_issues=True,
     has_projects=True,
-    has_wiki=True,
-    name="testpipeline",
+    has_wiki=False,
+    homepage_url=f"https://nf-co.re/{NAME}",
+    name=NAME,
     security_and_analysis=github.RepositorySecurityAndAnalysisArgs(
         secret_scanning=github.RepositorySecurityAndAnalysisSecretScanningArgs(
             status="disabled",
@@ -29,5 +32,6 @@ nfcore_testpipeline = github.Repository(
         ),
     ),
     visibility="public",
+    topics=TOPICS,
     opts=pulumi.ResourceOptions(protect=True),
 )
