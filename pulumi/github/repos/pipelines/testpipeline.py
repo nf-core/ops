@@ -16,6 +16,21 @@ TOPICS = [
     "workflows",
 ]
 
+# Names of required CI checks. These are added to whatever already exists.
+# public $required_status_check_contexts = [
+#     'pre-commit',
+#     'nf-core',
+REQUIRED_CI_CHECKS = [
+    github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+        context="pre-commit",
+        integration_id=0,
+    ),
+    github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+        context="nf-core",
+        integration_id=0,
+    ),
+]
+
 CORE_TEAM_ID = 2649377
 MAINTAINERS_TEAM_ID = 4462882
 
@@ -45,10 +60,6 @@ nfcore_testpipeline = github.Repository(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-# TODO Names of required CI checks. These are added to whatever already exists.
-# public $required_status_check_contexts = [
-#     'pre-commit',
-#     'nf-core',
 
 # Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
 # 'repo_default_branch' => 'default branch master (released) or dev (no releases)',
@@ -74,11 +85,9 @@ branch_template_testpipeline = github.Branch(
     repository="testpipeline",
     opts=pulumi.ResourceOptions(protect=True),
 )
-# TODO Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
+# Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # NOTE This uses the new Rulesets instead of classic branch protection rule
 # TODO 'branch_master_strict_updates' => 'master branch: do not require branch to be up to date before merging',
-# TODO 'branch_master_stale_reviews' => 'master branch: reviews not marked stale after new commits',
-# TODO 'branch_master_code_owner_reviews' => 'master branch: code owner reviews not required',
 ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     "ruleset_branch_default_testpipeline",
     bypass_actors=[
@@ -102,21 +111,13 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
         deletion=True,
         non_fast_forward=True,
         pull_request=github.RepositoryRulesetRulesPullRequestArgs(
-            # 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
-            required_approving_review_count=2,
+            required_approving_review_count=2,  # 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
+            dismiss_stale_reviews_on_push=False,  # 'branch_master_stale_reviews' => 'master branch: reviews not marked stale after new commits'
+            require_code_owner_review=False,  # 'branch_master_code_owner_reviews' => 'master branch: code owner reviews not required',
         ),
         # 'branch_master_required_ci' => 'master branch: minimum set of CI tests must pass',
         required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
-            required_checks=[
-                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
-                    context="Prettier",
-                    integration_id=0,
-                ),
-                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
-                    context="nf-core",
-                    integration_id=0,
-                ),
-            ],
+            required_checks=REQUIRED_CI_CHECKS,
             strict_required_status_checks_policy=True,
         ),
     ),
@@ -160,16 +161,7 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
         ),
         # 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
         required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
-            required_checks=[
-                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
-                    context="nf-core",
-                    integration_id=0,
-                ),
-                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
-                    context="pre-commit",
-                    integration_id=0,
-                ),
-            ],
+            required_checks=REQUIRED_CI_CHECKS,
             strict_required_status_checks_policy=True,
         ),
     ),
