@@ -188,7 +188,5 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
     target="branch",
     opts=pulumi.ResourceOptions(protect=True),
 )
-# TODO Set contributors to push
-# TODO Set core to admin
 # TODO 'team_contributors' => 'Write access for nf-core/contributors',
 # TODO 'team_core' => 'Admin access for nf-core/core',
