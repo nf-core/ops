@@ -4,6 +4,10 @@ Goal is to replace https://oldsite.nf-co.re/pipeline_health
 
 This repo will be the "Actions" section at the bottom. We can then create a reporting page if we really need to see all the green checks
 
+[Old Pipeline Health PHP code](https://github.com/nf-core/website/blob/old-site/public_html/pipeline_health.php)
+
+[New Pipeline Health page](https://github.com/nf-core/website/blob/main/sites/pipelines/src/pages/pipeline_health.astro)
+
 ## Initial Roll-out
 
 The new pipelines that are broken:
