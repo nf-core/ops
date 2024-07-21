@@ -51,6 +51,12 @@ branch_default_testpipeline = github.BranchDefault(
     repository={NAME},
     opts=pulumi.ResourceOptions(protect=True),
 )
+branch_template_testpipeline = github.Branch(
+    "branch_template_testpipeline",
+    branch="TEMPLATE",
+    repository="testpipeline",
+    opts=pulumi.ResourceOptions(protect=True),
+)
 # TODO Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
 # https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
