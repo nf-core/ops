@@ -15,7 +15,6 @@ TOPICS = [
 
 nfcore_testpipeline = github.Repository(
     NAME,
-    default_branch="master",
     description="A small example pipeline used to test new nf-core infrastructure and common code.",
     has_downloads=True,
     has_issues=True,
@@ -39,12 +38,19 @@ nfcore_testpipeline = github.Repository(
     topics=TOPICS,
     opts=pulumi.ResourceOptions(protect=True),
 )
+
 # TODO Names of required CI checks. These are added to whatever already exists.
 # public $required_status_check_contexts = [
 #     'pre-commit',
 #     'nf-core',
 
 # TODO Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
+branch_default_testpipeline = github.BranchDefault(
+    f"branch_default_{NAME}",
+    branch="master",
+    repository={NAME},
+    opts=pulumi.ResourceOptions(protect=True),
+)
 # TODO Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
 # https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
