@@ -39,3 +39,13 @@ Maybe:
 1. Wrangle in `core_repos`
 2. Roll out to all pipelines
 3. Switch all repos to main
+
+## Docs
+
+https://www.pulumi.com/registry/packages/github/api-docs/repository/
+
+### Importing Repos
+
+```sh
+pulumi env run nf-core/github-prod -i pulumi import github:index/repository:Repository testpipeline testpipeline
+```

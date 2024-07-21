@@ -25,7 +25,7 @@ alpha_test_pipeline_repos = [
 
 for pipeline in alpha_test_pipeline_repos:
     github.Repository(
-        "nf-core-tf",
+        pipeline,
         allow_merge_commit=True,
         allow_rebase_merge=True,
         allow_squash_merge=True,
