@@ -159,10 +159,36 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
     target="branch",
     opts=pulumi.ResourceOptions(protect=True),
 )
-# TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
-# https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
+# TODO Double check
+# Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
+# TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
+ruleset_branch_template_testpipeline = github.RepositoryRuleset(
+    "ruleset_branch_TEMPLATE_testpipeline",
+    bypass_actors=[
+        github.RepositoryRulesetBypassActorArgs(
+            actor_id=2649377,
+            actor_type="Team",
+            bypass_mode="always",
+        )
+    ],
+    conditions=github.RepositoryRulesetConditionsArgs(
+        ref_name=github.RepositoryRulesetConditionsRefNameArgs(
+            excludes=[],
+            includes=["refs/heads/TEMPLATE"],
+        ),
+    ),
+    enforcement="active",
+    name="template",
+    repository="testpipeline",
+    rules=github.RepositoryRulesetRulesArgs(
+        deletion=True,
+        non_fast_forward=True,
+        update=True,
+    ),
+    target="branch",
+    opts=pulumi.ResourceOptions(protect=True),
+)
 # TODO Set contributors to push
 # TODO Set core to admin
 # TODO 'team_contributors' => 'Write access for nf-core/contributors',
 # TODO 'team_core' => 'Admin access for nf-core/core',
-# TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
