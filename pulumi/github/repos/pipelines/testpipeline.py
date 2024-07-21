@@ -120,16 +120,49 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     target="branch",
     opts=pulumi.ResourceOptions(protect=True),
 )
-# TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
-# https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
-# TODO Set contributors to push
-# TODO Set core to admin
-# TODO 'team_contributors' => 'Write access for nf-core/contributors',
-# TODO 'team_core' => 'Admin access for nf-core/core',
 # TODO 'branch_dev_strict_updates' => 'dev branch: do not require branch to be up to date before merging',
 # TODO 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
 # TODO 'branch_dev_stale_reviews' => 'dev branch: reviews not marked stale after new commits',
 # TODO 'branch_dev_code_owner_reviews' => 'dev branch: code owner reviews not required',
 # TODO 'branch_dev_required_num_reviews' => 'dev branch: 1 review required',
 # TODO 'branch_dev_enforce_admins' => 'dev branch: do not enforce rules for admins',
+ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
+    "ruleset_branch_dev_testpipeline",
+    bypass_actors=[
+        github.RepositoryRulesetBypassActorArgs(
+            actor_id=2649377,
+            actor_type="Team",
+            bypass_mode="always",
+        ),
+        github.RepositoryRulesetBypassActorArgs(
+            actor_id=4462882,
+            actor_type="Team",
+            bypass_mode="always",
+        ),
+    ],
+    conditions=github.RepositoryRulesetConditionsArgs(
+        ref_name=github.RepositoryRulesetConditionsRefNameArgs(
+            excludes=[],
+            includes=["refs/heads/dev"],
+        ),
+    ),
+    enforcement="active",
+    name="dev",
+    repository="testpipeline",
+    rules=github.RepositoryRulesetRulesArgs(
+        deletion=True,
+        non_fast_forward=True,
+        pull_request=github.RepositoryRulesetRulesPullRequestArgs(
+            required_approving_review_count=1,
+        ),
+    ),
+    target="branch",
+    opts=pulumi.ResourceOptions(protect=True),
+)
+# TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
+# https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
+# TODO Set contributors to push
+# TODO Set core to admin
+# TODO 'team_contributors' => 'Write access for nf-core/contributors',
+# TODO 'team_core' => 'Admin access for nf-core/core',
 # TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
