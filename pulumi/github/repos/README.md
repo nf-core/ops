@@ -8,6 +8,9 @@ This repo will be the "Actions" section at the bottom. We can then create a repo
 
 The new pipelines that are broken:
 
+- demo
+- testpipeline
+
 - denovotranscript
 - meerpipe
 - pairgenomealign
