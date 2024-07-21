@@ -72,18 +72,60 @@ branch_template_testpipeline = github.Branch(
     opts=pulumi.ResourceOptions(protect=True),
 )
 # TODO Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
-# TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
-# https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
-# TODO Set contributors to push
-# TODO Set core to admin
-# TODO 'team_contributors' => 'Write access for nf-core/contributors',
-# TODO 'team_core' => 'Admin access for nf-core/core',
+# NOTE This uses the new Rulesets instead of classic branch protection rule
 # TODO 'branch_master_strict_updates' => 'master branch: do not require branch to be up to date before merging',
 # TODO 'branch_master_required_ci' => 'master branch: minimum set of CI tests must pass',
 # TODO 'branch_master_stale_reviews' => 'master branch: reviews not marked stale after new commits',
 # TODO 'branch_master_code_owner_reviews' => 'master branch: code owner reviews not required',
 # TODO 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
 # TODO 'branch_master_enforce_admins' => 'master branch: do not enforce rules for admins',
+ruleset_branch_default_testpipeline = github.RepositoryRuleset(
+    "ruleset_branch_default_testpipeline",
+    bypass_actors=[
+        github.RepositoryRulesetBypassActorArgs(
+            actor_id=2649377,
+            actor_type="Team",
+            bypass_mode="always",
+        )
+    ],
+    conditions=github.RepositoryRulesetConditionsArgs(
+        ref_name=github.RepositoryRulesetConditionsRefNameArgs(
+            excludes=[],
+            includes=["~DEFAULT_BRANCH"],
+        ),
+    ),
+    enforcement="active",
+    name="master",
+    repository="testpipeline",
+    rules=github.RepositoryRulesetRulesArgs(
+        deletion=True,
+        non_fast_forward=True,
+        pull_request=github.RepositoryRulesetRulesPullRequestArgs(
+            required_approving_review_count=2,
+        ),
+        required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
+            required_checks=[
+                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+                    context="Prettier",
+                    integration_id=0,
+                ),
+                github.RepositoryRulesetRulesRequiredStatusChecksRequiredCheckArgs(
+                    context="nf-core",
+                    integration_id=0,
+                ),
+            ],
+            strict_required_status_checks_policy=True,
+        ),
+    ),
+    target="branch",
+    opts=pulumi.ResourceOptions(protect=True),
+)
+# TODO Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
+# https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L275-L278
+# TODO Set contributors to push
+# TODO Set core to admin
+# TODO 'team_contributors' => 'Write access for nf-core/contributors',
+# TODO 'team_core' => 'Admin access for nf-core/core',
 # TODO 'branch_dev_strict_updates' => 'dev branch: do not require branch to be up to date before merging',
 # TODO 'branch_dev_required_ci' => 'dev branch: minimum set of CI tests must pass',
 # TODO 'branch_dev_stale_reviews' => 'dev branch: reviews not marked stale after new commits',
