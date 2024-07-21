@@ -1,0 +1,4 @@
+config:
+  github:owner: nf-core
+environment:
+  - github-prod
