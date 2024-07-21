@@ -44,11 +44,17 @@ nfcore_testpipeline = github.Repository(
 #     'pre-commit',
 #     'nf-core',
 
-# TODO Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
+# Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
 branch_default_testpipeline = github.BranchDefault(
     f"branch_default_{NAME}",
     branch="master",
     repository={NAME},
+    opts=pulumi.ResourceOptions(protect=True),
+)
+branch_dev_testpipeline = github.Branch(
+    "branch_dev_testpipeline",
+    branch="dev",
+    repository="testpipeline",
     opts=pulumi.ResourceOptions(protect=True),
 )
 branch_template_testpipeline = github.Branch(
