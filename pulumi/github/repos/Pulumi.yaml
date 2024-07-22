@@ -3,4 +3,4 @@ runtime:
   name: python
   options:
     virtualenv: venv
-description: Managing GitHub repos
+description: Managing nf-core GitHub repos

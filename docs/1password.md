@@ -5,12 +5,17 @@
 [How to use 1Password with different accounts automatically](https://developer.1password.com/docs/cli/shell-plugins/multiple-accounts/)
 
 ```console
-$ cd ~/src/nf-core
+cd ~/src/nf-core
 
-~/src/nf-core $ op signin
+op signin
+
 # Select nf-core
 
-~/src/nf-core $ op plugin init pulumi
+op plugin init pulumi
+```
+
+This should result in:
+```
 
 Pulumi CLI
 Authenticate with Pulumi Personal Access Token.
