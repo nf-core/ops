@@ -1,5 +1,5 @@
 config:
   github:owner: nf-core-tf
   # https://start.1password.com/open/i?a=O5GICFDKPNABLLVGMKBL5JWDWA&v=rdfcz6oy6qxxrc4clu467a7dmm&i=4ajrv44kc5lcbboa37fr5oydla&h=nf-core.1password.eu
-  github:token:
-    secure: AAABAFMgBNyCNuYsps6YVPV2L7Ji5qBJj0omEQQa9HrdhT2iHo3ex0e9NsDER3Q04itGiY698X/ZQCnTM2zu9op3tcjmzfITdHxGy0FGATuUFamYsSiztHrNAKiIEJ9E0M4Al8/yJeB6X4BXvkLEgik/I+GPvZIXK3tE65Q=
+environment:
+  - github-nf-core-tf
