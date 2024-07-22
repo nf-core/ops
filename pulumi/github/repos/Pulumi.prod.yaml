@@ -1,4 +1,5 @@
 config:
   github:owner: nf-core
+# https://start.1password.com/open/i?a=O5GICFDKPNABLLVGMKBL5JWDWA&v=rdfcz6oy6qxxrc4clu467a7dmm&i=ttqz63qvlr5qfwfde424nbl4re&h=nf-core.1password.eu
 environment:
   - github-prod
