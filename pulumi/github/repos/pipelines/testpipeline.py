@@ -68,28 +68,28 @@ nfcore_testpipeline = github.Repository(
 branch_default_testpipeline = github.BranchDefault(
     f"branch_default_{NAME}",
     branch="master",
-    repository={NAME},
+    repository=NAME,
     opts=pulumi.ResourceOptions(protect=True),
 )
 # 'branch_dev_exists' => 'dev branch: branch must exist',
 branch_dev_testpipeline = github.Branch(
-    "branch_dev_testpipeline",
+    f"branch_dev_{NAME}",
     branch="dev",
-    repository="testpipeline",
+    repository=NAME,
     opts=pulumi.ResourceOptions(protect=True),
 )
 # 'branch_template_exists' => 'TEMPLATE branch: branch must exist',
 branch_template_testpipeline = github.Branch(
-    "branch_template_testpipeline",
+    f"branch_template_{NAME}",
     branch="TEMPLATE",
-    repository="testpipeline",
+    repository=NAME,
     opts=pulumi.ResourceOptions(protect=True),
 )
 # Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # NOTE This uses the new Rulesets instead of classic branch protection rule
 # TODO 'branch_master_strict_updates' => 'master branch: do not require branch to be up to date before merging',
 ruleset_branch_default_testpipeline = github.RepositoryRuleset(
-    "ruleset_branch_default_testpipeline",
+    f"ruleset_branch_default_{NAME}",
     bypass_actors=[
         # 'branch_master_enforce_admins' => 'master branch: do not enforce rules for admins',
         github.RepositoryRulesetBypassActorArgs(
@@ -106,7 +106,7 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     ),
     enforcement="active",
     name="master",
-    repository="testpipeline",
+    repository=NAME,
     rules=github.RepositoryRulesetRulesArgs(
         deletion=True,
         non_fast_forward=True,
@@ -126,7 +126,7 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
 )
 # TODO 'branch_dev_strict_updates' => 'dev branch: do not require branch to be up to date before merging',
 ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
-    "ruleset_branch_dev_testpipeline",
+    f"ruleset_branch_dev_{NAME}",
     # 'branch_dev_enforce_admins' => 'dev branch: do not enforce rules for admins',
     bypass_actors=[
         github.RepositoryRulesetBypassActorArgs(
@@ -148,7 +148,7 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
     ),
     enforcement="active",
     name="dev",
-    repository="testpipeline",
+    repository=NAME,
     rules=github.RepositoryRulesetRulesArgs(
         deletion=True,
         non_fast_forward=True,
@@ -171,7 +171,7 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
 # TODO Double check
 # Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
 ruleset_branch_template_testpipeline = github.RepositoryRuleset(
-    "ruleset_branch_TEMPLATE_testpipeline",
+    f"ruleset_branch_TEMPLATE_{NAME}",
     bypass_actors=[
         github.RepositoryRulesetBypassActorArgs(
             actor_id=CORE_TEAM_ID,
@@ -188,7 +188,7 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
     ),
     enforcement="active",
     name="template",
-    repository="testpipeline",
+    repository=NAME,
     rules=github.RepositoryRulesetRulesArgs(
         deletion=True,
         non_fast_forward=True,
@@ -199,15 +199,15 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
 )
 # 'team_contributors' => 'Write access for nf-core/contributors',
 contributors_team_repo_testpipeline = github.TeamRepository(
-    "contributors_team_repo_testpipeline",
+    f"contributors_team_repo_{NAME}",
     team_id="contributors",
-    repository="testpipeline",
+    repository=NAME,
     permission="push",
 )
 # 'team_core' => 'Admin access for nf-core/core',
 core_team_repo_testpipeline = github.TeamRepository(
-    "core_team_repo_testpipeline",
+    f"core_team_repo_{NAME}",
     team_id="core",
-    repository="testpipeline",
+    repository=NAME,
     permission="admin",
 )
