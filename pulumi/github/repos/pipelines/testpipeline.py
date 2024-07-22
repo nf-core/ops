@@ -63,7 +63,7 @@ nfcore_testpipeline = github.Repository(
 
 # Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
 # 'repo_default_branch' => 'default branch master (released) or dev (no releases)',
-# TODO Toggle this on dev and master?
+# TODO Toggle this on dev as default if there's not release?
 # 'branch_master_exists' => 'master branch: branch must exist',
 branch_default_testpipeline = github.BranchDefault(
     f"branch_default_{NAME}",
@@ -197,5 +197,17 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
     target="branch",
     opts=pulumi.ResourceOptions(protect=True),
 )
-# TODO 'team_contributors' => 'Write access for nf-core/contributors',
-# TODO 'team_core' => 'Admin access for nf-core/core',
+# 'team_contributors' => 'Write access for nf-core/contributors',
+contributors_team_repo_testpipeline = github.TeamRepository(
+    "contributors_team_repo_testpipeline",
+    team_id="contributors",
+    repository="testpipeline",
+    permission="push",
+)
+# 'team_core' => 'Admin access for nf-core/core',
+core_team_repo_testpipeline = github.TeamRepository(
+    "core_team_repo_testpipeline",
+    team_id="core",
+    repository="testpipeline",
+    permission="admin",
+)
