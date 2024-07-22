@@ -57,7 +57,6 @@ nfcore_testpipeline = github.Repository(
     ),
     visibility="public",
     topics=TOPICS,  # 'repo_keywords' => 'Minimum keywords set',
-    opts=pulumi.ResourceOptions(protect=True),
 )
 
 
