@@ -1,48 +1,15 @@
 # Repos
 
-Goal is to replace https://oldsite.nf-co.re/pipeline_health
+Replaces the automatic rule enforcement from the [old Pipeline Health PHP code](https://github.com/nf-core/website/blob/old-site/public_html/pipeline_health.php),
 
-This repo will be the "Actions" section at the bottom. We can then create a reporting page if we really need to see all the green checks
+[Main GitHub Issue](https://github.com/nf-core/ops/issues/5)
+[Tracking Milestone](https://github.com/nf-core/ops/milestone/1)
 
-[Old Pipeline Health PHP code](https://github.com/nf-core/website/blob/old-site/public_html/pipeline_health.php)
+## Useful Docs
 
-[New Pipeline Health page](https://github.com/nf-core/website/blob/main/sites/pipelines/src/pages/pipeline_health.astro)
-
-## Initial Roll-out
-
-The new pipelines that are broken:
-
-- demo
-- testpipeline
-
-- denovotranscript
-- meerpipe
-- pairgenomealign
-- phaseimpute
-- reportho
-
-Maybe:
-
-- scdownstream
-- scnanoseq
-
-### Plan
-
-#### Short-term
-
-1. [ ] Import a pipeline that has all the right settings
-2. [ ] Fix the 5 pipelines above with the correct settings from the "model" repo
-3. [ ] Keep importing new pipelines until we gain confidence in it.
-
-#### Long-term
-
-1. Wrangle in `core_repos`
-2. Roll out to all pipelines
-3. Switch all repos to main
-
-## Docs
-
-https://www.pulumi.com/registry/packages/github/api-docs/repository/
+- https://www.pulumi.com/registry/packages/github/api-docs/repository/
+- [Old Pipeline Health PHP code](https://github.com/nf-core/website/blob/old-site/public_html/pipeline_health.php)
+- [New Pipeline Health page](https://github.com/nf-core/website/blob/main/sites/pipelines/src/pages/pipeline_health.astro)
 
 ### Importing Repos
 
