@@ -1,0 +1,10 @@
+name: analytics
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: I want a plausible community edition deployed on AWS https://github.com/plausible/community-edition/
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: https://www.pulumi.com/ai/api/project/b8ac0d79-8b03-456b-b358-13844516e82c.zip
