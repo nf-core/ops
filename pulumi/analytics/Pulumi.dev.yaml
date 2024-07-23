@@ -1,0 +1,4 @@
+config:
+  pulumi:template: https://www.pulumi.com/ai/api/project/b8ac0d79-8b03-456b-b358-13844516e82c.zip
+environment:
+  - nf-core_AWS
