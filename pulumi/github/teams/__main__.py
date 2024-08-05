@@ -2,7 +2,6 @@
 
 import yaml
 
-import pulumi
 import pulumi_github as github
 
 
@@ -24,25 +23,29 @@ class Organization:
 
         for user in members:
             # Add a user to the newly created team
-            team_membership = github.TeamMembership(
+            # team_membership =
+            github.TeamMembership(
                 f"{team['name']}-{user['name']}",
                 team_id=team_resource,
                 username=user["name"],
                 role=user.get("role", "member"),
             )
+            # TODO pulumi.export("team_membership",team_memebership.name)
 
         for repo in team.get("repositories", []):
-            if not repo["name"] in self._repos:
+            if repo["name"] not in self._repos:
                 print(f"Repository '{repo['name']}' not managed by Pulumi. Skipping.")
                 continue
 
             # Associate a repository with the team
-            team_repository = github.TeamRepository(
+            # team_repository =
+            github.TeamRepository(
                 f"{team['name']}-{repo['name']}",
                 team_id=team_resource,
                 repository=self._repos[repo["name"]],
                 permission=repo.get("permission", "pull"),
             )
+            # TODO pulumi.export("team_repository",team_memebership.name)
 
         for subteam in team.get("teams", []):
             self.setup_team(subteam, parent_team=team_resource)
