@@ -10,7 +10,7 @@ sentieon_vpc = aws.ec2.Vpc(
         "DELETE_ME": "",
         "Name": "sentieon_test_license_server_vpc",
     },
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True),  # type: ignore[attr-defined]
 )
 
 
@@ -161,7 +161,7 @@ license_server = aws.ec2.SecurityGroup(
         "Name": "sentieon-license-server-security-group",
     },
     vpc_id="vpc-09544162c32f4affc",
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True),  # type: ignore[attr-defined]
 )
 
 
@@ -208,5 +208,5 @@ sentieon_license_server = aws.ec2.Instance(
     subnet_id="subnet-040e9b9afcb44f3f9",
     tenancy=aws.ec2.Tenancy.DEFAULT,
     vpc_security_group_ids=["sg-0050bb55ca1c6292c"],
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True),  # type: ignore[attr-defined]
 )
