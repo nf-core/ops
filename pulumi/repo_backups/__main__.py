@@ -21,4 +21,4 @@ bucket_lifecycle_policy = aws.s3.BucketLifecycleConfiguration(
 )
 
 # Export the name of the bucket
-pulumi.export("bucket_name", bucket.id)
+pulumi.export("bucket_name", bucket.id)  # type: ignore[attr-defined]

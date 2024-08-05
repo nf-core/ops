@@ -65,4 +65,4 @@ for username in usernames:
     )
 
 # Export the bucket name
-pulumi.export("bucket_name", test_datasets_bucket.bucket)
+pulumi.export("bucket_name", test_datasets_bucket.bucket)  # type: ignore[attr-defined]
