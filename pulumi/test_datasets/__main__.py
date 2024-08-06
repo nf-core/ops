@@ -53,9 +53,12 @@ public_read_policy = json.dumps(
             {
                 "Effect": "Allow",
                 "Principal": "*",  # Allow access to anyone
-                "Action": ["s3:GetObject"],
+                "Action": [
+                    "s3:GetObject",
+                    "s3:ListBucket",
+                ],
                 "Resource": [
-                    f"arn:aws:s3:::{test_datasets_bucket.id}/*"
+                    test_datasets_bucket.arn.apply(lambda arn: f"{arn}/*"),
                 ],  # Access all objects in the bucket
             }
         ],
