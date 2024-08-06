@@ -38,6 +38,12 @@ test_datasets_bucket = aws.s3.Bucket(
     ),
 )
 
+test_datasets_bucket_publicaccessblock = aws.s3.BucketPublicAccessBlock(
+    "test-datasets-bucket-publicaccessblock",
+    bucket="nf-core-test-datasets",
+    opts=pulumi.ResourceOptions(protect=True),
+)
+
 # Define the policy which allows users to put objects in the S3 bucket
 policy = aws.iam.Policy(
     "bucketPutPolicy",
