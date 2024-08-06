@@ -1,6 +1,5 @@
 """An AWS Python Pulumi program"""
 
-import json
 import pulumi
 import pulumi_aws as aws
 
@@ -45,29 +44,26 @@ test_datasets_bucket_publicaccessblock = aws.s3.BucketPublicAccessBlock(
     opts=pulumi.ResourceOptions(protect=True),
 )
 
-# Step 2: Create a bucket policy for public read access
-public_read_policy = json.dumps(
-    {
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": "*",  # Allow access to anyone
-                "Action": [
-                    "s3:GetObject",
-                    "s3:ListBucket",
-                ],
-                "Resource": [
-                    test_datasets_bucket.arn.apply(lambda arn: f"{arn}/*"),
-                ],  # Access all objects in the bucket
-            }
-        ],
-    }
+allow_access_from_anyone = aws.iam.get_policy_document_output(
+    statements=[
+        {
+            "principals": [{"identifiers": ["*"], "type": "AWS"}],
+            "actions": [
+                "s3:GetObject",
+                "s3:ListBucket",
+            ],
+            "resources": [
+                test_datasets_bucket.arn,
+                test_datasets_bucket.arn.apply(lambda arn: f"{arn}/*"),
+            ],
+        }
+    ]
 )
 
-# Step 3: Apply the bucket policy to the bucket
-bucket_policy = aws.s3.BucketPolicy(
-    "testData-bucketPolicy", bucket=test_datasets_bucket.id, policy=public_read_policy
+allow_access_from_anyone_bucket_policy = aws.s3.BucketPolicy(
+    "allow_access_from_anyone",
+    bucket=test_datasets_bucket.id,
+    policy=allow_access_from_anyone.json,
 )
 
 # Define the policy which allows users to put objects in the S3 bucket
