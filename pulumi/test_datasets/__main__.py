@@ -41,7 +41,7 @@ test_datasets_bucket = aws.s3.Bucket(
 test_datasets_bucket_publicaccessblock = aws.s3.BucketPublicAccessBlock(
     "test-datasets-bucket-publicaccessblock",
     bucket="nf-core-test-datasets",
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True),  # type: ignore[attr-defined]
 )
 
 allow_access_from_anyone = aws.iam.get_policy_document_output(
