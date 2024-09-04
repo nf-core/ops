@@ -7,7 +7,7 @@ platforms = ["linux-64"]
 version = "0.1.0"
 
 [tasks]
-plugins = "steampipe plugin install github twitter"
+plugins = "steampipe plugin install github twitter --progress=false"
 twitter = "steampipe query twitter_users.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/twitter_users.json"
 github = "steampipe query github.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/github.json"
 download_hf = "huggingface-cli download nf-core/stats --local-dir hf_stats --repo-type dataset --quiet"
