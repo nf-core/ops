@@ -7,6 +7,9 @@ on:
   repository_dispatch:
     types: [update-website]
 
+env:
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+
 jobs:
   update:
     name: Update
