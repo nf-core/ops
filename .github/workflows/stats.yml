@@ -22,8 +22,12 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           cache: true
+          manifest-path: "stats/steampipe/pixi.toml"
       - run: pixi run download_hf
+        working-directory: ./stats/steampipe/
       - run: pixi run github
+        working-directory: ./stats/steampipe/
       # TODO - run: pixi run twitter
       # TODO - run: pixi run slack
       - run: pixi run upload_hf
+        working-directory: ./stats/steampipe/
