@@ -27,6 +27,8 @@ jobs:
           manifest-path: "stats/steampipe/pixi.toml"
       - run: pixi run download_hf
         working-directory: ./stats/steampipe/
+      - run: pixi run plugins
+        working-directory: ./stats/steampipe/
         # FIXME Throw error if failure to connect
       - run: pixi run github
         working-directory: ./stats/steampipe/
