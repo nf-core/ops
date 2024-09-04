@@ -1,0 +1,21 @@
+name: Stats
+
+on:
+  schedule: # every day at 2am and 2pm
+    - cron: "0 2,14 * * *"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [update-website]
+
+jobs:
+  update:
+    name: Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          cache: true
+      - run: pixi run download_hf
+      - run: pixi run github
+      - run: pixi run upload_hf
