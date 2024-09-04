@@ -12,7 +12,7 @@ on:
 
 env:
   # TWITTER_BEARER_TOKEN: TODO
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{secrets.NF_CORE_BOT_AUTH_TOKEN}}
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
 jobs:
