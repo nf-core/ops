@@ -11,6 +11,8 @@ on:
     types: [update-website]
 
 env:
+  # TWITTER_BEARER_TOKEN: TODO
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
 jobs:
@@ -25,6 +27,7 @@ jobs:
           manifest-path: "stats/steampipe/pixi.toml"
       - run: pixi run download_hf
         working-directory: ./stats/steampipe/
+        # FIXME Throw error if failure to connect
       - run: pixi run github
         working-directory: ./stats/steampipe/
       # TODO - run: pixi run twitter
