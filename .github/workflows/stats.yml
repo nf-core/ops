@@ -30,9 +30,9 @@ jobs:
       - run: pixi run plugins
         working-directory: ./stats/steampipe/
         # FIXME Throw error if failure to connect
-      - run: pixi run github
+      - run: pixi run github_hc
         working-directory: ./stats/steampipe/
-      - run: pixi run twitter
+      - run: pixi run twitter_hc
         working-directory: ./stats/steampipe/
       # TODO - run: pixi run slack
       - run: pixi run upload_hf

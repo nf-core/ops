@@ -1,3 +1,6 @@
+![GitHub Stats](https://img.shields.io/endpoint?url=https%3A%2F%2Fhealthchecks.io%2Fb%2F2%2Fd2febac8-1214-4c89-aa9c-a3f2c77b3995.shields)
+![Twitter Stats](https://img.shields.io/endpoint?url=https%3A%2F%2Fhealthchecks.io%2Fb%2F2%2F5fd77e2f-16ea-4514-bd06-a49e710aab37.shields)
+
 ## Notes
 
 https://steampipe.io/docs/integrations/gitpod
