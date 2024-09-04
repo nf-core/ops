@@ -12,6 +12,10 @@ on:
 
 env:
   # TWITTER_BEARER_TOKEN: TODO
+  TWITTER_CONSUMER_KEY: ${{secrets.TWITTER_CONSUMER_KEY}}
+  TWITTER_CONSUMER_SECRET: ${{secrets.TWITTER_CONSUMER_SECRET}}
+  TWITTER_ACCESS_TOKEN: ${{secrets.TWITTER_ACCESS_TOKEN}}
+  TWITTER_ACCESS_TOKEN_SECRET: ${{secrets.TWITTER_ACCESS_TOKEN_SECRET}}
   GITHUB_TOKEN: ${{secrets.STEAMPIPE_GH_TOKEN}}
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
 
@@ -32,7 +36,8 @@ jobs:
         # FIXME Throw error if failure to connect
       - run: pixi run github
         working-directory: ./stats/steampipe/
-      # TODO - run: pixi run twitter
+      - run: pixi run twitter
+        working-directory: ./stats/steampipe/
       # TODO - run: pixi run slack
       - run: pixi run upload_hf
         working-directory: ./stats/steampipe/
