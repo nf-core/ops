@@ -3,6 +3,9 @@ name: Stats
 on:
   schedule: # every day at 2am and 2pm
     - cron: "0 2,14 * * *"
+  pull_request:
+    paths:
+      - "stats/steampipe/**"
   workflow_dispatch:
   repository_dispatch:
     types: [update-website]
@@ -21,4 +24,6 @@ jobs:
           cache: true
       - run: pixi run download_hf
       - run: pixi run github
+      # TODO - run: pixi run twitter
+      # TODO - run: pixi run slack
       - run: pixi run upload_hf
