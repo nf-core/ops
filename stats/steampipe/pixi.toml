@@ -12,7 +12,8 @@ twitter = "steampipe query twitter_users.sql --output json | jq '.rows[0].public
 twitter_hc = { cmd = "curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/39c783d5-b697-4eb5-b677-05bae13a2490", depends_on = ["twitter"] }
 github = "steampipe query github.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/github.json"
 github_hc = { cmd = "curl -fsS -m 10 --retry 5 -o /dev/null https://hc-ping.com/017c8a09-9531-4206-a479-aa51a2209931", depends_on = ["github"] }
-slack = "steampipe query slack_users.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/slack_users.json"
+slack_active = "steampipe query slack_active_users.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/slack_active_users.json"
+slack_total = "steampipe query slack_total_users.sql --output json | jq '.rows[0] + {timestamp: now|tostring}' >> hf_stats/steampipe/slack_total_users.json"
 download_hf = "huggingface-cli download nf-core/stats --local-dir hf_stats --repo-type dataset --quiet"
 upload_hf = "huggingface-cli upload nf-core/stats hf_stats --repo-type dataset --quiet"
 

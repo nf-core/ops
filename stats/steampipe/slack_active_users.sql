@@ -1,3 +1,4 @@
+-- Active Users
 select
   date(date_first) as day,
   count(distinct user_name)
