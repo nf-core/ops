@@ -1,0 +1,42 @@
+name: Stats
+
+on:
+  schedule: # every day at 2am and 2pm
+    - cron: "0 2,14 * * *"
+  pull_request:
+    paths:
+      - "stats/steampipe/**"
+  workflow_dispatch:
+  repository_dispatch:
+    types: [update-website]
+
+env:
+  TWITTER_BEARER_TOKEN: ${{secrets.TWITTER_BEARER_TOKEN}}
+  GITHUB_TOKEN: ${{secrets.STEAMPIPE_GH_TOKEN}}
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  SLACK_TOKEN: ${{ secrets.SLACK_TOKEN }}
+
+jobs:
+  update:
+    name: Update
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          cache: true
+          manifest-path: "stats/steampipe/pixi.toml"
+      - run: pixi run download_hf
+        working-directory: ./stats/steampipe/
+      - run: pixi run plugins
+        working-directory: ./stats/steampipe/
+        # FIXME Throw error if failure to connect
+      - run: pixi run github_hc
+        working-directory: ./stats/steampipe/
+      - run: pixi run twitter_hc
+        working-directory: ./stats/steampipe/
+      - run: pixi run slack_hc
+        working-directory: ./stats/steampipe/
+      # TODO - run: pixi run slack
+      - run: pixi run upload_hf
+        working-directory: ./stats/steampipe/
