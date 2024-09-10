@@ -17,6 +17,7 @@ process GITHUB_DAILY_TRAFFIC {
         -H "Authorization: Bearer \$GH_TOKEN" \\
         -H "X-GitHub-Api-Version: 2022-11-28" \\
         https://api.github.com/repos/nf-core/${repo}/traffic/views \\
+        | jq '.views[-1]' \\
         > ${repo}_daily_traffic.json
     """
 }
@@ -24,8 +25,16 @@ process GITHUB_DAILY_TRAFFIC {
 // TODO https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-page-views--status-codes
 
 workflow {
+    def targetFile = "${launchDir}/hf_stats/steampipe/github_methylseq_daily_traffic.json"
     GITHUB_DAILY_TRAFFIC (
         // "nf-core",
         "methylseq",
-    )
+    ).out.withReader { source ->
+    targetFile.withWriter { target ->
+        String line
+        while( line=source.readLine() ) {
+                target << line
+        }
+    }
+}
 }
