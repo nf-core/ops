@@ -5,6 +5,6 @@ select
 from
   github_traffic_view_weekly
 where
-  repository_full_name = 'turbot/steampipe'
+  repository_full_name = 'nf-core/methylseq'
 order by
   timestamp;

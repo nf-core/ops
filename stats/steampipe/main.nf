@@ -1,25 +1,31 @@
-
 process GITHUB_DAILY_TRAFFIC {
-    conda "steampipe=0.23.5 jq=1.7.1"
+    conda "jq=1.7.1"
+
+    secret 'GH_TOKEN'
 
     input:
+    // val owner
     val repo
-    path sql_file
 
+    output:
+    path "*_daily_traffic.json"
 
     script:
     """
-    steampipe query $sql_file \\
-        --output json \\
-        --var=repo_name=$repo \\
-        | jq '.rows[0] + {timestamp: now|tostring}' \\
-        >> hf_stats/steampipe/github.json"
+    curl -L \\
+        -H "Accept: application/vnd.github+json" \\
+        -H "Authorization: Bearer \$GH_TOKEN" \\
+        -H "X-GitHub-Api-Version: 2022-11-28" \\
+        https://api.github.com/repos/nf-core/${repo}/traffic/views \\
+        > ${repo}_daily_traffic.json
     """
-
 }
+// TODO https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-top-referral-sources--code-samples
+// TODO https://docs.github.com/en/rest/metrics/traffic?apiVersion=2022-11-28#get-page-views--status-codes
 
-workflow github {
+workflow {
     GITHUB_DAILY_TRAFFIC (
-        "${projectDir}/github_daily_traffic.sql"
+        // "nf-core",
+        "methylseq",
     )
 }
