@@ -24,27 +24,28 @@
     enabled: true,
   },
   packageRules: [
-    {
-      matchDatasources: ["docker"],
-      registryUrls: ["quay.io"],
-    },
-    {
-      matchManagers: ["github-actions"],
-      groupName: "GitHub Actions",
-      automerge: true,
-      schedule: ["before 9am"],
-    },
-    // don't use digest for actions coming from seqera(labs) or nf-core
-    {
-      matchPackagePattern: ["^nf-core/", "^seqera"],
-      matchManagers: ["github-actions"],
-      automerge: true,
-      pinDigest: false,
-    },
-    {
-      matchPackagePatterns: ["renovate-config-validator"],
-      automerge: true,
-      schedule: ["before 9am on Monday"],
-    },
+      {
+          matchDatasources: ["docker"],
+          registryUrls: ["quay.io"],
+      },
+      {
+          matchManagers: ["github-actions"],
+          automerge: true,
+          pinDigest: {
+              enabled: false,
+          },
+          matchPackageNames: ["/^nf-core//", "/^seqera/"],
+      },
+      {
+          matchManagers: ["github-actions"],
+          groupName: "GitHub Actions",
+          automerge: true,
+          schedule: ["before 9am"],
+      },
+      {
+          automerge: true,
+          schedule: ["before 9am on Monday"],
+          matchPackageNames: ["/renovate-config-validator/"],
+      },
   ],
 }
