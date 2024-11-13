@@ -24,28 +24,28 @@
     enabled: true,
   },
   packageRules: [
-      {
-          matchDatasources: ["docker"],
-          registryUrls: ["quay.io"],
+    {
+      matchDatasources: ["docker"],
+      registryUrls: ["quay.io"],
+    },
+    {
+      matchManagers: ["github-actions"],
+      automerge: true,
+      pinDigest: {
+        enabled: false,
       },
-      {
-          matchManagers: ["github-actions"],
-          automerge: true,
-          pinDigest: {
-              enabled: false,
-          },
-          matchPackageNames: ["/^nf-core//", "/^seqera/"],
-      },
-      {
-          matchManagers: ["github-actions"],
-          groupName: "GitHub Actions",
-          automerge: true,
-          schedule: ["before 9am"],
-      },
-      {
-          automerge: true,
-          schedule: ["before 9am on Monday"],
-          matchPackageNames: ["/renovate-config-validator/"],
-      },
+      matchPackageNames: ["/^nf-core//", "/^seqera/"],
+    },
+    {
+      matchManagers: ["github-actions"],
+      groupName: "GitHub Actions",
+      automerge: true,
+      schedule: ["before 9am"],
+    },
+    {
+      automerge: true,
+      schedule: ["before 9am on Monday"],
+      matchPackageNames: ["/renovate-config-validator/"],
+    },
   ],
 }
