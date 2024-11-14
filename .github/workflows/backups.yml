@@ -1,0 +1,42 @@
+name: Clone and Upload to S3
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every Sunday
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  get-pipelines:
+    runs-on: "ubuntu-latest"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: echo "matrix=$(curl https://nf-co.re/pipeline_names.json)" >> $GITHUB_OUTPUT
+
+  backup:
+    needs: get-pipelines
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
+
+    env:
+      TARBALL_FILENAME: ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz
+
+    steps:
+      - name: Clone the repository
+        run: git clone --mirror https://github.com/nf-core/${{ matrix.pipeline }}.git
+
+      - name: Make a tarball
+        run: tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
+
+      - name: Upload dev branch to S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: 'eu-west-1'
+          SOURCE_DIR: $TARBALL_FILENAME
