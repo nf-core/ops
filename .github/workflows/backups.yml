@@ -3,8 +3,13 @@ name: Clone and Upload to S3
 on:
   schedule:
     # Runs at 00:00 UTC every Sunday
-    - cron: '0 0 * * 0'
+    # - cron: '0 0 * * 0' # TODO: Uncomment this after testing
   workflow_dispatch:
+    inputs:
+      pipeline:
+        description: 'Pipeline to backup'
+        required: true
+        default: 'all'
 
 jobs:
   get-pipelines:
