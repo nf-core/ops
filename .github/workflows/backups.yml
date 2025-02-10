@@ -2,8 +2,8 @@ name: Clone and Upload to S3
 
 on:
   # schedule:
-    # Runs at 00:00 UTC every Sunday
-    # - cron: '0 0 * * 0' # TODO: Uncomment this after testing
+  # Runs at 00:00 UTC every Sunday
+  # - cron: '0 0 * * 0' # TODO: Uncomment this after testing
   workflow_dispatch:
     inputs:
       pipeline:
