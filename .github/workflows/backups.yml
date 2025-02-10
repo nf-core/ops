@@ -18,7 +18,11 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - id: set-matrix
-        run: echo "matrix=$(curl https://nf-co.re/pipeline_names.json)" >> $GITHUB_OUTPUT
+        run: |
+          echo "matrix=$(curl https://nf-co.re/pipeline_names.json)" >> $GITHUB_OUTPUT
+          if [ -n "$INPUT_PIPELINE" && "$INPUT_PIPELINE" != "all" ]; then
+            echo "matrix=$(echo $matrix | jq '. |= map(select(.name == $INPUT_PIPELINE))')" >> $GITHUB_OUTPUT
+          fi
 
   backup:
     needs: get-pipelines
@@ -37,11 +41,12 @@ jobs:
       - name: Make a tarball
         run: tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
 
-      - name: Upload dev branch to S3
-        uses: jakejarvis/s3-sync-action@master
-        env:
-          AWS_S3_BUCKET: ${{ secrets.S3_BUCKET }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'eu-west-1'
-          SOURCE_DIR: $TARBALL_FILENAME
+      - name: setup aws cli
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_BACKUP_ROLE }}
+          aws-region: eu-west-1
+
+      - name: Upload repository to S3
+        run: |
+          aws s3 cp $TARBALL_FILENAME s3express://nf-core-repos-backup--euw1-az1--x-s3/$TARBALL_FILENAME
