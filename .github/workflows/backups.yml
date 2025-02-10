@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       pipeline:
-        description: 'Pipeline to backup'
+        description: "Pipeline to backup"
         required: true
-        default: 'all'
+        default: "all"
 
 jobs:
   get-pipelines:
