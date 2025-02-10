@@ -19,10 +19,11 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          echo "matrix=$(curl https://nf-co.re/pipeline_names.json)" >> $GITHUB_OUTPUT
-          if [ -n "$INPUT_PIPELINE" && "$INPUT_PIPELINE" != "all" ]; then
-            echo "matrix=$(echo $matrix | jq '. |= map(select(.name == $INPUT_PIPELINE))')" >> $GITHUB_OUTPUT
+          matrix=$(curl https://nf-co.re/pipeline_names.json)
+          if [ -n "${{ inputs.pipeline }}" ] && [ "${{ inputs.pipeline }}" != "all" ]; then
+            matrix=$(echo $matrix | jq --arg pipeline "${{ inputs.pipeline }}" '[.[] | select(.name == $pipeline)]')
           fi
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
 
   backup:
     needs: get-pipelines
