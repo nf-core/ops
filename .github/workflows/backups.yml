@@ -2,8 +2,8 @@ name: Backup nf-core pipelines
 
 on:
   schedule:
-  # Runs at 00:00 UTC every Sunday
-  - cron: '0 0 * * 0' 
+    # Runs at 00:00 UTC every Sunday
+    - cron: "0 0 * * 0"
   workflow_dispatch:
     inputs:
       pipeline:
@@ -61,4 +61,3 @@ jobs:
       - name: Upload repository to S3
         run: |
           aws s3 cp "${{ steps.make-tarball.outputs.TARBALL_FILENAME }}" "s3://nf-core-repos-backup--euw1-az1--x-s3/${{ steps.make-tarball.outputs.TARBALL_FILENAME }}"
-
