@@ -1,4 +1,4 @@
-name: Clone and Upload to S3
+name: Backup nf-core pipelines
 
 on:
   # schedule:
