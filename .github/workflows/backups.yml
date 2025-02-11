@@ -60,4 +60,5 @@ jobs:
 
       - name: Upload repository to S3
         run: |
-          aws s3 cp ${{ steps.make-tarball.outputs.TARBALL_FILENAME }} s3express://nf-core-repos-backup--euw1-az1--x-s3/$TARBALL_FILENAME
+          aws s3 cp "${{ steps.make-tarball.outputs.TARBALL_FILENAME }}" "s3express://nf-core-repos-backup--euw1-az1--x-s3/${{ steps.make-tarball.outputs.TARBALL_FILENAME }}"
+
