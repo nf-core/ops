@@ -22,9 +22,9 @@ jobs:
           json=$(curl -s https://nf-co.re/pipeline_names.json)
           # Default to "all" if running on schedule (no inputs available) or if input is "all"
           if [ -z "${{ inputs.pipeline }}" ] || [ "${{ inputs.pipeline }}" = "all" ]; then
-            echo "matrix=$json" >> $GITHUB_OUTPUT
+            echo "matrix=$(echo $json | jq -c '.')" >> $GITHUB_OUTPUT
           else
-            echo "matrix=$(echo $json | jq --arg p "${{ inputs.pipeline }}" '{pipeline: [.pipeline[] | select(. == $p)]}')" >> $GITHUB_OUTPUT
+            echo "matrix=$(echo $json | jq -c --arg p "${{ inputs.pipeline }}" '{pipeline: [.pipeline[] | select(. == $p)]}')" >> $GITHUB_OUTPUT
           fi
 
   backup:
