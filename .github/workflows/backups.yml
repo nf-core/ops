@@ -1,9 +1,9 @@
 name: Backup nf-core pipelines
 
 on:
-  # schedule:
+  schedule:
   # Runs at 00:00 UTC every Sunday
-  # - cron: '0 0 * * 0' # TODO: Uncomment this after testing
+  - cron: '0 0 * * 0' 
   workflow_dispatch:
     inputs:
       pipeline:
