@@ -62,4 +62,3 @@ jobs:
         run: |
           aws s3 cp "${{ steps.make-tarball.outputs.TARBALL_FILENAME }}" "s3://nf-core-repos-backup/${{ steps.make-tarball.outputs.TARBALL_FILENAME }}" \
             --storage-class DEEP_ARCHIVE
-
