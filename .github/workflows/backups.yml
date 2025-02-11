@@ -20,8 +20,10 @@ jobs:
       - id: set-matrix
         run: |
           matrix=$(curl https://nf-co.re/pipeline_names.json)
+          # Extract the pipeline array from the JSON structure
+          matrix=$(echo $matrix | jq '.pipeline')
           if [ -n "${{ inputs.pipeline }}" ] && [ "${{ inputs.pipeline }}" != "all" ]; then
-            matrix=$(echo $matrix | jq --arg pipeline "${{ inputs.pipeline }}" '[.[] | select(.name == $pipeline)]')
+            matrix=$(echo $matrix | jq --arg pipeline "${{ inputs.pipeline }}" '[.[] | select(. == $pipeline)]')
           fi
           echo "matrix=${matrix}" >> $GITHUB_OUTPUT
 
