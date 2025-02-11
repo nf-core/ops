@@ -11,6 +11,11 @@ on:
         required: true
         default: "all"
 
+# Add permissions block here
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   get-pipelines:
     runs-on: "ubuntu-latest"
@@ -50,6 +55,8 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_BACKUP_ROLE }}
           aws-region: eu-west-1
+          role-session-name: GithubActionsBackup
+          audience: sts.amazonaws.com
 
       - name: Upload repository to S3
         run: |
