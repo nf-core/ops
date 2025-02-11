@@ -1,0 +1,53 @@
+name: Clone and Upload to S3
+
+on:
+  # schedule:
+  # Runs at 00:00 UTC every Sunday
+  # - cron: '0 0 * * 0' # TODO: Uncomment this after testing
+  workflow_dispatch:
+    inputs:
+      pipeline:
+        description: "Pipeline to backup"
+        required: true
+        default: "all"
+
+jobs:
+  get-pipelines:
+    runs-on: "ubuntu-latest"
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          matrix=$(curl https://nf-co.re/pipeline_names.json)
+          if [ -n "${{ inputs.pipeline }}" ] && [ "${{ inputs.pipeline }}" != "all" ]; then
+            matrix=$(echo $matrix | jq --arg pipeline "${{ inputs.pipeline }}" '[.[] | select(.name == $pipeline)]')
+          fi
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+
+  backup:
+    needs: get-pipelines
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
+
+    env:
+      TARBALL_FILENAME: ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz
+
+    steps:
+      - name: Clone the repository
+        run: git clone --mirror https://github.com/nf-core/${{ matrix.pipeline }}.git
+
+      - name: Make a tarball
+        run: tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
+
+      - name: setup aws cli
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: ${{ secrets.AWS_BACKUP_ROLE }}
+          aws-region: eu-west-1
+
+      - name: Upload repository to S3
+        run: |
+          aws s3 cp $TARBALL_FILENAME s3express://nf-core-repos-backup--euw1-az1--x-s3/$TARBALL_FILENAME
