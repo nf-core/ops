@@ -41,7 +41,7 @@ jobs:
       - name: Make a tarball
         id: make-tarball
         run: |
-          TARBALL_FILENAME="${PIPELINE}_$(date +%Y-%m-%d_%H-%M).tar.gz"
+          TARBALL_FILENAME="${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz"
           tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
           echo "TARBALL_FILENAME=$TARBALL_FILENAME" >> $GITHUB_OUTPUT
 
