@@ -34,15 +34,16 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
 
-    env:
-      TARBALL_FILENAME: ${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz
-
     steps:
-      - name: Clone the repository
+      - name: Clone the nf-core/${{ matrix.pipeline }} repository
         run: git clone --mirror https://github.com/nf-core/${{ matrix.pipeline }}.git
 
       - name: Make a tarball
-        run: tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
+        id: make-tarball
+        run: |
+          TARBALL_FILENAME="${{ matrix.pipeline }}_$(date +%Y-%m-%d_%H-%M).tar.gz"
+          tar czf $TARBALL_FILENAME ${{ matrix.pipeline }}.git
+          echo "TARBALL_FILENAME=$TARBALL_FILENAME" >> $GITHUB_OUTPUT
 
       - name: setup aws cli
         uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838 # v1
@@ -52,4 +53,4 @@ jobs:
 
       - name: Upload repository to S3
         run: |
-          aws s3 cp $TARBALL_FILENAME s3express://nf-core-repos-backup--euw1-az1--x-s3/$TARBALL_FILENAME
+          aws s3 cp ${{ steps.make-tarball.outputs.TARBALL_FILENAME }} s3express://nf-core-repos-backup--euw1-az1--x-s3/$TARBALL_FILENAME
