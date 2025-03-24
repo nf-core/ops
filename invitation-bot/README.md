@@ -1,7 +1,23 @@
-# Bolt for Python Custom Step Template
+# Deno Starter Template
 
-This is a Bolt for Python template app used to build custom steps for use in
-[Workflow Builder](https://api.slack.com/start#workflow-builder).
+This is a scaffolded Deno template used to build out Slack apps using the Slack
+CLI.
+
+**Guide Outline**:
+
+- [Setup](#setup)
+  - [Install the Slack CLI](#install-the-slack-cli)
+  - [Clone the Template](#clone-the-template)
+- [Running Your Project Locally](#running-your-project-locally)
+- [Creating Triggers](#creating-triggers)
+- [Datastores](#datastores)
+- [Testing](#testing)
+- [Deploying Your App](#deploying-your-app)
+- [Viewing Activity Logs](#viewing-activity-logs)
+- [Project Structure](#project-structure)
+- [Resources](#resources)
+
+---
 
 ## Setup
 
@@ -10,106 +26,174 @@ you have permission to install apps. **Please note that the features in this
 project require that the workspace be part of
 [a Slack paid plan](https://slack.com/pricing).**
 
-### Developer Program
+### Install the Slack CLI
 
-Join the [Slack Developer Program](https://api.slack.com/developer-program) for
-exclusive access to sandbox environments for building and testing your apps,
-tooling, and resources created to help developers build and grow.
+To use this template, you need to install and configure the Slack CLI.
+Step-by-step instructions can be found in our
+[Quickstart Guide](https://api.slack.com/automation/quickstart).
 
-## Installation
+### Clone the Template
 
-### Create a Slack App
-
-1. Open [https://api.slack.com/apps/new](https://api.slack.com/apps/new) and
-   choose "From an app manifest"
-2. Choose the workspace you want to install the application to
-3. Copy the contents of [manifest.json](./manifest.json) into the text box that
-   says `*Paste your manifest code here*` (within the JSON tab) and click _Next_
-4. Review the configuration and click _Create_
-5. Click _Install_ button and _Allow_ on the screen that follows. You'll then be
-   redirected to the App Settings dashboard.
-
-### Environment Variables
-
-Before you can run the app, you'll need to store some environment variables.
-
-1. Open your apps setting page from this list, click **OAuth & Permissions** in
-   the left hand menu, then copy the Bot User OAuth Token. You will store this
-   in your environment as `SLACK_BOT_TOKEN`.
-2. Click **Basic Information** from the left hand menu and follow the steps in
-   the App-Level Tokens section to create an app-level token with the
-   `connections:write` scope. Copy this token. You will store this in your
-   environment as `SLACK_APP_TOKEN`.
-
-```zsh
-# Replace with your app token and bot token
-export SLACK_BOT_TOKEN=<your-bot-token>
-export SLACK_APP_TOKEN=<your-app-token>
-```
-
-### Local Project
+Start by cloning this repository:
 
 ```zsh
 # Clone this project onto your machine
-git clone https://github.com/slack-samples/bolt-python-custom-step-template.git
+$ slack create my-app -t slack-samples/deno-starter-template
 
-# Change into this project directory
-cd bolt-python-custom-step-template
-
-# Setup your python virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Install the dependencies
-pip3 install -r requirements.txt
-
-# Start your local server
-python3 app.py
+# Change into the project directory
+$ cd my-app
 ```
 
-### Linting
+## Running Your Project Locally
 
-Run flake8 and black for linting and code formatting:
+While building your app, you can see your changes appear in your workspace in
+real-time with `slack run`. You'll know an app is the development version if the
+name has the string `(local)` appended.
 
 ```zsh
-# Run ruff from root directory for linting
-ruff check
+# Run app locally
+$ slack run
 
-# Run ruff from root directory for code formatting
-ruff format
-ruff check --fix
+Connected, awaiting events
 ```
 
-## Using Steps in Workflow Builder
+To stop running locally, press `<CTRL> + C` to end the process.
 
-With your server running, the `Sample step` is now ready for use in
-[Workflow Builder](https://api.slack.com/start#workflow-builder)! Add it as a
-custom step in a new or existing workflow, then run the workflow while your app
-is running.
+## Creating Triggers
 
-For more information on creating workflows and adding custom steps, read more
-[here](https://slack.com/help/articles/17542172840595-Create-a-new-workflow-in-Slack).
+[Triggers](https://api.slack.com/automation/triggers) are what cause workflows
+to run. These triggers can be invoked by a user, or automatically as a response
+to an event within Slack.
+
+When you `run` or `deploy` your project for the first time, the CLI will prompt
+you to create a trigger if one is found in the `triggers/` directory. For any
+subsequent triggers added to the application, each must be
+[manually added using the `trigger create` command](#manual-trigger-creation).
+
+When creating triggers, you must select the workspace and environment that you'd
+like to create the trigger in. Each workspace can have a local development
+version (denoted by `(local)`), as well as a deployed version. _Triggers created
+in a local environment will only be available to use when running the
+application locally._
+
+### Link Triggers
+
+A [link trigger](https://api.slack.com/automation/triggers/link) is a type of
+trigger that generates a **Shortcut URL** which, when posted in a channel or
+added as a bookmark, becomes a link. When clicked, the link trigger will run the
+associated workflow.
+
+Link triggers are _unique to each installed version of your app_. This means
+that Shortcut URLs will be different across each workspace, as well as between
+[locally run](#running-your-project-locally) and
+[deployed apps](#deploying-your-app).
+
+With link triggers, after selecting a workspace and environment, the output
+provided will include a Shortcut URL. Copy and paste this URL into a channel as
+a message, or add it as a bookmark in a channel of the workspace you selected.
+Interacting with this link will run the associated workflow.
+
+**Note: triggers won't run the workflow unless the app is either running locally
+or deployed!**
+
+### Manual Trigger Creation
+
+To manually create a trigger, use the following command:
+
+```zsh
+$ slack trigger create --trigger-def triggers/sample_trigger.ts
+```
+
+## Datastores
+
+For storing data related to your app, datastores offer secure storage on Slack
+infrastructure. For an example of a datastore, see
+`datastores/sample_datastore.ts`. The use of a datastore requires the
+`datastore:write`/`datastore:read` scopes to be present in your manifest.
+
+## Testing
+
+For an example of how to test a function, see
+`functions/sample_function_test.ts`. Test filenames should be suffixed with
+`_test`.
+
+Run all tests with `deno test`:
+
+```zsh
+$ deno test
+```
+
+## Deploying Your App
+
+Once development is complete, deploy the app to Slack infrastructure using
+`slack deploy`:
+
+```zsh
+$ slack deploy
+```
+
+When deploying for the first time, you'll be prompted to
+[create a new link trigger](#creating-triggers) for the deployed version of your
+app. When that trigger is invoked, the workflow should run just as it did when
+developing locally (but without requiring your server to be running).
+
+## Viewing Activity Logs
+
+Activity logs of your application can be viewed live and as they occur with the
+following command:
+
+```zsh
+$ slack activity --tail
+```
 
 ## Project Structure
 
-### `app.py`
+### `.slack/`
 
-`app.py` is the entry point for the application and is the file you'll run to
-start the server. This project aims to keep this file as thin as possible,
-primarily using it as a way to route inbound requests.
+Contains `apps.dev.json` and `apps.json`, which include installation details for
+development and deployed apps.
 
-### `manifest.json`
+### `datastores/`
 
-`manifest.json` is a configuration for Slack apps. With a manifest, you can
-create an app with a pre-defined configuration, or adjust the configuration of
-an existing app.
+[Datastores](https://api.slack.com/automation/datastores) securely store data
+for your application on Slack infrastructure. Required scopes to use datastores
+include `datastore:write` and `datastore:read`.
 
-### `/listeners`
+### `functions/`
 
-Every incoming request is routed to a "listener". Inside this directory, we
-group each listener based on the Slack Platform feature used, so
-`/listeners/actions.py` handles incoming
-[Actions](https://api.slack.com/reference/interaction-payloads/block-actions)
-requests, `/listeners/functions.py` handles
-[Custom Steps](https://api.slack.com/automation/functions/custom-bolt) and so
-on.
+[Functions](https://api.slack.com/automation/functions) are reusable building
+blocks of automation that accept inputs, perform calculations, and provide
+outputs. Functions can be used independently or as steps in workflows.
+
+### `triggers/`
+
+[Triggers](https://api.slack.com/automation/triggers) determine when workflows
+are run. A trigger file describes the scenario in which a workflow should be
+run, such as a user pressing a button or when a specific event occurs.
+
+### `workflows/`
+
+A [workflow](https://api.slack.com/automation/workflows) is a set of steps
+(functions) that are executed in order.
+
+Workflows can be configured to run without user input or they can collect input
+by beginning with a [form](https://api.slack.com/automation/forms) before
+continuing to the next step.
+
+### `manifest.ts`
+
+The [app manifest](https://api.slack.com/automation/manifest) contains the app's
+configuration. This file defines attributes like app name and description.
+
+### `slack.json`
+
+Used by the CLI to interact with the project's SDK dependencies. It contains
+script hooks that are executed by the CLI and implemented by the SDK.
+
+## Resources
+
+To learn more about developing automations on Slack, visit the following:
+
+- [Automation Overview](https://api.slack.com/automation)
+- [CLI Quick Reference](https://api.slack.com/automation/cli/quick-reference)
+- [Samples and Templates](https://api.slack.com/automation/samples)
