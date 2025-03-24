@@ -1,4 +1,8 @@
 {
+  "hooks": {
+    "get-manifest": "deno run --allow-read --allow-env manifest.ts",
+    "deploy": "deno run --allow-read --allow-env --allow-net deploy.ts"
+  },
   "scripts": {
     "start": "deno run --allow-read --allow-env --allow-net slack.ts"
   }

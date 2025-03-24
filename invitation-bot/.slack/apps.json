@@ -1,0 +1,10 @@
+{
+  "apps": {
+    "TE6CZUZPH": {
+      "app_id": "A08K75M3WPM",
+      "team_domain": "nfcore",
+      "team_id": "TE6CZUZPH"
+    }
+  },
+  "default": "nfcore"
+}
