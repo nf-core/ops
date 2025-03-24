@@ -105,7 +105,7 @@ export default SlackFunction(
         } else if (response.status === 422 && errorData.message?.includes("already invited")) {
           return {
             outputs: {
-              success: false,
+              success: true,
               message: `@${github_username} already has a pending invitation to the ${githubOrg} organization.`,
             },
           };
@@ -125,7 +125,7 @@ export default SlackFunction(
           },
         };
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error inviting to GitHub:", error);
       return {
         outputs: {
