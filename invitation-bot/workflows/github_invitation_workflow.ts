@@ -1,70 +1,40 @@
 import { DefineWorkflow, Schema } from "deno-slack-sdk/mod.ts";
-import { GitHubInviteFunctionDefinition } from "../functions/github_invite_function.ts";
-import { ExtractGitHubUsernameDefinition } from "../functions/extract_github_username.ts";
+import { GitHubInvitationFunction } from "../functions/github_invitation.ts";
 
+/**
+ * This workflow defines a custom step for Workflow Builder 
+ * that allows users to invite people to GitHub repositories.
+ */
 const GitHubInvitationWorkflow = DefineWorkflow({
   callback_id: "github_invitation_workflow",
-  title: "GitHub Invitation Workflow",
-  description: "Invites users to GitHub organization based on reactions",
+  title: "Invite to GitHub Repository",
+  description: "Send an invitation to join a GitHub repository",
   input_parameters: {
     properties: {
-      user_id: {
-        type: Schema.slack.types.user_id,
-        description: "ID of the user who added the reaction",
-      },
-      channel_id: {
-        type: Schema.slack.types.channel_id,
-        description: "Channel where the reaction was added",
-      },
-      message_ts: {
+      github_username: {
         type: Schema.types.string,
-        description: "Timestamp of the message that was reacted to",
+        description: "GitHub username to invite",
       },
-      reaction: {
+      repository: {
         type: Schema.types.string,
-        description: "The reaction that was added",
+        description: "GitHub repository name (e.g., 'organization/repo')",
+      },
+      permission_level: {
+        type: Schema.types.string,
+        description: "Permission level (read, write, admin)",
+        enum: ["read", "write", "admin"],
+        default: "read",
       },
     },
-    required: ["user_id", "channel_id", "message_ts", "reaction"],
+    required: ["github_username", "repository"],
   },
 });
 
-// Step 1: Verify if the reaction is a checkmark
-GitHubInvitationWorkflow.addStep(
-  Schema.slack.functions.If,
-  {
-    condition: {
-      left: "{{inputs.reaction}}",
-      operator: "==",
-      right: "white_check_mark",
-    },
-    then: GitHubInvitationWorkflow.addStep(
-      Schema.slack.functions.GetConversationMessages,
-      {
-        channel_id: "{{inputs.channel_id}}",
-        ts: "{{inputs.message_ts}}",
-        limit: 1,
-      }
-    ).addStep(
-      ExtractGitHubUsernameDefinition,
-      {
-        message_text: "{{steps.GetConversationMessages.outputs.messages[0].text}}",
-      }
-    ).addStep(
-      GitHubInviteFunctionDefinition,
-      {
-        github_username: "{{steps.extract_github_username_function.outputs.github_username}}",
-        inviter_user_id: "{{inputs.user_id}}",
-      }
-    ).addStep(
-      Schema.slack.functions.PostMessage,
-      {
-        channel_id: "{{inputs.channel_id}}",
-        thread_ts: "{{inputs.message_ts}}",
-        message: "{{steps.github_invite_function.outputs.message}}",
-      }
-    ),
-  }
-);
+// Add a step that uses our custom function
+GitHubInvitationWorkflow.addStep(GitHubInvitationFunction, {
+  github_username: GitHubInvitationWorkflow.inputs.github_username,
+  repository: GitHubInvitationWorkflow.inputs.repository,
+  permission_level: GitHubInvitationWorkflow.inputs.permission_level,
+});
 
 export default GitHubInvitationWorkflow; 

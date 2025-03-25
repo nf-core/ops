@@ -1,54 +1,52 @@
-# GitHub Invitation Bot for Slack
+# GitHub Invitation Bot for nf-core
 
-A Slack bot that automates GitHub organization invitations based on reactions in Slack.
+A Slack app that provides a custom Workflow Builder step to invite people to GitHub repositories.
 
 ## Features
 
-- Monitors for checkmark reactions (✅) on messages
-- Verifies if the person adding the reaction is in the authorized user group
-- Extracts GitHub username from the original message
-- Sends an invitation to the GitHub organization
-- Provides confirmation in the thread
+- Custom Workflow Builder step to invite users to GitHub repositories
+- Configurable permission levels (read, write, admin)
 
-## Setup
+## Setup Instructions
 
-### Prerequisites
+1. The app is now configured with a custom function for GitHub repository invitations
+2. To complete the setup and make the function available in Workflow Builder:
 
-1. [Slack CLI](https://api.slack.com/automation/cli) installed
-2. A GitHub organization and a personal access token with organization admin permissions
+```bash
+# Deploy the app to your workspace (select your app when prompted)
+slack deploy
 
-### Installation
+# After deployment completes, trigger creation (select your app when prompted)
+slack trigger create
+```
 
-1. Clone this repository
-2. Run `slack run` to start the app in development mode
-3. Set environment variables:
-   - `GITHUB_TOKEN`: Your GitHub personal access token
-   - `GITHUB_ORG`: The name of your GitHub organization
+3. When creating the trigger, you'll be asked to select the workflow. Choose to create a new trigger for the "Invite to GitHub Repository" workflow.
 
-## Configuration
+4. After the trigger is created, you'll receive a URL that can be used in Slack to trigger the workflow.
 
-### Channel Configuration
+## Using the Custom Step in Workflow Builder
 
-By default, the bot monitors reactions in all channels it's added to. You can configure specific channels in the `triggers/reaction_added_trigger.ts` file.
+1. Go to your Slack workspace
+2. Open Workflow Builder (click on your workspace name > Tools > Workflow Builder)
+3. Create a new workflow or edit an existing one
+4. Add a step and search for "Invite to GitHub Repository" in the steps search bar
+5. Configure the step with:
+   - GitHub username
+   - Repository name
+   - Permission level (read, write, or admin)
 
-### Authorized Users
+## Troubleshooting
 
-You can restrict who can add reactions to trigger invitations by implementing authorization logic in the workflow.
+If you encounter validation errors:
 
-## Usage
+```bash
+# Test the manifest format
+slack manifest test
 
-1. Post a message mentioning a GitHub username (e.g., "Please add @username to our GitHub organization")
-2. Add a ✅ reaction to the message
-3. The bot will automatically extract the GitHub username and send an invitation
-4. A confirmation message will be posted in the thread
+# Validate the manifest for your specific app
+slack manifest validate -a YOUR_APP_ID
+```
 
-## GitHub Username Detection
+## License
 
-The bot will try to extract GitHub usernames from messages in the following formats:
-
-- GitHub: username
-- GitHub username: username
-- @username on GitHub
-- github.com/username
-
-If none of these patterns match, it will try to identify potential usernames in the message.
+[MIT](LICENSE)

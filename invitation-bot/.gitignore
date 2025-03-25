@@ -1,4 +1,16 @@
-dist
-package
-.DS_Store
-.slack/apps.dev.json
+# Deno specific
+.deno_dir/
+.env
+*.orig
+*.pyc
+*.swp
+
+# Build outputs
+/dist
+node_modules
+**/deno.lock
+**/.DS_Store
+
+# Slack specific
+.slack/apps.json
+.slack/auth.json
