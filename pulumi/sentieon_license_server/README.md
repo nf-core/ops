@@ -53,10 +53,10 @@ scp ~/Downloads/Seqera_Labs_cluster_eval.lic ec2-user@ec2-63-33-204-94.eu-west-1
 ```
 
 ```bash
-curl -L https://s3.amazonaws.com/sentieon-release/software/sentieon-genomics-202308.02.tar.gz | tar -zxf -
+curl -L https://s3.amazonaws.com/sentieon-release/software/sentieon-genomics-202308.03.tar.gz | tar -zxf -
 wget https://raw.githubusercontent.com/DonFreed/docker-actions-test/main/license_extension.py
 wget https://raw.githubusercontent.com/DonFreed/docker-actions-test/main/.github/scripts/license_message.py
 vi ~/.sentieon/license_key.txt
 # Add in secret in "op://Dev/SENTIEON_ENCRYPTION_KEY/password"
-sentieon-genomics-202308.02/bin/sentieon licsrvr --start --auth ./license_extension.py Seqera_Labs_cluster_eval.lic
+sentieon-genomics-202308.03/bin/sentieon licsrvr --start --auth ./license_extension.py Seqera_Labs_cluster_eval.lic
 ```
