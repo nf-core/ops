@@ -1,0 +1,5 @@
+config:
+  github:owner: nf-core-tf
+  # https://start.1password.com/open/i?a=O5GICFDKPNABLLVGMKBL5JWDWA&v=rdfcz6oy6qxxrc4clu467a7dmm&i=4ajrv44kc5lcbboa37fr5oydla&h=nf-core.1password.eu
+environment:
+  - github-nf-core-tf
