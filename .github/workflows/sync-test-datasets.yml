@@ -17,26 +17,26 @@ jobs:
       branches-list: ${{ steps.get-branches.outputs.branches-list }}
     
     steps:
-      - name: Get branches from test-datasets repository
+      - name: Get branches from test-datasets repository via GitHub API
         id: get-branches
-        run: |
-          # Clone the test-datasets repository with all branches
-          git clone --bare https://github.com/nf-core/test-datasets.git test-datasets-repo
-          cd test-datasets-repo
-          
-          # Get list of all remote branches
-          branches=$(git branch -r | grep -v HEAD | sed 's/origin\///' | xargs)
-          
-          echo "Found branches: $branches"
-          
-          # Convert to JSON array for matrix
-          branches_json=$(echo "$branches" | tr ' ' '\n' | jq -R . | jq -s .)
-          echo "branches=$branches_json" >> $GITHUB_OUTPUT
-          echo "branches-list=$branches" >> $GITHUB_OUTPUT
-          
-          # Clean up
-          cd ..
-          rm -rf test-datasets-repo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get all branches using GitHub API with automatic pagination
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner: 'nf-core',
+              repo: 'test-datasets',
+              per_page: 100
+            });
+            
+            // Extract branch names
+            const branchNames = branches.map(branch => branch.name);
+            
+            console.log(`Found ${branchNames.length} branches:`, branchNames);
+            
+            // Set outputs for matrix and metadata
+            core.setOutput('branches', JSON.stringify(branchNames));
+            core.setOutput('branches-list', branchNames.join(' '));
 
   sync-branches:
     needs: discover-branches
