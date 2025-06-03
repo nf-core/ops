@@ -7,6 +7,7 @@ test_datasets_bucket = aws.s3.Bucket(
     "test-datasets-bucket",
     arn="arn:aws:s3:::nf-core-test-datasets",
     bucket="nf-core-test-datasets",
+    acl="public-read",
     cors_rules=[
         aws.s3.BucketCorsRuleArgs(
             allowed_headers=["*"],
@@ -35,6 +36,34 @@ test_datasets_bucket = aws.s3.Bucket(
             ),
         ),
     ),
+)
+
+test_datasets_bucket_publicaccessblock = aws.s3.BucketPublicAccessBlock(
+    "test-datasets-bucket-publicaccessblock",
+    bucket="nf-core-test-datasets",
+    opts=pulumi.ResourceOptions(protect=True),  # type: ignore[attr-defined]
+)
+
+allow_access_from_anyone = aws.iam.get_policy_document_output(
+    statements=[
+        {
+            "principals": [{"identifiers": ["*"], "type": "AWS"}],
+            "actions": [
+                "s3:GetObject",
+                "s3:ListBucket",
+            ],
+            "resources": [
+                test_datasets_bucket.arn,
+                test_datasets_bucket.arn.apply(lambda arn: f"{arn}/*"),
+            ],
+        }
+    ]
+)
+
+allow_access_from_anyone_bucket_policy = aws.s3.BucketPolicy(
+    "allow_access_from_anyone",
+    bucket=test_datasets_bucket.id,
+    policy=allow_access_from_anyone.json,
 )
 
 # Define the policy which allows users to put objects in the S3 bucket
