@@ -7,80 +7,108 @@ on:
   workflow_dispatch: # Allow manual triggering
 
 jobs:
-  sync-test-datasets:
+  discover-branches:
     runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.get-branches.outputs.branches }}
+      branches-list: ${{ steps.get-branches.outputs.branches-list }}
     
     steps:
-      - name: Checkout current repository
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Clone test-datasets repository
+      - name: Get branches from test-datasets repository
+        id: get-branches
         run: |
           # Clone the test-datasets repository with all branches
           git clone --bare https://github.com/nf-core/test-datasets.git test-datasets-repo
           cd test-datasets-repo
           
           # Get list of all remote branches
-          branches=$(git branch -r | grep -v HEAD | sed 's/origin\///')
+          branches=$(git branch -r | grep -v HEAD | sed 's/origin\///' | xargs)
           
-          echo "Found branches:"
-          echo "$branches"
+          echo "Found branches: $branches"
           
-          # Store branches for next step
-          echo "$branches" > ../branches.txt
+          # Convert to JSON array for matrix
+          branches_json=$(echo "$branches" | tr ' ' '\n' | jq -R . | jq -s .)
+          echo "branches=$branches_json" >> $GITHUB_OUTPUT
+          echo "branches-list=$branches" >> $GITHUB_OUTPUT
+          
+          # Clean up
+          cd ..
+          rm -rf test-datasets-repo
 
-      - name: Sync branches to S3
+  sync-branches:
+    needs: discover-branches
+    runs-on: ubuntu-latest
+    if: ${{ needs.discover-branches.outputs.branches != '[]' }}
+    strategy:
+      matrix:
+        branch: ${{ fromJson(needs.discover-branches.outputs.branches) }}
+      max-parallel: 5  # Limit parallel jobs to avoid overwhelming S3
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Sync branch ${{ matrix.branch }} to S3
         run: |
-          cd test-datasets-repo
+          echo "Syncing branch: ${{ matrix.branch }}"
           
-          # Read branches from file
-          while IFS= read -r branch; do
-            branch=$(echo "$branch" | xargs) # trim whitespace
-            if [[ -n "$branch" ]]; then
-              echo "Processing branch: $branch"
-              
-              # Checkout the branch
-              git checkout "$branch" || continue
-              
-              # Create a temporary directory for this branch
-              temp_dir="../temp-$branch"
-              mkdir -p "$temp_dir"
-              
-              # Copy files (excluding .git directory)
-              rsync -av --exclude='.git' ./ "$temp_dir/"
-              
-              # Sync to S3 with branch prefix
-              aws s3 sync "$temp_dir" "s3://nf-core-test-datasets/$branch/" \
-                --delete \
-                --exclude "*.git*" \
-                --storage-class STANDARD_IA
-              
-              # Clean up temporary directory
-              rm -rf "$temp_dir"
-              
-              echo "Completed sync for branch: $branch"
-            fi
-          done < ../branches.txt
+          # Clone only the specific branch
+          git clone --single-branch --branch "${{ matrix.branch }}" \
+            https://github.com/nf-core/test-datasets.git test-datasets-branch
+          
+          cd test-datasets-branch
+          
+          # Sync to S3 with branch prefix
+          aws s3 sync ./ "s3://nf-core-test-datasets/${{ matrix.branch }}/" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --storage-class STANDARD_IA
+          
+          echo "Completed sync for branch: ${{ matrix.branch }}"
+          
+          # Clean up
+          cd ..
+          rm -rf test-datasets-branch
+
+  update-metadata:
+    needs: [discover-branches, sync-branches]
+    runs-on: ubuntu-latest
+    if: always() && needs.discover-branches.result == 'success'
+    
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
 
       - name: Update branch list in S3
         run: |
           # Create a file with the list of available branches
-          cat branches.txt > available-branches.txt
+          echo "${{ needs.discover-branches.outputs.branches-list }}" | tr ' ' '\n' > available-branches.txt
           aws s3 cp available-branches.txt s3://nf-core-test-datasets/available-branches.txt
-
-      - name: Cleanup
-        run: |
-          rm -rf test-datasets-repo branches.txt available-branches.txt
+          
+          # Create a metadata file with sync information
+          cat > sync-metadata.json << EOF
+          {
+            "last_sync": "$(date -u -Iseconds)",
+            "branches": ${{ needs.discover-branches.outputs.branches }},
+            "sync_status": "${{ needs.sync-branches.result }}"
+          }
+          EOF
+          
+          aws s3 cp sync-metadata.json s3://nf-core-test-datasets/sync-metadata.json
 
       - name: Report sync status
         run: |
-          echo "Test datasets sync completed successfully"
-          echo "Bucket: nf-core-test-datasets"
-          echo "Sync time: $(date -u)" 
+          echo "Test datasets sync completed"
+          echo "Bucket: nf-core-test-datasets"  
+          echo "Branches synced: ${{ needs.discover-branches.outputs.branches-list }}"
+          echo "Sync time: $(date -u)"
+          echo "Sync status: ${{ needs.sync-branches.result }}" 
