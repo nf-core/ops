@@ -17,8 +17,8 @@ test_datasets_bucket = aws.s3.Bucket(
             ],
             allowed_origins=[
                 "https://s3.amazonaws.com",
-                "https://s3-eu-west-1.amazonaws.com",
-                "https://s3.eu-west-1.amazonaws.com",
+                "https://s3-eu-north-1.amazonaws.com",
+                "https://s3.eu-north-1.amazonaws.com",
                 "*",
             ],
             expose_headers=[
