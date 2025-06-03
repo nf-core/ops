@@ -1,0 +1,86 @@
+name: Sync Test Datasets to S3
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  sync-test-datasets:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout current repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Clone test-datasets repository
+        run: |
+          # Clone the test-datasets repository with all branches
+          git clone --bare https://github.com/nf-core/test-datasets.git test-datasets-repo
+          cd test-datasets-repo
+          
+          # Get list of all remote branches
+          branches=$(git branch -r | grep -v HEAD | sed 's/origin\///')
+          
+          echo "Found branches:"
+          echo "$branches"
+          
+          # Store branches for next step
+          echo "$branches" > ../branches.txt
+
+      - name: Sync branches to S3
+        run: |
+          cd test-datasets-repo
+          
+          # Read branches from file
+          while IFS= read -r branch; do
+            branch=$(echo "$branch" | xargs) # trim whitespace
+            if [[ -n "$branch" ]]; then
+              echo "Processing branch: $branch"
+              
+              # Checkout the branch
+              git checkout "$branch" || continue
+              
+              # Create a temporary directory for this branch
+              temp_dir="../temp-$branch"
+              mkdir -p "$temp_dir"
+              
+              # Copy files (excluding .git directory)
+              rsync -av --exclude='.git' ./ "$temp_dir/"
+              
+              # Sync to S3 with branch prefix
+              aws s3 sync "$temp_dir" "s3://nf-core-test-datasets/$branch/" \
+                --delete \
+                --exclude "*.git*" \
+                --storage-class STANDARD_IA
+              
+              # Clean up temporary directory
+              rm -rf "$temp_dir"
+              
+              echo "Completed sync for branch: $branch"
+            fi
+          done < ../branches.txt
+
+      - name: Update branch list in S3
+        run: |
+          # Create a file with the list of available branches
+          cat branches.txt > available-branches.txt
+          aws s3 cp available-branches.txt s3://nf-core-test-datasets/available-branches.txt
+
+      - name: Cleanup
+        run: |
+          rm -rf test-datasets-repo branches.txt available-branches.txt
+
+      - name: Report sync status
+        run: |
+          echo "Test datasets sync completed successfully"
+          echo "Bucket: nf-core-test-datasets"
+          echo "Sync time: $(date -u)" 
