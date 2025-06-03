@@ -3,6 +3,29 @@
 # https://github.com/pulumi/examples/blob/74db62a03d013c2854d2cf933c074ea0a3bbf69d/testing-unit-py/test_ec2.py
 import pulumi
 import pulumi_github as github
+import pulumi_onepassword as onepassword
+
+# Configure 1Password provider with account details
+onepassword_provider = onepassword.Provider(
+    "onepassword-provider",
+    account="nf-core.1password.eu"
+)
+
+# Fetch GitHub token from 1Password
+# Item ID from the 1Password URL: 4ajrv44kc5lcbboa37fr5oydla
+# Vault ID from the 1Password URL: rdfcz6oy6qxxrc4clu467a7dmm
+github_token_item = onepassword.get_item(
+    vault="rdfcz6oy6qxxrc4clu467a7dmm",  # Vault ID from the 1Password URL
+    uuid="4ajrv44kc5lcbboa37fr5oydla",   # Item ID from the 1Password URL
+    opts=pulumi.InvokeOptions(provider=onepassword_provider)
+)
+
+# Configure GitHub provider with token from 1Password
+github_provider = github.Provider(
+    "github-provider",
+    token=github_token_item.password,  # The token is stored in the password field
+    owner="nf-core-tf"
+)
 
 NAME = "testpipeline"
 
@@ -58,6 +81,7 @@ nfcore_testpipeline = github.Repository(
     visibility="public",
     topics=TOPICS,  # 'repo_keywords' => 'Minimum keywords set',
     # NOTE: @mirpedrol asked if we could add missing topics without deleting existing ones
+    opts=pulumi.ResourceOptions(provider=github_provider)
 )
 
 
@@ -69,21 +93,21 @@ branch_default_testpipeline = github.BranchDefault(
     f"branch_default_{NAME}",
     branch="main",
     repository=NAME,
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # 'branch_dev_exists' => 'dev branch: branch must exist',
 branch_dev_testpipeline = github.Branch(
     f"branch_dev_{NAME}",
     branch="dev",
     repository=NAME,
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # 'branch_template_exists' => 'TEMPLATE branch: branch must exist',
 branch_template_testpipeline = github.Branch(
     f"branch_template_{NAME}",
     branch="TEMPLATE",
     repository=NAME,
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # NOTE This uses the new Rulesets instead of classic branch protection rule
@@ -122,7 +146,7 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
         ),
     ),
     target="branch",
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # TODO 'branch_dev_strict_updates' => 'dev branch: do not require branch to be up to date before merging',
 ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
@@ -166,7 +190,7 @@ ruleset_branch_dev_testpipeline = github.RepositoryRuleset(
         ),
     ),
     target="branch",
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # TODO Double check
 # Template branch protection https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L509
@@ -196,7 +220,7 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
         update=True,
     ),
     target="branch",
-    opts=pulumi.ResourceOptions(protect=True),
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
 # 'team_contributors' => 'Write access for nf-core/contributors',
 contributors_team_repo_testpipeline = github.TeamRepository(
@@ -204,6 +228,7 @@ contributors_team_repo_testpipeline = github.TeamRepository(
     team_id="contributors",
     repository=NAME,
     permission="push",
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 # 'team_core' => 'Admin access for nf-core/core',
 core_team_repo_testpipeline = github.TeamRepository(
@@ -211,4 +236,5 @@ core_team_repo_testpipeline = github.TeamRepository(
     team_id="core",
     repository=NAME,
     permission="admin",
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
