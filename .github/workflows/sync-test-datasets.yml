@@ -5,6 +5,9 @@ on:
     # Run daily at 2 AM UTC
     - cron: '0 2 * * *'
   workflow_dispatch: # Allow manual triggering
+  pull_request:
+    paths:
+      - '.github/workflows/sync-test-datasets.yml'
 
 jobs:
   discover-branches:
