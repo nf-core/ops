@@ -3,20 +3,22 @@
 import pulumi
 import pulumi_aws as aws
 import pulumi_github as github
+
 # Uncomment this line after installing the 1Password provider
 import pulumi_onepassword as onepassword
 
 # Configure the 1Password provider explicitly
 onepassword_config = pulumi.Config("pulumi-onepassword")
-onepassword_provider = onepassword.Provider("onepassword-provider",
-    service_account_token=onepassword_config.require_secret("service_account_token")
+onepassword_provider = onepassword.Provider(
+    "onepassword-provider",
+    service_account_token=onepassword_config.require_secret("service_account_token"),
 )
 
 # Get GitHub token from 1Password using the get_item function
 github_token_item = onepassword.get_item_output(
     vault="Dev",
     title="GitHub nf-core PA Token Pulumi",
-    opts=pulumi.InvokeOptions(provider=onepassword_provider)
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 
 # For now, let's use Pulumi config for AWS credentials
@@ -29,9 +31,10 @@ github_token_item = onepassword.get_item_output(
 aws_provider = aws.Provider("aws-provider")
 
 # Configure GitHub provider using token from 1Password
-github_provider = github.Provider("github-provider",
+github_provider = github.Provider(
+    "github-provider",
     token=github_token_item.credential,
-    owner="nf-core"  # Set the GitHub organization
+    owner="nf-core",  # Set the GitHub organization
 )
 
 test_datasets_bucket = aws.s3.Bucket(
@@ -67,13 +70,13 @@ test_datasets_bucket = aws.s3.Bucket(
             ),
         ),
     ),
-    opts=pulumi.ResourceOptions(provider=aws_provider)  
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 test_datasets_bucket_publicaccessblock = aws.s3.BucketPublicAccessBlock(
     "test-datasets-bucket-publicaccessblock",
     bucket="nf-core-test-datasets",
-    opts=pulumi.ResourceOptions(protect=True, provider=aws_provider)  
+    opts=pulumi.ResourceOptions(protect=True, provider=aws_provider),
 )
 
 allow_access_from_anyone = aws.iam.get_policy_document_output(
@@ -96,7 +99,7 @@ allow_access_from_anyone_bucket_policy = aws.s3.BucketPolicy(
     "allow_access_from_anyone",
     bucket=test_datasets_bucket.id,
     policy=allow_access_from_anyone.json,
-    opts=pulumi.ResourceOptions(provider=aws_provider)
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # Define the policy which allows users to put objects in the S3 bucket
@@ -115,7 +118,7 @@ policy = aws.iam.Policy(
       ]
     }}"""
     ),
-    opts=pulumi.ResourceOptions(provider=aws_provider)
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # List of AWS user names to attach the policy to
@@ -124,10 +127,10 @@ usernames = ["edmund", "maxime"]
 # Attach the policy to each user
 for username in usernames:
     aws.iam.UserPolicyAttachment(
-        f"{username}-putPolicyAttachment", 
-        user=username, 
+        f"{username}-putPolicyAttachment",
+        user=username,
         policy_arn=policy.arn,
-        opts=pulumi.ResourceOptions(provider=aws_provider)
+        opts=pulumi.ResourceOptions(provider=aws_provider),
     )
 
 # For now, keep the IAM user creation for CI/CD, but we'll manage it through 1Password later
@@ -138,14 +141,14 @@ ci_user = aws.iam.User(
     "test-datasets-ci-user",
     name="nf-core-test-datasets-ci",
     path="/",
-    opts=pulumi.ResourceOptions(provider=aws_provider)
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # Create access keys for the CI user
 ci_user_access_key = aws.iam.AccessKey(
     "test-datasets-ci-access-key",
     user=ci_user.name,
-    opts=pulumi.ResourceOptions(provider=aws_provider)
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # Create a comprehensive policy for full bucket access
@@ -199,7 +202,7 @@ aws_access_key_secret = github.ActionsSecret(
     repository="ops",  # Repository name (not full name)
     secret_name="AWS_ACCESS_KEY_ID",
     plaintext_value=ci_user_access_key.id,
-    opts=pulumi.ResourceOptions(provider=github_provider)
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
 # AWS Secret Access Key secret
@@ -208,7 +211,7 @@ aws_secret_access_key_secret = github.ActionsSecret(
     repository="ops",  # Repository name (not full name)
     secret_name="AWS_SECRET_ACCESS_KEY",
     plaintext_value=ci_user_access_key.secret,
-    opts=pulumi.ResourceOptions(provider=github_provider)
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
 # AWS Region secret
@@ -217,7 +220,7 @@ aws_region_secret = github.ActionsSecret(
     repository="ops",  # Repository name (not full name)
     secret_name="AWS_REGION",
     plaintext_value="eu-north-1",  # Based on your CORS configuration
-    opts=pulumi.ResourceOptions(provider=github_provider)
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
 # Export the bucket name
@@ -225,12 +228,17 @@ pulumi.export("bucket_name", test_datasets_bucket.bucket)  # type: ignore[attr-d
 
 # Export the CI user credentials (these will be stored in 1Password)
 pulumi.export("ci_user_access_key_id", ci_user_access_key.id)
-pulumi.export("ci_user_secret_access_key", pulumi.Output.secret(ci_user_access_key.secret))
+pulumi.export(
+    "ci_user_secret_access_key", pulumi.Output.secret(ci_user_access_key.secret)
+)
 pulumi.export("ci_user_name", ci_user.name)
 
 # Export GitHub secrets information
-pulumi.export("github_secrets_created", {
-    "AWS_ACCESS_KEY_ID": aws_access_key_secret.secret_name,
-    "AWS_SECRET_ACCESS_KEY": aws_secret_access_key_secret.secret_name,
-    "AWS_REGION": aws_region_secret.secret_name
-})
+pulumi.export(
+    "github_secrets_created",
+    {
+        "AWS_ACCESS_KEY_ID": aws_access_key_secret.secret_name,
+        "AWS_SECRET_ACCESS_KEY": aws_secret_access_key_secret.secret_name,
+        "AWS_REGION": aws_region_secret.secret_name,
+    },
+)

@@ -11,6 +11,7 @@ This Pulumi program manages the AWS S3 infrastructure for nf-core test datasets 
 ## Setup
 
 1. **Configure AWS credentials**:
+
    ```bash
    pulumi config set aws:accessKey <your-access-key> --secret
    pulumi config set aws:secretKey <your-secret-key> --secret
@@ -18,13 +19,16 @@ This Pulumi program manages the AWS S3 infrastructure for nf-core test datasets 
    ```
 
 2. **Configure 1Password**:
+
    ```bash
    pulumi config set pulumi-onepassword:service_account_token <your-token> --secret
    ```
+
    The GitHub token is automatically retrieved from 1Password at:
    `op://Dev/GitHub nf-core PA Token Pulumi/token`
 
 3. **Install dependencies**:
+
    ```bash
    uv sync
    ```
@@ -39,7 +43,7 @@ This Pulumi program manages the AWS S3 infrastructure for nf-core test datasets 
 This program automatically creates the following GitHub Actions secrets in the `nf-core/ops` repository:
 
 - `AWS_ACCESS_KEY_ID`: Access key for the CI user
-- `AWS_SECRET_ACCESS_KEY`: Secret key for the CI user  
+- `AWS_SECRET_ACCESS_KEY`: Secret key for the CI user
 - `AWS_REGION`: Set to `eu-north-1`
 
 This replaces the need for the separate `add_github_secrets.py` script.
