@@ -6,6 +6,5 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pulumi>=3",
-    "pulumi_github>=5.20.0",
-    "ruff>=0.3.7"
+    "pulumi-github>=6.7.2",
 ]
