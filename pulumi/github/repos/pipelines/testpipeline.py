@@ -39,7 +39,7 @@ nfcore_testpipeline = github.Repository(
     description="A small example pipeline used to test new nf-core infrastructure and common code.",  # 'repo_description' => 'Description must be set',
     has_downloads=True,
     has_issues=True,  # 'repo_issues' => 'Enable issues',
-    has_projects=True,
+    has_projects=False,
     has_wiki=False,  # 'repo_wikis' => 'Disable wikis',
     allow_merge_commit=True,  # 'repo_merge_commits' => 'Allow merge commits',
     allow_rebase_merge=True,  # 'repo_merge_rebase' => 'Allow rebase merging',
@@ -57,16 +57,17 @@ nfcore_testpipeline = github.Repository(
     ),
     visibility="public",
     topics=TOPICS,  # 'repo_keywords' => 'Minimum keywords set',
+    # NOTE: @mirpedrol asked if we could add missing topics without deleting existing ones
 )
 
 
-# Make branches foreach (['master', 'dev', 'TEMPLATE'] as $branch) {
-# 'repo_default_branch' => 'default branch master (released) or dev (no releases)',
+# Make branches foreach (['main', 'dev', 'TEMPLATE'] as $branch) {
+# 'repo_default_branch' => 'default branch main (released) or dev (no releases)',
 # TODO Toggle this on dev as default if there's not release?
-# 'branch_master_exists' => 'master branch: branch must exist',
+# 'branch_main_exists' => 'main branch: branch must exist',
 branch_default_testpipeline = github.BranchDefault(
     f"branch_default_{NAME}",
-    branch="master",
+    branch="main",
     repository=NAME,
     opts=pulumi.ResourceOptions(protect=True),
 )
@@ -86,11 +87,11 @@ branch_template_testpipeline = github.Branch(
 )
 # Add branch protections https://github.com/nf-core/website/blob/33acd6a2fab2bf9251e14212ce731ef3232b5969/public_html/pipeline_health.php#L296
 # NOTE This uses the new Rulesets instead of classic branch protection rule
-# TODO 'branch_master_strict_updates' => 'master branch: do not require branch to be up to date before merging',
+# TODO 'branch_main_strict_updates' => 'main branch: do not require branch to be up to date before merging',
 ruleset_branch_default_testpipeline = github.RepositoryRuleset(
     f"ruleset_branch_default_{NAME}",
     bypass_actors=[
-        # 'branch_master_enforce_admins' => 'master branch: do not enforce rules for admins',
+        # 'branch_main_enforce_admins' => 'main branch: do not enforce rules for admins',
         github.RepositoryRulesetBypassActorArgs(
             actor_id=CORE_TEAM_ID,
             actor_type="Team",
@@ -104,17 +105,17 @@ ruleset_branch_default_testpipeline = github.RepositoryRuleset(
         ),
     ),
     enforcement="active",
-    name="master",
+    name="main",
     repository=NAME,
     rules=github.RepositoryRulesetRulesArgs(
         deletion=True,
         non_fast_forward=True,
         pull_request=github.RepositoryRulesetRulesPullRequestArgs(
-            required_approving_review_count=2,  # 'branch_master_required_num_reviews' => 'master branch: 2 reviews required',
-            dismiss_stale_reviews_on_push=False,  # 'branch_master_stale_reviews' => 'master branch: reviews not marked stale after new commits'
-            require_code_owner_review=False,  # 'branch_master_code_owner_reviews' => 'master branch: code owner reviews not required',
+            required_approving_review_count=2,  # 'branch_main_required_num_reviews' => 'main branch: 2 reviews required',
+            dismiss_stale_reviews_on_push=False,  # 'branch_main_stale_reviews' => 'main branch: reviews not marked stale after new commits'
+            require_code_owner_review=False,  # 'branch_main_code_owner_reviews' => 'main branch: code owner reviews not required',
         ),
-        # 'branch_master_required_ci' => 'master branch: minimum set of CI tests must pass',
+        # 'branch_main_required_ci' => 'main branch: minimum set of CI tests must pass',
         required_status_checks=github.RepositoryRulesetRulesRequiredStatusChecksArgs(
             required_checks=REQUIRED_CI_CHECKS,
             strict_required_status_checks_policy=True,
@@ -178,6 +179,7 @@ ruleset_branch_template_testpipeline = github.RepositoryRuleset(
             bypass_mode="always",
         )
         # TODO 'branch_template_restrict_push' => 'Restrict push to TEMPLATE to @nf-core-bot',
+        # NOTE: @mirpedrol suggested this may not be needed since everyone can run `nf-core sync` manually
     ],
     conditions=github.RepositoryRulesetConditionsArgs(
         ref_name=github.RepositoryRulesetConditionsRefNameArgs(
