@@ -2,6 +2,7 @@
 
 import pulumi
 import pulumi_aws as aws
+import pulumi_github as github
 # Uncomment this line after installing the 1Password provider
 import pulumi_onepassword as onepassword
 
@@ -9,6 +10,13 @@ import pulumi_onepassword as onepassword
 onepassword_config = pulumi.Config("pulumi-onepassword")
 onepassword_provider = onepassword.Provider("onepassword-provider",
     service_account_token=onepassword_config.require_secret("service_account_token")
+)
+
+# Get GitHub token from 1Password using the get_item function
+github_token_item = onepassword.get_item_output(
+    vault="Dev",
+    title="GitHub nf-core PA Token Pulumi",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider)
 )
 
 # For now, let's use Pulumi config for AWS credentials
@@ -19,6 +27,12 @@ onepassword_provider = onepassword.Provider("onepassword-provider",
 # Use the default AWS provider which will read from Pulumi config
 # The region is already set via: pulumi config set aws:region eu-north-1
 aws_provider = aws.Provider("aws-provider")
+
+# Configure GitHub provider using token from 1Password
+github_provider = github.Provider("github-provider",
+    token=github_token_item.credential,
+    owner="nf-core"  # Set the GitHub organization
+)
 
 test_datasets_bucket = aws.s3.Bucket(
     "test-datasets-bucket",
@@ -176,6 +190,36 @@ aws.iam.UserPolicyAttachment(
     # opts=pulumi.ResourceOptions(provider=aws_provider)  # Uncomment when using 1Password
 )
 
+# Create GitHub Actions secrets for the AWS credentials
+# This replaces the functionality from add_github_secrets.py
+
+# AWS Access Key ID secret
+aws_access_key_secret = github.ActionsSecret(
+    "aws-access-key-id-secret",
+    repository="ops",  # Repository name (not full name)
+    secret_name="AWS_ACCESS_KEY_ID",
+    plaintext_value=ci_user_access_key.id,
+    opts=pulumi.ResourceOptions(provider=github_provider)
+)
+
+# AWS Secret Access Key secret
+aws_secret_access_key_secret = github.ActionsSecret(
+    "aws-secret-access-key-secret",
+    repository="ops",  # Repository name (not full name)
+    secret_name="AWS_SECRET_ACCESS_KEY",
+    plaintext_value=ci_user_access_key.secret,
+    opts=pulumi.ResourceOptions(provider=github_provider)
+)
+
+# AWS Region secret
+aws_region_secret = github.ActionsSecret(
+    "aws-region-secret",
+    repository="ops",  # Repository name (not full name)
+    secret_name="AWS_REGION",
+    plaintext_value="eu-north-1",  # Based on your CORS configuration
+    opts=pulumi.ResourceOptions(provider=github_provider)
+)
+
 # Export the bucket name
 pulumi.export("bucket_name", test_datasets_bucket.bucket)  # type: ignore[attr-defined]
 
@@ -183,3 +227,10 @@ pulumi.export("bucket_name", test_datasets_bucket.bucket)  # type: ignore[attr-d
 pulumi.export("ci_user_access_key_id", ci_user_access_key.id)
 pulumi.export("ci_user_secret_access_key", pulumi.Output.secret(ci_user_access_key.secret))
 pulumi.export("ci_user_name", ci_user.name)
+
+# Export GitHub secrets information
+pulumi.export("github_secrets_created", {
+    "AWS_ACCESS_KEY_ID": aws_access_key_secret.secret_name,
+    "AWS_SECRET_ACCESS_KEY": aws_secret_access_key_secret.secret_name,
+    "AWS_REGION": aws_region_secret.secret_name
+})

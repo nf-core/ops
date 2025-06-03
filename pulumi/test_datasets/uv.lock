@@ -140,6 +140,20 @@ wheels = [
 ]
 
 [[package]]
+name = "pulumi-github"
+version = "6.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "parver" },
+    { name = "pulumi" },
+    { name = "semver" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/53/35/20c2a03d80a3b8ed39f93232f99eec48d676a9bb20897bdc7afa1a07f3ed/pulumi_github-6.7.2.tar.gz", hash = "sha256:2c48be297b551319fc5ce93564ae7ede6a46e60a95a8b4ce3a8944b284a57be7", size = 200992, upload-time = "2025-04-30T17:20:25.55Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d9/ea/55777086f498ee2c067231a424abe5e26a3b032e81c9107777a4b78b8a8f/pulumi_github-6.7.2-py3-none-any.whl", hash = "sha256:7d14574a2cf9579cc60670f26b898d38b303349c1b15b4ededba479506e84432", size = 370137, upload-time = "2025-04-30T17:20:23.449Z" },
+]
+
+[[package]]
 name = "pulumi-onepassword"
 version = "1.1.3"
 source = { registry = "https://pypi.org/simple" }
@@ -192,6 +206,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "pulumi" },
     { name = "pulumi-aws" },
+    { name = "pulumi-github" },
     { name = "pulumi-onepassword" },
 ]
 
@@ -199,5 +214,6 @@ dependencies = [
 requires-dist = [
     { name = "pulumi", specifier = ">=3.173.0" },
     { name = "pulumi-aws", specifier = ">=6.81.0" },
+    { name = "pulumi-github", specifier = ">=6.7.2" },
     { name = "pulumi-onepassword", specifier = ">=1.1.3" },
 ]
