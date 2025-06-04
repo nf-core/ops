@@ -1,5 +1,3 @@
-import yaml
-
 import pulumi
 import pulumi_github as github
 

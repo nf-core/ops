@@ -7,8 +7,7 @@ import pulumi_onepassword as onepassword
 
 # Configure 1Password provider with account details
 onepassword_provider = onepassword.Provider(
-    "onepassword-provider",
-    account="nf-core.1password.eu"
+    "onepassword-provider", account="nf-core.1password.eu"
 )
 
 # Fetch GitHub token from 1Password
@@ -16,15 +15,15 @@ onepassword_provider = onepassword.Provider(
 # Vault ID from the 1Password URL: rdfcz6oy6qxxrc4clu467a7dmm
 github_token_item = onepassword.get_item(
     vault="rdfcz6oy6qxxrc4clu467a7dmm",  # Vault ID from the 1Password URL
-    uuid="4ajrv44kc5lcbboa37fr5oydla",   # Item ID from the 1Password URL
-    opts=pulumi.InvokeOptions(provider=onepassword_provider)
+    uuid="4ajrv44kc5lcbboa37fr5oydla",  # Item ID from the 1Password URL
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 
 # Configure GitHub provider with token from 1Password
 github_provider = github.Provider(
     "github-provider",
     token=github_token_item.password,  # The token is stored in the password field
-    owner="nf-core-tf"
+    owner="nf-core-tf",
 )
 
 NAME = "testpipeline"
@@ -81,7 +80,7 @@ nfcore_testpipeline = github.Repository(
     visibility="public",
     topics=TOPICS,  # 'repo_keywords' => 'Minimum keywords set',
     # NOTE: @mirpedrol asked if we could add missing topics without deleting existing ones
-    opts=pulumi.ResourceOptions(provider=github_provider)
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
 

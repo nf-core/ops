@@ -15,6 +15,7 @@ op plugin init pulumi
 ```
 
 This should result in:
+
 ```
 
 Pulumi CLI
