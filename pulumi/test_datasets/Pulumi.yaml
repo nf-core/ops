@@ -2,7 +2,8 @@ name: test-datasets
 runtime:
   name: python
   options:
-    virtualenv: venv
+    toolchain: uv
+    virtualenv: .venv
 description: For hosting nf-core test datasets
 config:
   pulumi:tags:
