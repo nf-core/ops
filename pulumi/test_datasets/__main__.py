@@ -34,7 +34,7 @@ aws_provider = aws.Provider("aws-provider")
 github_provider = github.Provider(
     "github-provider",
     token=github_token_item.credential,
-    owner="nf-core",  # Set the GitHub organization
+    owner=pulumi.Config("github").get("owner"),  # Set the GitHub organization
 )
 
 test_datasets_bucket = aws.s3.Bucket(
@@ -241,4 +241,35 @@ pulumi.export(
         "AWS_SECRET_ACCESS_KEY": aws_secret_access_key_secret.secret_name,
         "AWS_REGION": aws_region_secret.secret_name,
     },
+)
+
+test_datasets_repo = github.Repository(
+    "test-datasets-repo",
+    allow_squash_merge=False,
+    default_branch="master",
+    description="Test data to be used for automated testing with the nf-core pipelines",
+    has_downloads=True,
+    has_issues=True,
+    homepage_url="https://nf-co.re",
+    name="test-datasets",
+    security_and_analysis={
+        "secret_scanning": {
+            "status": "enabled",
+        },
+        "secret_scanning_push_protection": {
+            "status": "enabled",
+        },
+    },
+    topics=[
+        "nextflow",
+        "nf-core",
+        "pipelines",
+        "test-data",
+        "test-datasets",
+        "testing",
+        "workflow",
+    ],
+    visibility="public",
+    vulnerability_alerts=True,
+    opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
 )
