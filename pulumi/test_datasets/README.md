@@ -8,6 +8,16 @@ This Pulumi program manages the AWS S3 infrastructure for nf-core test datasets 
 - **IAM User**: CI user with full access to the bucket
 - **GitHub Actions Secrets**: Automatically creates secrets in the `nf-core/ops` repository
 
+### nf-core/test-datasets
+
+#### Repository Ruleset (applies to ALL branches):
+
+- Restricts branch creation ✅
+- Restricts branch deletion ✅  
+- Prevents force pushes ✅
+- Requires linear history ✅
+- Requires pull requests for ALL changes ✅
+
 ## Setup
 
 1. **Configure AWS credentials**:

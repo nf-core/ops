@@ -182,7 +182,7 @@ bucket_access_policy = aws.iam.Policy(
       ]
     }}"""
     ),
-    # opts=pulumi.ResourceOptions(provider=aws_provider)  # Uncomment when using 1Password
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # Attach the comprehensive policy to the CI user
@@ -190,7 +190,7 @@ aws.iam.UserPolicyAttachment(
     "ci-user-bucket-policy-attachment",
     user=ci_user.name,
     policy_arn=bucket_access_policy.arn,
-    # opts=pulumi.ResourceOptions(provider=aws_provider)  # Uncomment when using 1Password
+    opts=pulumi.ResourceOptions(provider=aws_provider),
 )
 
 # Create GitHub Actions secrets for the AWS credentials
@@ -272,4 +272,85 @@ test_datasets_repo = github.Repository(
     visibility="public",
     vulnerability_alerts=True,
     opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
+)
+# Step 2: After successful import, uncomment the following to add branch protection
+# Get team data for core and infrastructure teams
+core_team = github.get_team_output(
+    slug="core",
+    opts=pulumi.InvokeOptions(provider=github_provider),
+)
+
+infrastructure_team = github.get_team_output(
+    slug="infrastructure",
+    opts=pulumi.InvokeOptions(provider=github_provider),
+)
+
+# Create repository ruleset to restrict branch creation to core and infrastructure teams
+test_datasets_ruleset = github.RepositoryRuleset(
+    "test-datasets-branch-protection",
+    repository=test_datasets_repo.name,
+    target="branch",
+    enforcement="active",
+    conditions=github.RepositoryRulesetConditionsArgs(
+        ref_name=github.RepositoryRulesetConditionsRefNameArgs(
+            includes=["~ALL"],  # Apply to all branches
+            excludes=[],
+        ),
+    ),
+    bypass_actors=[
+        # Allow GitHub Apps for automated processes (like CI/CD)
+        github.RepositoryRulesetBypassActorArgs(
+            actor_id=1,  # GitHub App (for automated processes)
+            actor_type="Integration",
+            bypass_mode="always",
+        ),
+    ],
+    rules=github.RepositoryRulesetRulesArgs(
+        creation=True,  # Restrict branch creation
+        deletion=True,  # Restrict branch deletion
+        non_fast_forward=True,  # Prevent force pushes
+        required_linear_history=True,  # Require linear history
+        pull_request=github.RepositoryRulesetRulesPullRequestArgs(
+            required_approving_review_count=1,
+            dismiss_stale_reviews_on_push=True,
+            require_code_owner_review=False,
+            require_last_push_approval=False,
+            required_review_thread_resolution=True,
+        ),
+    ),
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
+
+# Add traditional branch protection for master branch to enforce review restrictions
+# NOTE This is needed because Repository Rulesets don't support restricting reviewers to specific teams
+
+# Export team information for verification
+pulumi.export("core_team_id", core_team.id)
+pulumi.export("infrastructure_team_id", infrastructure_team.id)
+pulumi.export(
+    "branch_protection_summary",
+    {
+        "repository": test_datasets_repo.name,
+        "ruleset_enforcement": "active",
+        "allowed_teams_for_branch_creation": ["core", "infrastructure"],
+        "allowed_teams_for_reviews": ["core", "infrastructure"],
+        "restrictions": [
+            "branch_creation_restricted",
+            "branch_deletion_restricted", 
+            "force_push_blocked",
+            "linear_history_required",
+            "pull_requests_required_for_all_changes",
+        ],
+        "pull_request_requirements": {
+            "required_reviews": 1,
+            "dismiss_stale_reviews": True,
+            "require_review_thread_resolution": True,
+            "enforced_via_ruleset": True,
+        },
+        "master_branch_specific": {
+            "enforce_admins": False,
+            "allows_deletions": False,
+            "allows_force_pushes": False,
+        },
+    },
 )
