@@ -246,7 +246,6 @@ pulumi.export(
 test_datasets_repo = github.Repository(
     "test-datasets-repo",
     allow_squash_merge=False,
-    default_branch="master",
     description="Test data to be used for automated testing with the nf-core pipelines",
     has_downloads=True,
     has_issues=True,
@@ -272,6 +271,14 @@ test_datasets_repo = github.Repository(
     visibility="public",
     vulnerability_alerts=True,
     opts=pulumi.ResourceOptions(protect=True, provider=github_provider),
+)
+
+# Set the default branch using the dedicated resource
+test_datasets_default_branch = github.BranchDefault(
+    "test-datasets-default-branch",
+    repository=test_datasets_repo.name,
+    branch="master",
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 # Step 2: After successful import, uncomment the following to add branch protection
 # Get team data for core and infrastructure teams
