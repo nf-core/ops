@@ -33,14 +33,14 @@ jobs:
       # limit it to push jobs to allow PR jobs to run concurrently.
       - name: Turnstyle
         if: ${{ github.event_name == 'push' }}
-        uses: softprops/turnstyle@8db075d65b19bf94e6e8687b504db69938dc3c65 # v1
+        uses: softprops/turnstyle@807f6009e7cee5c2c9faa41ccef03a8bb24b06ab # v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Install Python
-        uses: actions/setup-python@e9aba2c848f5ebd159c070c61ea2c4e2b122355e # v2
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: 3.13.x
 
@@ -49,7 +49,7 @@ jobs:
 
       - name: PR previews
         if: ${{ github.event_name == 'pull_request' }}
-        uses: pulumi/actions@6914f488b3ea5da08ae448f0622b405b9df25ed5 # v3
+        uses: pulumi/actions@df5a93ad715135263c732ba288301bd044c383c0 # v6
         with:
           command: preview
           stack-name: ${{ env.PULUMI_STACK_NAME }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: Apply infrastructure update
         if: ${{ github.event_name == 'push' }}
-        uses: pulumi/actions@6914f488b3ea5da08ae448f0622b405b9df25ed5 # v3
+        uses: pulumi/actions@df5a93ad715135263c732ba288301bd044c383c0 # v6
         with:
           command: up
           stack-name: ${{ env.PULUMI_STACK_NAME }}
