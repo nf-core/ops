@@ -4,12 +4,12 @@ on:
     branches:
       - master
     paths:
-      - 'pulumi/test_datasets/**/*'
+      - "pulumi/test_datasets/**/*"
   pull_request:
     branches:
       - master
     paths:
-      - 'pulumi/test_datasets/**/*'
+      - "pulumi/test_datasets/**/*"
 
 # These are the environment variables that jobs in the workflow have access to.
 # By defining them here, all jobs/steps will have access to these variables.
@@ -29,7 +29,6 @@ jobs:
     name: Pulumi
     runs-on: ubuntu-latest
     steps:
-
       # Turnstyle is used to prevent multiple push jobs from running at the same time. We
       # limit it to push jobs to allow PR jobs to run concurrently.
       - name: Turnstyle
@@ -63,7 +62,6 @@ jobs:
           command: up
           stack-name: ${{ env.PULUMI_STACK_NAME }}
           work-dir: ${{ env.PULUMI_WORKING_DIRECTORY }}
-
 
       # If you'd like to run your Pulumi application outside of the official GitHub Action
 
