@@ -47,5 +47,20 @@
       schedule: ["before 9am on Monday"],
       matchPackageNames: ["/renovate-config-validator/"],
     },
+    {
+      matchManagers: ["custom.regex"],
+      matchFileNames: [".pre-commit-config.yaml"],
+      groupName: "pre-commit npm dependencies",
+      groupSlug: "pre-commit-npm",
+    },
+  ],
+  customManagers: [
+    {
+      customType: "regex",
+      managerFilePatterns: ["/.pre-commit-config.yaml$/"],
+      matchStrings: ["- (?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"],
+      datasourceTemplate: "npm",
+      versioningTemplate: "npm",
+    },
   ],
 }
