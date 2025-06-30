@@ -29,6 +29,12 @@ repos:
           - types-Markdown
           - types-setuptools
 
+  - repo: https://github.com/astral-sh/ty
+    rev: "0.0.1-alpha.12"
+    hooks:
+      - id: ty
+        args: [check, --exclude, "**/venv/**", --exclude, "**/.venv/**", --exclude, "**/__pycache__/**"]
+
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 38.142.7
     hooks:
