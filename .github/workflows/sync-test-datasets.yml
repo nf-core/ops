@@ -17,12 +17,21 @@ jobs:
       branches-list: ${{ steps.get-branches.outputs.branches-list }}
 
     steps:
-      - name: Get branches from test-datasets repository via GitHub API
+      - name: Get pipeline names and filter branches
         id: get-branches
         uses: actions/github-script@v7
         with:
           script: |
-            // Get all branches using GitHub API with automatic pagination
+            // Fetch pipeline names from nf-core website
+            console.log('Fetching pipeline names from nf-core website...');
+            const pipelineResponse = await fetch('https://raw.githubusercontent.com/nf-core/website/main/public/pipeline_names.json');
+            const pipelineData = await pipelineResponse.json();
+            const pipelineNames = pipelineData.pipeline;
+
+            console.log(`Found ${pipelineNames.length} pipelines:`, pipelineNames.slice(0, 5), '...');
+
+            // Get all branches from test-datasets repository
+            console.log('Fetching branches from test-datasets repository...');
             const branches = await github.paginate(github.rest.repos.listBranches, {
               owner: 'nf-core',
               repo: 'test-datasets',
@@ -30,13 +39,20 @@ jobs:
             });
 
             // Extract branch names
-            const branchNames = branches.map(branch => branch.name);
+            const allBranchNames = branches.map(branch => branch.name);
+            console.log(`Found ${allBranchNames.length} total branches`);
 
-            console.log(`Found ${branchNames.length} branches:`, branchNames);
+            // Filter branches to only include those that match pipeline names
+            // Also include 'master' branch as it's the default branch
+            const filteredBranches = allBranchNames.filter(branch => 
+              pipelineNames.includes(branch) || branch === 'master'
+            );
+
+            console.log(`Filtered to ${filteredBranches.length} pipeline branches:`, filteredBranches);
 
             // Set outputs for matrix and metadata
-            core.setOutput('branches', JSON.stringify(branchNames));
-            core.setOutput('branches-list', branchNames.join(' '));
+            core.setOutput('branches', JSON.stringify(filteredBranches));
+            core.setOutput('branches-list', filteredBranches.join(' '));
 
   sync-branches:
     needs: discover-branches
