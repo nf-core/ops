@@ -343,7 +343,7 @@ pulumi.export(
         "allowed_teams_for_reviews": ["core", "infrastructure"],
         "restrictions": [
             "branch_creation_restricted",
-            "branch_deletion_restricted", 
+            "branch_deletion_restricted",
             "force_push_blocked",
             "linear_history_required",
             "pull_requests_required_for_all_changes",

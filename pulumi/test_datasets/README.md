@@ -13,7 +13,7 @@ This Pulumi program manages the AWS S3 infrastructure for nf-core test datasets 
 #### Repository Ruleset (applies to ALL branches):
 
 - Restricts branch creation ✅
-- Restricts branch deletion ✅  
+- Restricts branch deletion ✅
 - Prevents force pushes ✅
 - Requires linear history ✅
 - Requires pull requests for ALL changes ✅
