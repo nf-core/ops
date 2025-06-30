@@ -1,0 +1,133 @@
+name: Sync Test Datasets to S3
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: "0 2 * * *"
+  workflow_dispatch: # Allow manual triggering
+  pull_request:
+    paths:
+      - ".github/workflows/sync-test-datasets.yml"
+
+jobs:
+  discover-branches:
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.get-branches.outputs.branches }}
+      branches-list: ${{ steps.get-branches.outputs.branches-list }}
+
+    steps:
+      - name: Get pipeline names and filter branches
+        id: get-branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Fetch pipeline names from nf-core website
+            console.log('Fetching pipeline names from nf-core website...');
+            const pipelineResponse = await fetch('https://raw.githubusercontent.com/nf-core/website/main/public/pipeline_names.json');
+            const pipelineData = await pipelineResponse.json();
+            const pipelineNames = pipelineData.pipeline;
+
+            console.log(`Found ${pipelineNames.length} pipelines:`, pipelineNames.slice(0, 5), '...');
+
+            // Get all branches from test-datasets repository
+            console.log('Fetching branches from test-datasets repository...');
+            const branches = await github.paginate(github.rest.repos.listBranches, {
+              owner: 'nf-core',
+              repo: 'test-datasets',
+              per_page: 100
+            });
+
+            // Extract branch names
+            const allBranchNames = branches.map(branch => branch.name);
+            console.log(`Found ${allBranchNames.length} total branches`);
+
+            // Filter branches to only include those that match pipeline names
+            // Also include 'master' branch as it's the default branch
+            const filteredBranches = allBranchNames.filter(branch => 
+              pipelineNames.includes(branch) || branch === 'master'
+            );
+
+            console.log(`Filtered to ${filteredBranches.length} pipeline branches:`, filteredBranches);
+
+            // Set outputs for matrix and metadata
+            core.setOutput('branches', JSON.stringify(filteredBranches));
+            core.setOutput('branches-list', filteredBranches.join(' '));
+
+  sync-branches:
+    needs: discover-branches
+    runs-on: ubuntu-latest
+    if: ${{ needs.discover-branches.outputs.branches != '[]' }}
+    strategy:
+      matrix:
+        branch: ${{ fromJson(needs.discover-branches.outputs.branches) }}
+      max-parallel: 5 # Limit parallel jobs to avoid overwhelming S3
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Sync branch ${{ matrix.branch }} to S3
+        run: |
+          echo "Syncing branch: ${{ matrix.branch }}"
+
+          # Clone only the specific branch
+          git clone --single-branch --branch "${{ matrix.branch }}" \
+            https://github.com/nf-core/test-datasets.git test-datasets-branch
+
+          cd test-datasets-branch
+
+          # Sync to S3 with branch prefix
+          aws s3 sync ./ "s3://nf-core-test-datasets/${{ matrix.branch }}/" \
+            --delete \
+            --exclude ".git/*" \
+            --exclude ".github/*" \
+            --storage-class STANDARD_IA
+
+          echo "Completed sync for branch: ${{ matrix.branch }}"
+
+          # Clean up
+          cd ..
+          rm -rf test-datasets-branch
+
+  update-metadata:
+    needs: [discover-branches, sync-branches]
+    runs-on: ubuntu-latest
+    if: always() && needs.discover-branches.result == 'success'
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-north-1
+
+      - name: Update branch list in S3
+        run: |
+          # Create a file with the list of available branches
+          echo "${{ needs.discover-branches.outputs.branches-list }}" | tr ' ' '\n' > available-branches.txt
+          aws s3 cp available-branches.txt s3://nf-core-test-datasets/available-branches.txt
+
+          # Create a metadata file with sync information
+          cat > sync-metadata.json << EOF
+          {
+            "last_sync": "$(date -u -Iseconds)",
+            "branches": ${{ needs.discover-branches.outputs.branches }},
+            "sync_status": "${{ needs.sync-branches.result }}"
+          }
+          EOF
+
+          aws s3 cp sync-metadata.json s3://nf-core-test-datasets/sync-metadata.json
+
+      - name: Report sync status
+        run: |
+          echo "Test datasets sync completed"
+          echo "Bucket: nf-core-test-datasets"  
+          echo "Branches synced: ${{ needs.discover-branches.outputs.branches-list }}"
+          echo "Sync time: $(date -u)"
+          echo "Sync status: ${{ needs.sync-branches.result }}"
