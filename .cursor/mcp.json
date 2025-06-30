@@ -3,6 +3,11 @@
     "terraform": {
       "command": "docker",
       "args": ["run", "-i", "--rm", "hashicorp/terraform-mcp-server"]
+    },
+    "pulumi": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@pulumi/mcp-server"]
     }
   }
 }
