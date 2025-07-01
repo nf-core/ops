@@ -1,0 +1,11 @@
+[project]
+name = "sentieon-license-server"
+version = "0.1.0"
+description = "Pulumi project for Sentieon license server"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.173.0,<4.0.0",
+    "pulumi-aws>=6.81.0",
+    "pulumi-std>=1.7.3",
+] 

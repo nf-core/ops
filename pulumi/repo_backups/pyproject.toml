@@ -1,0 +1,10 @@
+[project]
+name = "repo-backups"
+version = "0.1.0"
+description = "Pulumi project for repository backups"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.173.0",
+    "pulumi-aws>=6.81.0",
+] 
