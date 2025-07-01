@@ -1,89 +1,82 @@
- # Azure Native Python Pulumi Template
+# Legacy Azure Resources
 
- A minimal Pulumi template for provisioning an Azure Resource Group and a Storage Account using the Azure Native provider with Python.
+> **Note:** Our Azure credits ran out and it's unclear at this point if we will get any more. Please shout if anyone can think of any infra that relies on Azure so that we can mitigate this.
+>
+> Slack discussion: https://nfcore.slack.com/archives/C069B2Z5P1R/p1751276871909109
 
- ## Overview
+## Azure Resources Inventory
 
- This template demonstrates:
+This document contains a record of all Azure resources that were provisioned in our account before the credits ran out.
 
- - Provider: `pulumi-azure-native`
- - Resources:
-   - `azure-native:resources:ResourceGroup` — a new resource group
-   - `azure-native:storage:StorageAccount` — a storage account in the resource group
- - Output:
-   - `primary_storage_key` — the primary key of the storage account
+### Virtual Machines
 
- Use this template as a starting point to learn Pulumi, author infrastructure-as-code in Python, and build on top of basic Azure resources.
+- **bastion-server** (West Europe, nf-nomad-dev-rg)
+- **hashistack-client-0** (West Europe, nf-nomad-dev-rg)
+- **hashistack-client-1** (West Europe, nf-nomad-dev-rg)
+- **hashistack-client-2** (West Europe, nf-nomad-dev-rg)
+- **hashistack-server-0** (West Europe, nf-nomad-dev-rg)
+- **hashistack-server-1** (West Europe, nf-nomad-dev-rg)
+- **hashistack-server-2** (West Europe, nf-nomad-dev-rg)
+- **igenomes-data-sync** (West Europe, igenomes-data-sync_group)
 
- ## Prerequisites
+### Disks
 
- - An Azure subscription with sufficient permissions
- - Azure CLI installed and authenticated (`az login`)
- - Python 3.7 or later
+- **bastion-server-osdisk** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-client-osdisk-0** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-client-osdisk-1** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-client-osdisk-2** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-server-osdisk-0** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-server-osdisk-1** (West Europe, NF-NOMAD-DEV-RG)
+- **hashistack-server-osdisk-2** (West Europe, NF-NOMAD-DEV-RG)
+- **igenomes-data-sync_OsDisk_1_6805966503c542b78dbe9ad597d363d0** (West Europe, IGENOMES-DATA-SYNC_GROUP)
 
- ## Usage
+### Images
 
- 1. Create a new project from this template:
+#### Bastion Images
 
-    ```bash
-    pulumi new azure-python
-    ```
+- **bastion.20240320111435** (West Europe, nf-nomad-dev-rg)
+- **bastion.20240529125052** (West Europe, nf-nomad-dev-rg)
+- **bastion.20240603130052** (West Europe, nf-nomad-dev-rg)
 
- 2. When prompted, enter your project name, description, and Azure location. The default `azure-native:location` is `WestUS2`.
+#### Hashistack Images
 
- 3. Deploy the stack:
+- **hashistack.20240320121559** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320122410** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320141508** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320150510** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320152709** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320161553** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240320163511** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240322140155** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240322151338** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240325143604** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240326122214** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240603131113** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20240607112210** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20241106143509** (West Europe, nf-nomad-dev-rg)
+- **hashistack.20241106160129** (West Europe, nf-nomad-dev-rg)
 
-    ```bash
-    pulumi up
-    ```
+### Storage Accounts
 
- ## Project Layout
+- **nfcoreazuremegatests** (West Europe, nf-core-azure-megatests)
+- **nfnomad** (West Europe, nf-nomad-dev-rg)
 
- ```plaintext
- .
- ├── __main__.py        # Pulumi program defining your infrastructure
- ├── Pulumi.yaml        # Project settings and template metadata
- └── requirements.txt   # Python dependencies (Pulumi SDK and provider)
- ```
+### Other Resources
 
- ## Configuration
+- **nfcoreazuremegatests** - Batch account (West Europe, nf-core-azure-megatests)
+- **nfcoreazuremegatests** - Container registry (West Europe, nf-core-azure-megatests)
+- **igenomes-data-sync_key** - SSH key (West Europe, igenomes-data-sync_group)
 
- This template exposes the following configuration variable:
+### Resource Groups
 
- - `azure-native:location` — Azure region to deploy resources. Defaults to `WestUS2`.
+- **nf-nomad-dev-rg** - Main development environment for Nomad cluster
+- **igenomes-data-sync_group** - Data synchronization resources
+- **nf-core-azure-megatests** - Testing infrastructure
 
- Set or override it with:
+### Summary
 
- ```bash
- pulumi config set azure-native:location eastus
- ```
-
- ## Outputs
-
- After deployment, the following output is available:
-
- - `primary_storage_key` — the primary access key for the storage account
-
- Retrieve it with:
-
- ```bash
- pulumi stack output primary_storage_key
- ```
-
- ## When to Use This Template
-
- - You want a quick Azure infrastructure starter with Pulumi and Python
- - You're learning infrastructure-as-code patterns on Azure
- - You need a simple storage account setup to build applications
-
- ## Next Steps
-
- - Customize resource names and add more Azure services (e.g., Virtual Networks, Key Vault)
- - Explore the `pulumi-azure-native` documentation for available services
- - Migrate this template into a larger multi-stack setup
-
- ## Getting Help
-
- - Pulumi Documentation: https://www.pulumi.com/docs/
- - Azure Native Provider Reference: https://www.pulumi.com/registry/packages/azure-native/
- - Community Support: https://pulumi.com/community/
+- **Total VMs**: 8 (1 bastion server, 6 hashistack nodes, 1 data sync server)
+- **Total Images**: 18 (3 bastion snapshots, 15 hashistack snapshots)
+- **Total Disks**: 8 (OS disks for each VM)
+- **Total Storage Accounts**: 2
+- **Resource Groups**: 3
