@@ -1,14 +1,16 @@
+# TODO We'll need to move this to the actual GitHub workflows directory, but this is just a placeholder anyways.
+# We should merge our current setup and then make a PR updating it to the new setup that we want to have.
 name: Deploy Seqerakit Infrastructure
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'seqerakit/**'
+      - "seqerakit/**"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'seqerakit/**'
+      - "seqerakit/**"
 
 jobs:
   validate:
@@ -49,17 +51,17 @@ jobs:
           script: |
             const output = `
             ## Seqerakit Validation Results 🧪
-            
+
             ✅ All compute environment configurations have been validated successfully.
-            
+
             The following environments were tested:
             - CPU Environment (aws_ireland_fusionv2_nvme_cpu)
             - CPU ARM Environment (aws_ireland_fusionv2_nvme_cpu_ARM_snapshots)
             - GPU Environment (aws_ireland_fusionv2_nvme_gpu_snapshots)
-            
+
             Ready for deployment! 🚀
             `;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -105,15 +107,15 @@ jobs:
           script: |
             const output = `
             ## Seqerakit Deployment Completed ✅
-            
+
             Successfully deployed all compute environments:
             - ✅ CPU Environment (aws_ireland_fusionv2_nvme_cpu)
             - ✅ CPU ARM Environment (aws_ireland_fusionv2_nvme_cpu_ARM_snapshots)
             - ✅ GPU Environment (aws_ireland_fusionv2_nvme_gpu_snapshots)
-            
+
             Infrastructure is now up to date! 🎉
             `;
-            
+
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -128,12 +130,12 @@ jobs:
           script: |
             const output = `
             ## Seqerakit Deployment Failed ❌
-            
+
             Deployment failed for commit ${context.sha}.
-            
+
             Please check the workflow logs for details and fix any issues.
             `;
-            
+
             github.rest.repos.createCommitComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
