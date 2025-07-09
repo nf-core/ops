@@ -13,11 +13,14 @@ This is a seqerakit configuration repository for automating the setup of nf-core
 # Install seqerakit
 pip install seqerakit
 
-# Set platform access token
-export TOWER_ACCESS_TOKEN=<your-token>
+# Install direnv (for 1Password integration)
+brew install direnv
 
-# Load environment variables
-source vars.sh
+# Allow the .envrc file (loads secrets from 1Password)
+direnv allow
+
+# Alternatively, manually load environment variables
+# export TOWER_ACCESS_TOKEN=<your-token>
 ```
 
 ### Seqerakit Operations
@@ -68,14 +71,20 @@ The repository contains YAML-based Infrastructure as Code configurations for fou
 
 ### Environment Variables
 
-The `vars.sh` file defines key configuration variables:
+The `.envrc` file defines key configuration variables and loads secrets from 1Password:
 
+**Static Configuration**:
 - `ORGANIZATION_NAME`: "nf-core"
 - `WORKSPACE_NAME`: "AWSmegatests"
 - `AWS_CREDENTIALS_NAME`: "tower-awstest"
 - `AWS_REGION`: "eu-west-1"
 - `AWS_WORK_DIR`: "s3://nf-core-awsmegatests"
 - `AWS_COMPUTE_ENV_ALLOWED_BUCKETS`: "s3://ngi-igenomes,s3://annotation-cache"
+
+**1Password Secrets**:
+- `TOWER_ACCESS_TOKEN`: `op://Dev/Tower nf-core Access Token/password`
+- `AWS_ACCESS_KEY_ID`: `op://Dev/AWS Tower Test Credentials/access key id`
+- `AWS_SECRET_ACCESS_KEY`: `op://Dev/AWS Tower Test Credentials/secret access key`
 
 ### Common Configuration Patterns
 
@@ -97,7 +106,7 @@ Key differentiators:
 
 The typical deployment workflow:
 
-1. **Environment Setup**: Source `vars.sh` to load configuration variables
+1. **Environment Setup**: `direnv allow` to load configuration variables and 1Password secrets
 2. **Validation**: Use `--dryrun` flag to validate YAML configurations
 3. **Deployment**: Execute seqerakit commands to create compute environments
 4. **Management**: Use `--delete` flag to remove resources when needed

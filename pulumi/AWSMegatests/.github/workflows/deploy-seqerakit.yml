@@ -27,7 +27,11 @@ jobs:
           token: ${{ secrets.TOWER_ACCESS_TOKEN }}
 
       - name: Load environment variables
-        run: source vars.sh
+        run: |
+          # Install direnv for 1Password integration
+          sudo apt-get update && sudo apt-get install -y direnv
+          # Allow .envrc and load environment
+          direnv allow && eval "$(direnv export bash)"
 
       - name: Validate CPU environment
         run: seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
@@ -79,7 +83,11 @@ jobs:
           token: ${{ secrets.TOWER_ACCESS_TOKEN }}
 
       - name: Load environment variables
-        run: source vars.sh
+        run: |
+          # Install direnv for 1Password integration
+          sudo apt-get update && sudo apt-get install -y direnv
+          # Allow .envrc and load environment
+          direnv allow && eval "$(direnv export bash)"
 
       - name: Deploy CPU environment
         run: seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
