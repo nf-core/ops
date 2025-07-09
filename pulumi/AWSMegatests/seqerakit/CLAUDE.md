@@ -23,19 +23,21 @@ source vars.sh
 ### Seqerakit Operations
 ```bash
 # Dry run to validate configuration
-seqerakit compute-envs/aws_ireland_fusionv2_nvme_cpu.yml --dryrun
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
 
-# Deploy individual compute environments
+# Deploy individual compute environments (current production configs)
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
+seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
+seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml
+
+# Deploy legacy compute environments (for reference)
 seqerakit compute-envs/aws_ireland_fusionv2_nvme_cpu.yml
 seqerakit compute-envs/aws_ireland_fusionv2_nvme_gpu.yml
 seqerakit compute-envs/aws_ireland_fusionv2_nvme_arm.yml
 seqerakit compute-envs/aws_ireland_nofusion.yml
 
-# Deploy all compute environments
-seqerakit compute-envs/*.yml
-
 # Delete resources
-seqerakit compute-envs/aws_ireland_fusionv2_nvme_cpu.yml --delete
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --delete
 ```
 
 ## Architecture
@@ -99,6 +101,42 @@ The typical deployment workflow:
 2. **Validation**: Use `--dryrun` flag to validate YAML configurations
 3. **Deployment**: Execute seqerakit commands to create compute environments
 4. **Management**: Use `--delete` flag to remove resources when needed
+
+## GitOps Workflow
+
+This repository implements a GitOps approach for managing Seqera Platform infrastructure:
+
+### Workflow Triggers
+- **Pull Requests**: Validate configurations with `--dryrun` on changes to `seqerakit/**`
+- **Main Branch**: Deploy infrastructure on merges to main branch
+
+### Current Infrastructure Files
+- `current-env-cpu.json`: Exported CPU environment configuration
+- `current-env-cpu-arm.json`: Exported CPU ARM environment configuration  
+- `current-env-gpu.json`: Exported GPU environment configuration
+- `aws_ireland_fusionv2_nvme_cpu_current.yml`: Seqerakit config for CPU environment
+- `aws_ireland_fusionv2_nvme_cpu_arm_current.yml`: Seqerakit config for CPU ARM environment
+- `aws_ireland_fusionv2_nvme_gpu_current.yml`: Seqerakit config for GPU environment
+
+### GitHub Actions Workflow
+The `.github/workflows/deploy-seqerakit.yml` workflow:
+
+1. **Validation Job** (on PR):
+   - Validates all environment configurations with `seqerakit --dryrun`
+   - Comments on PR with validation results
+
+2. **Deployment Job** (on merge to main):
+   - Deploys all compute environments
+   - Notifies success/failure via commit comments
+
+### Required Secrets
+- `TOWER_ACCESS_TOKEN`: Seqera Platform personal access token
+
+### Migration from Manual Setup
+The current configurations were exported from existing environments:
+- CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu`
+- CPU ARM: `5LWYX9a2GxrIFiax8tn9DV` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
+- GPU: `7Gjp4zOBlhH9xMIlfs9LM2` → `aws_ireland_fusionv2_nvme_gpu_snapshots`
 
 ## Known Issues
 
