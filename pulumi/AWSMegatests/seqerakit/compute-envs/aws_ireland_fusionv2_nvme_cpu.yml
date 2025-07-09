@@ -15,4 +15,4 @@ compute-envs:
     max-cpus: 500
     allow-buckets: "$AWS_COMPUTE_ENV_ALLOWED_BUCKETS"
     wait: "AVAILABLE"
-    on_exists: 'overwrite'
+    on_exists: "overwrite"

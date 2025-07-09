@@ -1,4 +1,5 @@
 # megatest-seqerakit
+
 Contains the seqerakit scripts used to stand up the nf-core megatest workspace
 
 ## Quick Start
@@ -11,6 +12,7 @@ Contains the seqerakit scripts used to stand up the nf-core megatest workspace
 ## GitOps Workflow
 
 This repository now implements GitOps with GitHub Actions:
+
 - **Pull Requests**: Automatically validate configurations with `--dryrun`
 - **Main Branch**: Automatically deploy infrastructure changes
 - **1Password Integration**: Secure credential management with `.envrc`
@@ -24,11 +26,13 @@ This repository now implements GitOps with GitHub Actions:
 ## Resolved Issues
 
 ✅ **Snapshots with seqerakit**: Implemented in ARM environment (`current-env-cpu-arm.json`) with:
+
 ```json
 "nextflowConfig": "fusion.enabled = true\nfusion.snapshots = true\nfusion.containerConfigUrl = '...'"
 ```
 
 ✅ **GPU-enabled compute environments**: Implemented in GPU environment (`current-env-gpu.json`) with:
+
 ```json
 "forge": { "gpuEnabled": true, "instanceTypes": ["g4dn", "g5", "c6id", "m6id", "r6id"] }
 ```

@@ -5,18 +5,20 @@ This repository uses 1Password for secure credential management with direnv inte
 ## Prerequisites
 
 1. **1Password CLI**: Install the 1Password CLI tool
+
    ```bash
    # macOS
    brew install --cask 1password-cli
-   
+
    # Other platforms: https://developer.1password.com/docs/cli/get-started/
    ```
 
 2. **direnv**: Install direnv for automatic environment loading
+
    ```bash
    # macOS
    brew install direnv
-   
+
    # Add to your shell config (e.g., ~/.zshrc)
    eval "$(direnv hook zsh)"
    ```
@@ -38,6 +40,7 @@ op whoami
 ### 2. Configure direnv
 
 The repository uses the `direnv-1password` integration. When you enter a directory with a `.envrc` file, direnv will automatically:
+
 - Load the 1Password integration script
 - Fetch secrets from 1Password vaults
 - Export them as environment variables
@@ -56,10 +59,11 @@ The `pulumi/AWSMegatests/seqerakit/` directory uses 1Password for storing:
 Ensure these items exist in the `Dev` vault:
 
 1. **"Tower nf-core Access Token"**
+
    - Contains the Seqera Platform access token
    - Field: `password`
 
-2. **"AWS Tower Test Credentials"** 
+2. **"AWS Tower Test Credentials"**
    - Contains AWS access credentials for testing
    - Fields: `access key id`, `secret access key`
 
@@ -114,15 +118,19 @@ export WORKSPACE_NAME="AWSmegatests"
 ### Common Issues
 
 1. **"op: not found"**
+
    - Install 1Password CLI: `brew install --cask 1password-cli`
 
 2. **"Authentication required"**
+
    - Sign in: `op signin --account nf-core`
 
 3. **"direnv: error .envrc is blocked"**
+
    - Allow the environment: `direnv allow`
 
 4. **"Item not found"**
+
    - Verify the 1Password item exists in the specified vault
    - Check item name and field names match exactly
 

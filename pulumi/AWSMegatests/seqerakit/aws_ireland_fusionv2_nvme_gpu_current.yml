@@ -1,7 +1,7 @@
 compute-envs:
-  - name: 'aws_ireland_fusionv2_nvme_gpu_snapshots'
-    workspace: '$ORGANIZATION_NAME/$WORKSPACE_NAME'
-    credentials: '$AWS_CREDENTIALS_NAME'
-    wait: 'AVAILABLE'
-    file-path: './current-env-gpu.json'
+  - name: "aws_ireland_fusionv2_nvme_gpu_snapshots"
+    workspace: "$ORGANIZATION_NAME/$WORKSPACE_NAME"
+    credentials: "$AWS_CREDENTIALS_NAME"
+    wait: "AVAILABLE"
+    file-path: "./current-env-gpu.json"
     overwrite: True

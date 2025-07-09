@@ -12,6 +12,7 @@ This is a Pulumi project for AWS infrastructure management supporting nf-core me
 ## Common Development Commands
 
 ### Environment Setup
+
 ```bash
 # Install dependencies using uv
 uv sync
@@ -21,6 +22,7 @@ uv run <command>
 ```
 
 ### Pulumi Operations
+
 ```bash
 # Preview infrastructure changes
 uv run pulumi preview
@@ -39,6 +41,7 @@ uv run pulumi stack output
 ```
 
 ### Seqerakit Operations
+
 ```bash
 # Set up environment variables
 source seqerakit/vars.sh
@@ -64,15 +67,18 @@ seqerakit compute-envs/aws_ireland_nofusion.yml
 The project defines multiple compute environment configurations:
 
 1. **CPU Environment** (`aws_ireland_fusionv2_nvme_cpu.yml`):
+
    - AWS Batch with Fusion v2 and NVMe storage
    - Instance types: c6id, m6id, r6id
    - Max CPUs: 500
    - SPOT provisioning model
 
 2. **GPU Environment** (`aws_ireland_fusionv2_nvme_gpu.yml`):
+
    - Similar to CPU but with GPU-enabled instances
 
 3. **ARM Environment** (`aws_ireland_fusionv2_nvme_arm.yml`):
+
    - ARM-based compute instances
 
 4. **No Fusion Environment** (`aws_ireland_nofusion.yml`):
@@ -81,6 +87,7 @@ The project defines multiple compute environment configurations:
 ### Environment Variables
 
 Key environment variables defined in `seqerakit/vars.sh`:
+
 - `ORGANIZATION_NAME`: "nf-core"
 - `WORKSPACE_NAME`: "AWSmegatests"
 - `AWS_CREDENTIALS_NAME`: "tower-awstest"
@@ -99,6 +106,7 @@ Key environment variables defined in `seqerakit/vars.sh`:
 ## Known Issues/Blockers
 
 From the seqerakit README:
+
 - How to enable snapshots with seqerakit
 - How to create GPU-enabled compute environments with seqerakit
 

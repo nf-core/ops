@@ -9,6 +9,7 @@ This is a seqerakit configuration repository for automating the setup of nf-core
 ## Common Commands
 
 ### Prerequisites
+
 ```bash
 # Install seqerakit
 pip install seqerakit
@@ -24,6 +25,7 @@ direnv allow
 ```
 
 ### Seqerakit Operations
+
 ```bash
 # Dry run to validate configuration
 seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
@@ -50,16 +52,19 @@ seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --delete
 The repository contains YAML-based Infrastructure as Code configurations for four distinct AWS Batch compute environments:
 
 1. **CPU Environment** (`aws_ireland_fusionv2_nvme_cpu.yml`):
+
    - Instance types: c6id, m6id, r6id (Intel x86_64 with NVMe storage)
    - Features: Fusion v2, Wave, fast storage, no EBS auto-scale
    - Provisioning: SPOT instances
 
 2. **GPU Environment** (`aws_ireland_fusionv2_nvme_gpu.yml`):
+
    - Instance types: g4dn, g5, c6id, m6id, r6id (GPU + CPU instances)
    - Features: GPU enabled, Fusion v2, Wave, fast storage
    - Provisioning: SPOT instances
 
 3. **ARM Environment** (`aws_ireland_fusionv2_nvme_arm.yml`):
+
    - Instance types: m6gd, c6gd, r6gd (ARM Graviton2 with NVMe storage)
    - Features: Fusion v2, Wave, fast storage
    - Provisioning: SPOT instances
@@ -74,6 +79,7 @@ The repository contains YAML-based Infrastructure as Code configurations for fou
 The `.envrc` file defines key configuration variables and loads secrets from 1Password:
 
 **Static Configuration**:
+
 - `ORGANIZATION_NAME`: "nf-core"
 - `WORKSPACE_NAME`: "AWSmegatests"
 - `AWS_CREDENTIALS_NAME`: "tower-awstest"
@@ -82,6 +88,7 @@ The `.envrc` file defines key configuration variables and loads secrets from 1Pa
 - `AWS_COMPUTE_ENV_ALLOWED_BUCKETS`: "s3://ngi-igenomes,s3://annotation-cache"
 
 **1Password Secrets**:
+
 - `TOWER_ACCESS_TOKEN`: `op://Dev/Tower nf-core Access Token/password`
 - `AWS_ACCESS_KEY_ID`: `op://Dev/AWS Tower Test Credentials/access key id`
 - `AWS_SECRET_ACCESS_KEY`: `op://Dev/AWS Tower Test Credentials/secret access key`
@@ -89,6 +96,7 @@ The `.envrc` file defines key configuration variables and loads secrets from 1Pa
 ### Common Configuration Patterns
 
 All compute environments share:
+
 - **Type**: aws-batch
 - **Config Mode**: forge
 - **Max CPUs**: 500
@@ -97,6 +105,7 @@ All compute environments share:
 - **Provisioning Model**: SPOT
 
 Key differentiators:
+
 - **Instance Types**: Vary by architecture (x86_64, ARM, GPU)
 - **Fusion v2**: Enabled for performance environments, disabled for traditional
 - **Fast Storage**: NVMe-enabled instances vs standard storage
@@ -116,21 +125,25 @@ The typical deployment workflow:
 This repository implements a GitOps approach for managing Seqera Platform infrastructure:
 
 ### Workflow Triggers
+
 - **Pull Requests**: Validate configurations with `--dryrun` on changes to `seqerakit/**`
 - **Main Branch**: Deploy infrastructure on merges to main branch
 
 ### Current Infrastructure Files
+
 - `current-env-cpu.json`: Exported CPU environment configuration
-- `current-env-cpu-arm.json`: Exported CPU ARM environment configuration  
+- `current-env-cpu-arm.json`: Exported CPU ARM environment configuration
 - `current-env-gpu.json`: Exported GPU environment configuration
 - `aws_ireland_fusionv2_nvme_cpu_current.yml`: Seqerakit config for CPU environment
 - `aws_ireland_fusionv2_nvme_cpu_arm_current.yml`: Seqerakit config for CPU ARM environment
 - `aws_ireland_fusionv2_nvme_gpu_current.yml`: Seqerakit config for GPU environment
 
 ### GitHub Actions Workflow
+
 The `.github/workflows/deploy-seqerakit.yml` workflow:
 
 1. **Validation Job** (on PR):
+
    - Validates all environment configurations with `seqerakit --dryrun`
    - Comments on PR with validation results
 
@@ -139,10 +152,13 @@ The `.github/workflows/deploy-seqerakit.yml` workflow:
    - Notifies success/failure via commit comments
 
 ### Required Secrets
+
 - `TOWER_ACCESS_TOKEN`: Seqera Platform personal access token
 
 ### Migration from Manual Setup
+
 The current configurations were exported from existing environments:
+
 - CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu`
 - CPU ARM: `5LWYX9a2GxrIFiax8tn9DV` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
 - GPU: `7Gjp4zOBlhH9xMIlfs9LM2` → `aws_ireland_fusionv2_nvme_gpu_snapshots`
@@ -150,6 +166,7 @@ The current configurations were exported from existing environments:
 ## Known Issues
 
 From the project README:
+
 - How to enable snapshots with seqerakit
 - How to create GPU-enabled compute environments with seqerakit (partially addressed in current configs)
 
