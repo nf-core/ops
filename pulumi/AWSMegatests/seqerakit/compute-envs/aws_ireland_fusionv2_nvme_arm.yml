@@ -1,0 +1,18 @@
+compute-envs:
+  - type: aws-batch
+    config-mode: forge
+    name: "aws_ireland_fusionv2_nvme_cpu"
+    workspace: "$ORGANIZATION_NAME/$WORKSPACE_NAME"
+    credentials: "$AWS_CREDENTIALS_NAME"
+    region: "$AWS_REGION"
+    work-dir: "$AWS_WORK_DIR"
+    wave: True
+    fusion-v2: True
+    fast-storage: True
+    no-ebs-auto-scale: True
+    provisioning-model: "SPOT"
+    instance-types: "m6gd,c6gd,r6gd"
+    max-cpus: 500
+    allow-buckets: "$AWS_COMPUTE_ENV_ALLOWED_BUCKETS"
+    wait: "AVAILABLE"
+    on_exists: "overwrite"

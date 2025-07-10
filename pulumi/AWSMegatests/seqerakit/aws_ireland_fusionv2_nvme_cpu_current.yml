@@ -1,0 +1,7 @@
+compute-envs:
+  - name: "aws_ireland_fusionv2_nvme_cpu"
+    workspace: "$ORGANIZATION_NAME/$WORKSPACE_NAME"
+    credentials: "$AWS_CREDENTIALS_NAME"
+    wait: "AVAILABLE"
+    file-path: "./current-env-cpu.json"
+    overwrite: True

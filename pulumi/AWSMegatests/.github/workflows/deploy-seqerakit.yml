@@ -1,0 +1,144 @@
+# TODO We'll need to move this to the actual GitHub workflows directory, but this is just a placeholder anyways.
+# We should merge our current setup and then make a PR updating it to the new setup that we want to have.
+name: Deploy Seqerakit Infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "seqerakit/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "seqerakit/**"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory: seqerakit
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Seqerakit
+        uses: seqeralabs/setup-seqerakit@v1
+        with:
+          token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+
+      - name: Load environment variables
+        run: |
+          # Install direnv for 1Password integration
+          sudo apt-get update && sudo apt-get install -y direnv
+          # Allow .envrc and load environment
+          direnv allow && eval "$(direnv export bash)"
+
+      - name: Validate CPU environment
+        run: seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
+
+      - name: Validate CPU ARM environment
+        run: seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml --dryrun
+
+      - name: Validate GPU environment
+        run: seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --dryrun
+
+      - name: Comment PR with validation results
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            const output = `
+            ## Seqerakit Validation Results 🧪
+
+            ✅ All compute environment configurations have been validated successfully.
+
+            The following environments were tested:
+            - CPU Environment (aws_ireland_fusionv2_nvme_cpu)
+            - CPU ARM Environment (aws_ireland_fusionv2_nvme_cpu_ARM_snapshots)
+            - GPU Environment (aws_ireland_fusionv2_nvme_gpu_snapshots)
+
+            Ready for deployment! 🚀
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: seqerakit
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Seqerakit
+        uses: seqeralabs/setup-seqerakit@v1
+        with:
+          token: ${{ secrets.TOWER_ACCESS_TOKEN }}
+
+      - name: Load environment variables
+        run: |
+          # Install direnv for 1Password integration
+          sudo apt-get update && sudo apt-get install -y direnv
+          # Allow .envrc and load environment
+          direnv allow && eval "$(direnv export bash)"
+
+      - name: Deploy CPU environment
+        run: seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
+
+      - name: Deploy CPU ARM environment
+        run: seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
+
+      - name: Deploy GPU environment
+        run: seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml
+
+      - name: Notify deployment success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `
+            ## Seqerakit Deployment Completed ✅
+
+            Successfully deployed all compute environments:
+            - ✅ CPU Environment (aws_ireland_fusionv2_nvme_cpu)
+            - ✅ CPU ARM Environment (aws_ireland_fusionv2_nvme_cpu_ARM_snapshots)
+            - ✅ GPU Environment (aws_ireland_fusionv2_nvme_gpu_snapshots)
+
+            Infrastructure is now up to date! 🎉
+            `;
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: output
+            });
+
+      - name: Notify deployment failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const output = `
+            ## Seqerakit Deployment Failed ❌
+
+            Deployment failed for commit ${context.sha}.
+
+            Please check the workflow logs for details and fix any issues.
+            `;
+
+            github.rest.repos.createCommitComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+              body: output
+            });
