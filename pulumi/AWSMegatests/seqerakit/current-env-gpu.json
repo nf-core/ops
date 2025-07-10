@@ -1,0 +1,25 @@
+{
+  "discriminator": "aws-batch",
+  "region": "eu-west-1",
+  "executionRole": "arn:aws:iam::728131696474:role/TowerForge-7Gjp4zOBlhH9xMIlfs9LM2-ExecutionRole",
+  "workDir": "s3://nf-core-awsmegatests",
+  "environment": [],
+  "waveEnabled": true,
+  "fusion2Enabled": true,
+  "nvnmeStorageEnabled": true,
+  "forge": {
+    "type": "SPOT",
+    "minCpus": 0,
+    "maxCpus": 500,
+    "gpuEnabled": true,
+    "instanceTypes": ["g4dn", "g5", "c6id", "m6id", "r6id"],
+    "subnets": [],
+    "securityGroups": [],
+    "disposeOnDeletion": true,
+    "allowBuckets": ["s3://ngi-igenomes", "s3://nf-core-awsmegatests"],
+    "efsCreate": false,
+    "dragenEnabled": false,
+    "ebsBootSize": 50
+  },
+  "labels": []
+}
