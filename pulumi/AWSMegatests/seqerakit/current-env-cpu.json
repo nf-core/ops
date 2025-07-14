@@ -31,4 +31,5 @@
     "arm64Enabled": false
   },
   "labels": []
+  // Pipeline ResourceLabel
 }
