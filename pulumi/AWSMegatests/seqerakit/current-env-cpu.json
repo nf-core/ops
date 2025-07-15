@@ -10,6 +10,7 @@
   "waveEnabled": true,
   "fusion2Enabled": true,
   "nvnmeStorageEnabled": true,
+  "fusionSnapshots": true,
   "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n}\n",
   "forge": {
     "type": "SPOT",
