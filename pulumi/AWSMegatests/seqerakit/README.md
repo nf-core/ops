@@ -5,10 +5,9 @@ Contains the seqerakit configurations for the three core compute environments us
 ## Quick Start
 
 1. Install seqerakit: `pip install seqerakit`
-2. Install Tower CLI v0.13.0+: Follow [installation guide](https://docs.seqera.io/platform/23.3.0/cli/overview)
-3. Install direnv: `brew install direnv`
-4. Allow environment loading: `direnv allow`
-5. Deploy compute environments:
+2. Install direnv: `brew install direnv`
+3. Allow environment loading: `direnv allow`
+4. Deploy compute environments:
    ```bash
    seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
    seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
@@ -61,18 +60,49 @@ All environments share these settings:
 
 ## Snapshots Configuration
 
-All three environments have fusion snapshots enabled using the Tower CLI v0.13.0+ format:
+All three environments have fusion snapshots enabled using the seqerakit `fusionSnapshots` field:
 
 ```json
 {
   "fusionSnapshots": true,
   "fusion2Enabled": true,
   "waveEnabled": true,
-  "nvnmeStorageEnabled": true
+  "nvnmeStorageEnabled": true,
+  "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n}\n"
 }
 ```
 
-This replaces the previous configuration method that embedded snapshots settings in `nextflowConfig`.
+This approach keeps snapshots configuration separate from Nextflow configuration, making it cleaner and more maintainable.
+
+## Seqerakit Deployment
+
+### Why Seqerakit?
+
+We use seqerakit for Infrastructure as Code management of compute environments because:
+
+- **Native snapshots support**: Supports the `fusionSnapshots` field directly
+- **Clean configuration**: No need to embed snapshots in `nextflowConfig`
+- **GitOps workflow**: Infrastructure managed through version control
+- **Validation**: Built-in `--dryrun` support for testing configurations
+
+### Deployment Commands
+
+```bash
+# Deploy individual environments
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
+seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
+seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml
+
+# Validate configurations (dry run)
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
+seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml --dryrun
+seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --dryrun
+
+# Delete environments
+seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --delete
+seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml --delete
+seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --delete
+```
 
 ## GitOps Workflow
 
@@ -104,6 +134,40 @@ compute-envs:
     overwrite: True
 ```
 
+### JSON Configuration Structure
+
+Each JSON file contains the complete compute environment configuration:
+
+```json
+{
+  "discriminator": "aws-batch",
+  "region": "eu-west-1",
+  "executionRole": "arn:aws:iam::...:role/TowerForge-...-ExecutionRole",
+  "headJobRole": "arn:aws:iam::...:role/TowerForge-...-FargateRole",
+  "workDir": "s3://nf-core-awsmegatests",
+  "headJobCpus": 4,
+  "headJobMemoryMb": 16384,
+  "waveEnabled": true,
+  "fusion2Enabled": true,
+  "nvnmeStorageEnabled": true,
+  "fusionSnapshots": true,
+  "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n}\n",
+  "forge": {
+    "type": "SPOT",
+    "minCpus": 0,
+    "maxCpus": 500,
+    "gpuEnabled": false,
+    "instanceTypes": ["c6id", "m6id", "r6id"],
+    "allowBuckets": [
+      "s3://ngi-igenomes",
+      "s3://nf-core-awsmegatests",
+      "s3://annotation-cache/"
+    ],
+    "fargateHeadEnabled": true
+  }
+}
+```
+
 ## Environment Variables
 
 The `.envrc` file defines key configuration variables:
@@ -117,53 +181,22 @@ export AWS_WORK_DIR="s3://nf-core-awsmegatests"
 export AWS_COMPUTE_ENV_ALLOWED_BUCKETS="s3://ngi-igenomes,s3://annotation-cache"
 ```
 
-## Deployment Commands
-
-### Individual Environment Deployment
-
-```bash
-# CPU environment
-seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
-
-# ARM environment
-seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
-
-# GPU environment
-seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml
-```
-
-### Validation (Dry Run)
-
-```bash
-# Validate individual configurations
-seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
-seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml --dryrun
-seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --dryrun
-```
-
-### Cleanup
-
-```bash
-# Delete environments
-seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --delete
-seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml --delete
-seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --delete
-```
-
 ## Resolved Issues
 
-✅ **Snapshots enabled for all environments**: All three compute environments now have fusion snapshots enabled using the Tower CLI v0.13.0+ format with `"fusionSnapshots": true`.
+✅ **Snapshots enabled for all environments**: All three compute environments now have fusion snapshots enabled using the seqerakit `fusionSnapshots` field.
 
 ✅ **GPU functionality**: GPU environment properly configured with GPU-enabled instances and fallback CPU instances.
 
 ✅ **Consistent configuration**: All environments follow the same patterns with appropriate instance types for their use cases.
 
+✅ **Clean configuration**: Using seqerakit's native `fusionSnapshots` field instead of embedding in `nextflowConfig`.
+
 ## Environment IDs
 
 For reference, the current environment IDs are:
 
-- CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu`
-- ARM: `5LWYX9a2GxrIFiax8tn9DV` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
+- CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu_snapshots`
+- ARM: `6PbzdQZOmWlSn6AQkbfZWU` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
 - GPU: `7Gjp4zOBlhH9xMIlfs9LM2` → `aws_ireland_fusionv2_nvme_gpu_snapshots`
 
 ## Technical Details
@@ -175,4 +208,4 @@ For reference, the current environment IDs are:
 - **Storage**: S3 for work directory, NVMe for fast local storage
 - **Networking**: Managed by Seqera Platform forge mode
 - **Cost Optimization**: SPOT instances for all environments
-- **Snapshots**: Enabled for optimized container layer caching
+- **Snapshots**: Enabled for optimized container layer caching using seqerakit's native `fusionSnapshots` field
