@@ -20,7 +20,7 @@ Contains the seqerakit configurations for the three core compute environments us
 
 This repository manages **three compute environments** on AWS Batch, all with fusion snapshots enabled:
 
-#### 1. **CPU Environment** (`aws_ireland_fusionv2_nvme_cpu_snapshots`)
+#### 1. **CPU Environment** (`aws_ireland_fusionv2_nvme_cpu`)
 
 - **Instance Types**: `c6id`, `m6id`, `r6id` (Intel x86_64 with NVMe storage)
 - **Features**: Fusion v2, Wave, NVMe storage, **snapshots enabled**
@@ -181,23 +181,21 @@ export AWS_WORK_DIR="s3://nf-core-awsmegatests"
 export AWS_COMPUTE_ENV_ALLOWED_BUCKETS="s3://ngi-igenomes,s3://annotation-cache"
 ```
 
-## Resolved Issues
+## Current Environment Status
 
-✅ **Snapshots enabled for all environments**: All three compute environments now have fusion snapshots enabled using the seqerakit `fusionSnapshots` field.
+All three compute environments are successfully deployed with fusion snapshots enabled:
 
-✅ **GPU functionality**: GPU environment properly configured with GPU-enabled instances and fallback CPU instances.
-
-✅ **Consistent configuration**: All environments follow the same patterns with appropriate instance types for their use cases.
-
-✅ **Clean configuration**: Using seqerakit's native `fusionSnapshots` field instead of embedding in `nextflowConfig`.
+✅ **CPU Environment**: Standard x86_64 instances with fusion snapshots
+✅ **ARM Environment**: ARM Graviton instances with fusion snapshots  
+✅ **GPU Environment**: GPU + CPU instances with fusion snapshots
 
 ## Environment IDs
 
 For reference, the current environment IDs are:
 
-- CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu_snapshots`
-- ARM: `6PbzdQZOmWlSn6AQkbfZWU` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
-- GPU: `7Gjp4zOBlhH9xMIlfs9LM2` → `aws_ireland_fusionv2_nvme_gpu_snapshots`
+- CPU: `53ljSqphNKjm6jjmuB6T9b` → `aws_ireland_fusionv2_nvme_cpu`
+- ARM: `7eC1zALvNGIaFXbybVohP1` → `aws_ireland_fusionv2_nvme_cpu_ARM_snapshots`
+- GPU: `2SRyFNKtLVAJCxMhcZRMfx` → `aws_ireland_fusionv2_nvme_gpu_snapshots`
 
 ## Technical Details
 
