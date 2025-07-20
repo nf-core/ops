@@ -49,7 +49,7 @@ jobs:
 
       - name: PR previews
         if: ${{ github.event_name == 'pull_request' }}
-        uses: pulumi/actions@df5a93ad715135263c732ba288301bd044c383c0 # v6
+        uses: pulumi/actions@cc7494be991dba0978f7ffafaf995b0449a0998e # v6
         with:
           command: preview
           stack-name: ${{ env.PULUMI_STACK_NAME }}
@@ -57,7 +57,7 @@ jobs:
 
       - name: Apply infrastructure update
         if: ${{ github.event_name == 'push' }}
-        uses: pulumi/actions@df5a93ad715135263c732ba288301bd044c383c0 # v6
+        uses: pulumi/actions@cc7494be991dba0978f7ffafaf995b0449a0998e # v6
         with:
           command: up
           stack-name: ${{ env.PULUMI_STACK_NAME }}
