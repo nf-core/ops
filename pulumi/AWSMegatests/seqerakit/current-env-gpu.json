@@ -2,11 +2,16 @@
   "discriminator": "aws-batch",
   "region": "eu-west-1",
   "executionRole": "arn:aws:iam::728131696474:role/TowerForge-7Gjp4zOBlhH9xMIlfs9LM2-ExecutionRole",
+  "headJobRole": "arn:aws:iam::728131696474:role/TowerForge-7Gjp4zOBlhH9xMIlfs9LM2-FargateRole",
   "workDir": "s3://nf-core-awsmegatests",
+  "headJobCpus": 4,
+  "headJobMemoryMb": 16384,
   "environment": [],
   "waveEnabled": true,
   "fusion2Enabled": true,
   "nvnmeStorageEnabled": true,
+  "fusionSnapshots": true,
+  "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n}\n",
   "forge": {
     "type": "SPOT",
     "minCpus": 0,
@@ -16,10 +21,15 @@
     "subnets": [],
     "securityGroups": [],
     "disposeOnDeletion": true,
-    "allowBuckets": ["s3://ngi-igenomes", "s3://nf-core-awsmegatests"],
+    "allowBuckets": [
+      "s3://ngi-igenomes",
+      "s3://nf-core-awsmegatests",
+      "s3://annotation-cache/"
+    ],
     "efsCreate": false,
     "dragenEnabled": false,
-    "ebsBootSize": 50
+    "ebsBootSize": 50,
+    "fargateHeadEnabled": true
   },
   "labels": []
 }
