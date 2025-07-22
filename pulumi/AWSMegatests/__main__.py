@@ -1,5 +1,6 @@
 """An AWS Python Pulumi program"""
 
+import os
 import pulumi
 import pulumi_github as github
 import pulumi_command as command
@@ -78,6 +79,11 @@ seqerakit_environment = {
     "AWS_REGION": "eu-west-1",
     "AWS_WORK_DIR": "s3://nf-core-awsmegatests",
     "AWS_COMPUTE_ENV_ALLOWED_BUCKETS": "s3://ngi-igenomes,s3://annotation-cache",
+    # Add AWS credentials for seqerakit to create compute environments
+    "AWS_ACCESS_KEY_ID": pulumi.Config("aws").get("accessKey")
+    or os.environ.get("AWS_ACCESS_KEY_ID"),
+    "AWS_SECRET_ACCESS_KEY": pulumi.Config("aws").get_secret("secretKey")
+    or os.environ.get("AWS_SECRET_ACCESS_KEY"),
 }
 
 # Deploy CPU environment with seqerakit
@@ -147,58 +153,62 @@ arm_compute_env_id = get_compute_env_id(
 
 # GitHub provider already configured above
 
-# Create org-level GitHub secrets for compute environment IDs
-cpu_secret = github.ActionsOrganizationSecret(
-    "tower-compute-env-cpu",
-    visibility="private",
-    secret_name="TOWER_COMPUTE_ENV_CPU",
-    plaintext_value=cpu_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
-)
+# TODO: GitHub secrets commented out due to insufficient token permissions
+# The GitHub token needs admin:org scope to manage organization secrets
+# For now, we'll export the values so they can be manually added
 
-gpu_secret = github.ActionsOrganizationSecret(
-    "tower-compute-env-gpu",
-    visibility="private",
-    secret_name="TOWER_COMPUTE_ENV_GPU",
-    plaintext_value=gpu_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
-)
+# # Create org-level GitHub secrets for compute environment IDs
+# cpu_secret = github.ActionsOrganizationSecret(
+#     "tower-compute-env-cpu",
+#     visibility="private",
+#     secret_name="TOWER_COMPUTE_ENV_CPU",
+#     plaintext_value=cpu_compute_env_id,
+#     opts=pulumi.ResourceOptions(provider=github_provider),
+# )
 
-arm_secret = github.ActionsOrganizationSecret(
-    "tower-compute-env-arm",
-    visibility="private",
-    secret_name="TOWER_COMPUTE_ENV_ARM",
-    plaintext_value=arm_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
-)
+# gpu_secret = github.ActionsOrganizationSecret(
+#     "tower-compute-env-gpu",
+#     visibility="private",
+#     secret_name="TOWER_COMPUTE_ENV_GPU",
+#     plaintext_value=gpu_compute_env_id,
+#     opts=pulumi.ResourceOptions(provider=github_provider),
+# )
 
-# Create org-level GitHub secret for Seqera Platform API token
-seqera_token_secret = github.ActionsOrganizationSecret(
-    "tower-access-token",
-    visibility="private",
-    secret_name="TOWER_ACCESS_TOKEN",
-    plaintext_value=tower_access_token,
-    opts=pulumi.ResourceOptions(provider=github_provider),
-)
+# arm_secret = github.ActionsOrganizationSecret(
+#     "tower-compute-env-arm",
+#     visibility="private",
+#     secret_name="TOWER_COMPUTE_ENV_ARM",
+#     plaintext_value=arm_compute_env_id,
+#     opts=pulumi.ResourceOptions(provider=github_provider),
+# )
 
-# Create org-level GitHub secret for workspace ID
-workspace_id_secret = github.ActionsOrganizationSecret(
-    "tower-workspace-id",
-    visibility="private",
-    secret_name="TOWER_WORKSPACE_ID",
-    plaintext_value=workspace_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
-)
+# # Create org-level GitHub secret for Seqera Platform API token
+# seqera_token_secret = github.ActionsOrganizationSecret(
+#     "tower-access-token",
+#     visibility="private",
+#     secret_name="TOWER_ACCESS_TOKEN",
+#     plaintext_value=tower_access_token,
+#     opts=pulumi.ResourceOptions(provider=github_provider),
+# )
 
-# Export the created secrets
+# # Create org-level GitHub secret for workspace ID
+# workspace_id_secret = github.ActionsOrganizationSecret(
+#     "tower-workspace-id",
+#     visibility="private",
+#     secret_name="TOWER_WORKSPACE_ID",
+#     plaintext_value=workspace_id,
+#     opts=pulumi.ResourceOptions(provider=github_provider),
+# )
+
+# Export GitHub secret names that need to be created manually
 pulumi.export(
-    "github_secrets",
+    "github_secrets_to_create",
     {
-        "compute_env_cpu": cpu_secret.secret_name,
-        "compute_env_gpu": gpu_secret.secret_name,
-        "compute_env_arm": arm_secret.secret_name,
-        "tower_access_token": seqera_token_secret.secret_name,
-        "tower_workspace_id": workspace_id_secret.secret_name,
+        "TOWER_COMPUTE_ENV_CPU": cpu_compute_env_id,
+        "TOWER_COMPUTE_ENV_GPU": gpu_compute_env_id,
+        "TOWER_COMPUTE_ENV_ARM": arm_compute_env_id,
+        "TOWER_ACCESS_TOKEN": "*** Use Tower access token from 1Password ***",
+        "TOWER_WORKSPACE_ID": workspace_id,
     },
 )
 
