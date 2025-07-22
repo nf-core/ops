@@ -4,28 +4,8 @@ import pulumi
 import pulumi_github as github
 import pulumi_command as command
 import pulumi_onepassword as onepassword
+import pulumi_aws as aws
 from pulumi_aws import s3
-
-# Import existing AWS resources used by nf-core megatests
-# S3 bucket for Nextflow work directory (already exists)
-nf_core_awsmegatests_bucket = s3.Bucket(
-    "nf-core-awsmegatests",
-    bucket="nf-core-awsmegatests",
-    opts=pulumi.ResourceOptions(
-        import_="nf-core-awsmegatests",  # Import existing bucket
-        protect=True,  # Protect from accidental deletion
-    ),
-)
-
-# Export the bucket information
-pulumi.export(
-    "megatests_bucket",
-    {
-        "name": nf_core_awsmegatests_bucket.bucket,
-        "arn": nf_core_awsmegatests_bucket.arn,
-        "region": "eu-west-1",
-    },
-)
 
 # Configure the 1Password provider explicitly
 onepassword_config = pulumi.Config("pulumi-onepassword")
@@ -48,6 +28,48 @@ github_token_item = onepassword.get_item_output(
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 github_token = github_token_item.credential
+
+# Get AWS credentials from 1Password
+aws_credentials_item = onepassword.get_item_output(
+    vault="Dev",
+    title="AWS Tower Test Credentials",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
+)
+
+# Configure AWS provider with 1Password credentials
+aws_provider = aws.Provider(
+    "aws-provider",
+    access_key=aws_credentials_item.username,  # access key id
+    secret_key=aws_credentials_item.credential,  # secret access key
+    region="eu-west-1",
+)
+
+# Configure GitHub provider with 1Password credentials
+github_provider = github.Provider(
+    "github-provider", token=github_token, owner="nf-core"
+)
+
+# Import existing AWS resources used by nf-core megatests
+# S3 bucket for Nextflow work directory (already exists)
+nf_core_awsmegatests_bucket = s3.Bucket(
+    "nf-core-awsmegatests",
+    bucket="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(
+        import_="nf-core-awsmegatests",  # Import existing bucket
+        protect=True,  # Protect from accidental deletion
+        provider=aws_provider,  # Use configured AWS provider
+    ),
+)
+
+# Export the bucket information
+pulumi.export(
+    "megatests_bucket",
+    {
+        "name": nf_core_awsmegatests_bucket.bucket,
+        "arn": nf_core_awsmegatests_bucket.arn,
+        "region": "eu-west-1",
+    },
+)
 
 # Deploy seqerakit environments and extract compute IDs
 # NOTE: We could check for tw-cli availability here, but we'll let seqerakit
@@ -134,8 +156,7 @@ arm_compute_env_id = get_compute_env_id(
     "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots", arm_deploy_cmd
 )
 
-# Create GitHub provider
-github_provider = github.Provider("github", token=github_token)
+# GitHub provider already configured above
 
 # Create org-level GitHub secrets for compute environment IDs
 cpu_secret = github.ActionsOrganizationSecret(
