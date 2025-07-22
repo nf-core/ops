@@ -9,4 +9,5 @@ dependencies = [
     "pulumi-aws>=6.81.0,<7.0.0",
     "pulumi-github>=6.4.0,<7.0.0",
     "pulumi-command>=1.0.1,<2.0.0",
+    "pulumi-onepassword>=2.3.0,<3.0.0",
 ] 

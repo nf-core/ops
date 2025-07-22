@@ -3,6 +3,7 @@
 import pulumi
 import pulumi_github as github
 import pulumi_command as command
+import pulumi_onepassword as onepassword
 from pulumi_aws import s3
 
 # Create an AWS resource (S3 Bucket)
@@ -11,23 +12,27 @@ bucket = s3.Bucket("my-bucket")
 # Export the name of the bucket
 pulumi.export("bucket_name", bucket.id)  # type: ignore[attr-defined]
 
-
-# Get secrets from 1Password using the CLI
-def get_1password_secret(secret_ref: str) -> str:
-    """Get a secret from 1Password using the CLI"""
-    get_secret_cmd = command.local.Command(
-        f"get-1password-{secret_ref.replace('/', '-').replace(' ', '-')}",
-        create=f"op read '{secret_ref}'",
-        opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
-    )
-    return get_secret_cmd.stdout
-
-
-# Get secrets from 1Password
-tower_access_token = get_1password_secret(
-    "op://Employee/Seqera Platform Token/credential"
+# Configure the 1Password provider explicitly
+onepassword_config = pulumi.Config("pulumi-onepassword")
+onepassword_provider = onepassword.Provider(
+    "onepassword-provider",
+    service_account_token=onepassword_config.require_secret("service_account_token"),
 )
-github_token = get_1password_secret("op://Employee/Github Token nf-core/credential")
+
+# Get secrets from 1Password using the provider
+tower_access_token_item = onepassword.get_item_output(
+    vault="Employee",
+    title="Seqera Platform Token",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
+)
+tower_access_token = tower_access_token_item.credential
+
+github_token_item = onepassword.get_item_output(
+    vault="Employee",
+    title="Github Token nf-core",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
+)
+github_token = github_token_item.credential
 
 # Get workspace ID from Tower CLI
 workspace_cmd = command.local.Command(
