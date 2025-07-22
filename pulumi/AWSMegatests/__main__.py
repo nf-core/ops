@@ -23,26 +23,15 @@ tower_access_token_item = onepassword.get_item_output(
 tower_access_token = tower_access_token_item.credential
 
 github_token_item = onepassword.get_item_output(
-    vault="Employee",
-    title="Github Token nf-core",
+    vault="Dev",
+    title="GitHub nf-core PA Token Pulumi",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 github_token = github_token_item.credential
 
-# Get AWS credentials from 1Password
-aws_credentials_item = onepassword.get_item_output(
-    vault="Dev",
-    title="AWS megatests",
-    opts=pulumi.InvokeOptions(provider=onepassword_provider),
-)
-
-# Configure AWS provider with 1Password credentials
-aws_provider = aws.Provider(
-    "aws-provider",
-    access_key=aws_credentials_item.username,  # access key id
-    secret_key=aws_credentials_item.credential,  # secret access key
-    region="eu-west-1",
-)
+# Use default AWS provider which will read from environment variables
+# (set via .envrc with 1Password integration)
+aws_provider = aws.Provider("aws-provider", region="eu-west-1")
 
 # Configure GitHub provider with 1Password credentials
 github_provider = github.Provider(
