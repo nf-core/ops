@@ -32,7 +32,7 @@ github_token = github_token_item.credential
 # Get AWS credentials from 1Password
 aws_credentials_item = onepassword.get_item_output(
     vault="Dev",
-    title="AWS Tower Test Credentials",
+    title="AWS megatests",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 
