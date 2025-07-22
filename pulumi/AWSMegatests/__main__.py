@@ -16,8 +16,8 @@ onepassword_provider = onepassword.Provider(
 
 # Get secrets from 1Password using the provider
 tower_access_token_item = onepassword.get_item_output(
-    vault="Employee",
-    title="Seqera Platform Token",
+    vault="Dev",
+    uuid="zwsrkl26xz3biqwcmw64qizxie",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
 tower_access_token = tower_access_token_item.credential

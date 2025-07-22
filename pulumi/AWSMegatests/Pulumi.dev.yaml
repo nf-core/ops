@@ -2,4 +2,4 @@ config:
   aws:region: eu-west-1
   github:owner: nf-core
   pulumi-onepassword:service_account_token:
-    secure: AAABAHEZUpSDcfk5pGmN4d53Un3F9kxBGLWme9jG4Lw=
+    secure: AAABAA4TU/l5bba53oU5RyMyux7vTyyoCc9U6HGsOYM=
