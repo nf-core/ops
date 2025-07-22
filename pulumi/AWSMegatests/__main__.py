@@ -35,6 +35,9 @@ github_token_item = onepassword.get_item_output(
 github_token = github_token_item.credential
 
 # Deploy seqerakit environments and extract compute IDs
+# NOTE: We could check for tw-cli availability here, but we'll let seqerakit
+# throw the appropriate error if it's missing. Seqerakit requires tw-cli to be
+# installed and available in PATH.
 seqerakit_environment = {
     "TOWER_ACCESS_TOKEN": tower_access_token,
     "ORGANIZATION_NAME": "nf-core",
