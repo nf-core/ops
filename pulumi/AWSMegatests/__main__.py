@@ -48,6 +48,11 @@ nf_core_awsmegatests_bucket = s3.Bucket(
         import_="nf-core-awsmegatests",  # Import existing bucket
         protect=True,  # Protect from accidental deletion
         provider=aws_provider,  # Use configured AWS provider
+        ignore_changes=[
+            "cors_rules",
+            "lifecycle_rules",
+            "versioning",
+        ],  # Don't modify existing configurations
     ),
 )
 
