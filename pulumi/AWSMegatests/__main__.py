@@ -3,72 +3,149 @@
 import pulumi
 import pulumi_github as github
 import pulumi_command as command
+import pulumi_onepassword as onepassword
+import pulumi_aws as aws
 from pulumi_aws import s3
 
-# Create an AWS resource (S3 Bucket)
-bucket = s3.Bucket("my-bucket")
-
-# Export the name of the bucket
-pulumi.export("bucket_name", bucket.id)  # type: ignore[attr-defined]
-
-
-# Get secrets from 1Password using the CLI
-def get_1password_secret(secret_ref: str) -> str:
-    """Get a secret from 1Password using the CLI"""
-    get_secret_cmd = command.local.Command(
-        f"get-1password-{secret_ref.replace('/', '-').replace(' ', '-')}",
-        create=f"op read '{secret_ref}'",
-        opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
-    )
-    return get_secret_cmd.stdout
-
-
-# Get secrets from 1Password
-tower_access_token = get_1password_secret(
-    "op://Employee/Seqera Platform Token/credential"
+# Configure the 1Password provider explicitly
+onepassword_config = pulumi.Config("pulumi-onepassword")
+onepassword_provider = onepassword.Provider(
+    "onepassword-provider",
+    service_account_token=onepassword_config.require_secret("service_account_token"),
 )
-github_token = get_1password_secret("op://Employee/Github Token nf-core/credential")
+
+# Get secrets from 1Password using the provider
+tower_access_token_item = onepassword.get_item_output(
+    vault="Dev",
+    uuid="zwsrkl26xz3biqwcmw64qizxie",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
+)
+tower_access_token = tower_access_token_item.credential
+
+github_token_item = onepassword.get_item_output(
+    vault="Dev",
+    title="GitHub nf-core PA Token Pulumi",
+    opts=pulumi.InvokeOptions(provider=onepassword_provider),
+)
+github_token = github_token_item.credential
+
+# Use default AWS provider which will read from environment variables
+# (set via .envrc with 1Password integration)
+aws_provider = aws.Provider("aws-provider", region="eu-west-1")
+
+# Configure GitHub provider with 1Password credentials
+github_provider = github.Provider(
+    "github-provider", token=github_token, owner="nf-core"
+)
+
+# Import existing AWS resources used by nf-core megatests
+# S3 bucket for Nextflow work directory (already exists)
+nf_core_awsmegatests_bucket = s3.Bucket(
+    "nf-core-awsmegatests",
+    bucket="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(
+        import_="nf-core-awsmegatests",  # Import existing bucket
+        protect=True,  # Protect from accidental deletion
+        provider=aws_provider,  # Use configured AWS provider
+    ),
+)
+
+# Export the bucket information
+pulumi.export(
+    "megatests_bucket",
+    {
+        "name": nf_core_awsmegatests_bucket.bucket,
+        "arn": nf_core_awsmegatests_bucket.arn,
+        "region": "eu-west-1",
+    },
+)
+
+# Deploy seqerakit environments and extract compute IDs
+# NOTE: We could check for tw-cli availability here, but we'll let seqerakit
+# throw the appropriate error if it's missing. Seqerakit requires tw-cli to be
+# installed and available in PATH.
+#
+# NOTE: Seqerakit will create and manage:
+# - AWS Batch compute environments and job queues
+# - IAM roles (ExecutionRole, FargateRole) with TowerForge prefix
+# - Security groups and networking resources
+# These are managed by Seqera Platform and should not be imported into Pulumi
+seqerakit_environment = {
+    "TOWER_ACCESS_TOKEN": tower_access_token,
+    "ORGANIZATION_NAME": "nf-core",
+    "WORKSPACE_NAME": "AWSmegatests",
+    "AWS_CREDENTIALS_NAME": "tower-awstest",
+    "AWS_REGION": "eu-west-1",
+    "AWS_WORK_DIR": "s3://nf-core-awsmegatests",
+    "AWS_COMPUTE_ENV_ALLOWED_BUCKETS": "s3://ngi-igenomes,s3://annotation-cache",
+}
+
+# Deploy CPU environment with seqerakit
+cpu_deploy_cmd = command.local.Command(
+    "deploy-cpu-environment",
+    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml",
+    environment=seqerakit_environment,
+    opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
+)
+
+# Deploy GPU environment with seqerakit
+gpu_deploy_cmd = command.local.Command(
+    "deploy-gpu-environment",
+    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml",
+    environment=seqerakit_environment,
+    opts=pulumi.ResourceOptions(
+        additional_secret_outputs=["stdout"], depends_on=[cpu_deploy_cmd]
+    ),
+)
+
+# Deploy ARM environment with seqerakit
+arm_deploy_cmd = command.local.Command(
+    "deploy-arm-environment",
+    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
+    environment=seqerakit_environment,
+    opts=pulumi.ResourceOptions(
+        additional_secret_outputs=["stdout"], depends_on=[gpu_deploy_cmd]
+    ),
+)
 
 # Get workspace ID from Tower CLI
 workspace_cmd = command.local.Command(
     "get-workspace-id",
     create="tw -o nf-core workspaces list --format json | jq -r '.[] | select(.name==\"AWSmegatests\") | .id'",
-    environment={
-        "TOWER_ACCESS_TOKEN": tower_access_token,
-        "ORGANIZATION_NAME": "nf-core",
-    },
-    opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
+    environment=seqerakit_environment,
+    opts=pulumi.ResourceOptions(
+        additional_secret_outputs=["stdout"], depends_on=[arm_deploy_cmd]
+    ),
 )
 workspace_id = workspace_cmd.stdout
 
 
-# Get compute environment IDs using Tower CLI
-def get_compute_env_id(env_name: str, display_name: str) -> str:
-    """Get compute environment ID by name"""
+# Extract compute environment IDs after deployment
+def get_compute_env_id(env_name: str, display_name: str, depends_on_cmd) -> str:
+    """Get compute environment ID by name after deployment"""
     get_env_cmd = command.local.Command(
         f"get-compute-env-{env_name}",
         create=f"tw -o nf-core -w AWSmegatests compute-envs list --format json | jq -r '.[] | select(.name==\"{display_name}\") | .id'",
-        environment={
-            "TOWER_ACCESS_TOKEN": tower_access_token,
-            "ORGANIZATION_NAME": "nf-core",
-            "WORKSPACE_NAME": "AWSmegatests",
-        },
-        opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
+        environment=seqerakit_environment,
+        opts=pulumi.ResourceOptions(
+            additional_secret_outputs=["stdout"], depends_on=[depends_on_cmd]
+        ),
     )
     return get_env_cmd.stdout
 
 
-# Get compute environment IDs for each environment
-cpu_compute_env_id = get_compute_env_id("cpu", "aws_ireland_fusionv2_nvme_cpu")
+# Get compute environment IDs for each environment after deployment
+cpu_compute_env_id = get_compute_env_id(
+    "cpu", "aws_ireland_fusionv2_nvme_cpu", cpu_deploy_cmd
+)
 gpu_compute_env_id = get_compute_env_id(
-    "gpu", "aws_ireland_fusionv2_nvme_gpu_snapshots"
+    "gpu", "aws_ireland_fusionv2_nvme_gpu_snapshots", gpu_deploy_cmd
 )
 arm_compute_env_id = get_compute_env_id(
-    "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots"
+    "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots", arm_deploy_cmd
 )
 
-# Create GitHub provider
-github_provider = github.Provider("github", token=github_token)
+# GitHub provider already configured above
 
 # Create org-level GitHub secrets for compute environment IDs
 cpu_secret = github.ActionsOrganizationSecret(
@@ -133,3 +210,13 @@ pulumi.export(
 
 # Export workspace ID for reference
 pulumi.export("workspace_id", workspace_id)
+
+# Export deployment status for reference
+pulumi.export(
+    "seqerakit_deployments",
+    {
+        "cpu_deployment": cpu_deploy_cmd.stdout,
+        "gpu_deployment": gpu_deploy_cmd.stdout,
+        "arm_deployment": arm_deploy_cmd.stdout,
+    },
+)
