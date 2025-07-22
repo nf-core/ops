@@ -6,11 +6,26 @@ import pulumi_command as command
 import pulumi_onepassword as onepassword
 from pulumi_aws import s3
 
-# Create an AWS resource (S3 Bucket)
-bucket = s3.Bucket("my-bucket")
+# Import existing AWS resources used by nf-core megatests
+# S3 bucket for Nextflow work directory (already exists)
+nf_core_awsmegatests_bucket = s3.Bucket(
+    "nf-core-awsmegatests",
+    bucket="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(
+        import_="nf-core-awsmegatests",  # Import existing bucket
+        protect=True,  # Protect from accidental deletion
+    ),
+)
 
-# Export the name of the bucket
-pulumi.export("bucket_name", bucket.id)  # type: ignore[attr-defined]
+# Export the bucket information
+pulumi.export(
+    "megatests_bucket",
+    {
+        "name": nf_core_awsmegatests_bucket.bucket,
+        "arn": nf_core_awsmegatests_bucket.arn,
+        "region": "eu-west-1",
+    },
+)
 
 # Configure the 1Password provider explicitly
 onepassword_config = pulumi.Config("pulumi-onepassword")
@@ -38,6 +53,12 @@ github_token = github_token_item.credential
 # NOTE: We could check for tw-cli availability here, but we'll let seqerakit
 # throw the appropriate error if it's missing. Seqerakit requires tw-cli to be
 # installed and available in PATH.
+#
+# NOTE: Seqerakit will create and manage:
+# - AWS Batch compute environments and job queues
+# - IAM roles (ExecutionRole, FargateRole) with TowerForge prefix
+# - Security groups and networking resources
+# These are managed by Seqera Platform and should not be imported into Pulumi
 seqerakit_environment = {
     "TOWER_ACCESS_TOKEN": tower_access_token,
     "ORGANIZATION_NAME": "nf-core",
