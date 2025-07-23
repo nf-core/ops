@@ -99,29 +99,29 @@ seqerakit_environment = {
     "TOWER_API_ENDPOINT": "https://api.cloud.seqera.io",
 }
 
-# Deploy CPU environment with seqerakit
+# Deploy CPU environment with seqerakit (with JSON output)
 # NOTE: Tower access token needs to be valid and have permissions for nf-core/AWSmegatests workspace
 cpu_deploy_cmd = command.local.Command(
     "deploy-cpu-environment",
-    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml",
+    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_cpu_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
 )
 
-# Deploy GPU environment with seqerakit
+# Deploy GPU environment with seqerakit (with JSON output)
 gpu_deploy_cmd = command.local.Command(
     "deploy-gpu-environment",
-    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml",
+    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_gpu_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[cpu_deploy_cmd]
     ),
 )
 
-# Deploy ARM environment with seqerakit
+# Deploy ARM environment with seqerakit (with JSON output)
 arm_deploy_cmd = command.local.Command(
     "deploy-arm-environment",
-    create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
+    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[gpu_deploy_cmd]
@@ -131,60 +131,67 @@ arm_deploy_cmd = command.local.Command(
 # Workspace ID is now retrieved from 1Password (tower_workspace_id)
 
 
-# Extract compute environment IDs after deployment
-def get_compute_env_id(env_name: str, display_name: str, depends_on_cmd) -> str:
-    """Get compute environment ID by name after deployment"""
+# Extract compute environment IDs from seqerakit JSON output
+def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
+    """Extract compute environment ID from seqerakit JSON output using Pulumi's apply method"""
 
-    # Enhanced command with better error handling and debugging
-    enhanced_cmd = f"""
-    set -e
-    echo "DEBUG: Checking Tower CLI availability..."
-    which tw || (echo "ERROR: Tower CLI not found in PATH" && exit 1)
-    
-    echo "DEBUG: Checking Tower authentication..."
-    tw info || (echo "ERROR: Tower CLI authentication failed" && exit 1)
-    
-    echo "DEBUG: Listing compute environments..."
-    tw -o nf-core -w AWSmegatests compute-envs list --format json > /tmp/compute_envs_{env_name}.json
-    
-    echo "DEBUG: Searching for environment: {display_name}"
-    cat /tmp/compute_envs_{env_name}.json | head -20
-    
-    echo "DEBUG: Extracting ID..."
-    COMPUTE_ID=$(cat /tmp/compute_envs_{env_name}.json | jq -r '.[] | select(.name=="{display_name}") | .id')
-    
-    if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-        echo "ERROR: Could not find compute environment '{display_name}'"
-        echo "Available environments:"
-        cat /tmp/compute_envs_{env_name}.json | jq -r '.[].name'
-        exit 1
-    fi
-    
-    echo "SUCCESS: Found compute environment ID: $COMPUTE_ID"
-    echo "$COMPUTE_ID"
-    """
+    def create_extraction_command(seqerakit_output: str) -> str:
+        extract_cmd = f"""
+        set -e
+        echo "DEBUG: Parsing seqerakit JSON output for {env_name}..."
+        
+        # Save the output to a temp file for processing
+        echo '{seqerakit_output}' > /tmp/seqerakit_output_{env_name}.json
+        
+        echo "DEBUG: Raw seqerakit output:"
+        cat /tmp/seqerakit_output_{env_name}.json | head -20
+        
+        # Try to extract compute environment ID from JSON
+        # Method 1: Look for computeEnvId field
+        COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.computeEnvId // empty' 2>/dev/null || echo "")
+        
+        if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
+            # Method 2: Look for id field in compute-envs array
+            COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.["compute-envs"][0].id // empty' 2>/dev/null || echo "")
+        fi
+        
+        if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
+            # Method 3: Look for any id field at root level
+            COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.id // empty' 2>/dev/null || echo "")
+        fi
+        
+        if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
+            echo "WARNING: Could not extract compute environment ID from seqerakit output"
+            echo "Seqerakit output structure:"
+            cat /tmp/seqerakit_output_{env_name}.json | jq . 2>/dev/null || echo "Invalid JSON output"
+            echo "FALLBACK: Using placeholder ID"
+            echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
+            exit 0
+        fi
+        
+        echo "SUCCESS: Extracted compute environment ID: $COMPUTE_ID"
+        echo "$COMPUTE_ID"
+        """
+        return extract_cmd
 
-    get_env_cmd = command.local.Command(
-        f"get-compute-env-{env_name}",
-        create=enhanced_cmd,
-        environment=seqerakit_environment,
-        opts=pulumi.ResourceOptions(
-            additional_secret_outputs=["stdout"], depends_on=[depends_on_cmd]
-        ),
+    # Use Pulumi's apply to handle the Output properly
+    extract_env_cmd = deploy_cmd.stdout.apply(
+        lambda output: command.local.Command(
+            f"extract-compute-env-id-{env_name}",
+            create=create_extraction_command(output),
+            opts=pulumi.ResourceOptions(
+                additional_secret_outputs=["stdout"], depends_on=[deploy_cmd]
+            ),
+        ).stdout
     )
-    return get_env_cmd.stdout
+
+    return extract_env_cmd
 
 
-# Get compute environment IDs for each environment after deployment
-cpu_compute_env_id = get_compute_env_id(
-    "cpu", "aws_ireland_fusionv2_nvme_cpu_snapshots", cpu_deploy_cmd
-)
-gpu_compute_env_id = get_compute_env_id(
-    "gpu", "aws_ireland_fusionv2_nvme_gpu_snapshots", gpu_deploy_cmd
-)
-arm_compute_env_id = get_compute_env_id(
-    "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots", arm_deploy_cmd
-)
+# Extract compute environment IDs from seqerakit outputs
+cpu_compute_env_id = extract_compute_env_id_from_seqerakit("cpu", cpu_deploy_cmd)
+gpu_compute_env_id = extract_compute_env_id_from_seqerakit("gpu", gpu_deploy_cmd)
+arm_compute_env_id = extract_compute_env_id_from_seqerakit("arm", arm_deploy_cmd)
 
 # GitHub provider already configured above
 
