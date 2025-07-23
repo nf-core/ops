@@ -162,27 +162,71 @@ direnv exec . uv run pulumi stack output github_secrets    # Secret names
 
 ## Development Workflow
 
-### Making Changes
+### For Contributors
 
-1. **Update configurations** in `seqerakit/` directory
-2. **Preview changes**: `direnv exec . uv run pulumi preview`
-3. **Deploy**: `direnv exec . uv run pulumi up`
-4. **Verify**: Check GitHub secrets and compute environments
+**📝 Contributing to Infrastructure**
 
-### Common Operations
+Contributors **do not need** to run infrastructure locally. The workflow is:
+
+1. **Make your changes** to seqerakit configurations in `seqerakit/` directory
+2. **Create a Pull Request** with your changes
+3. **Core team will review** and run `pulumi preview` in Pulumi Cloud
+4. **Infrastructure is deployed** automatically via Pulumi Cloud + 1Password integration
+
+**Requirements for Contributors:**
+
+- ✅ None! No 1Password, AWS, or Pulumi access needed
+- ✅ Just edit the configuration files and make a PR
+- ✅ Core team handles all infrastructure operations
+
+### For Core Team (Infrastructure Access)
+
+**🔧 Infrastructure Management**
+
+Core team members with 1Password and Pulumi access:
+
+1. **Setup credentials**: Ensure 1Password service account token is configured
+2. **Preview changes**: Review PR changes in Pulumi Cloud preview
+3. **Deploy**: Merge PR triggers automatic deployment via Pulumi Cloud
+4. **Monitor**: Check Pulumi Console and AWS Console for deployment status
+
+**Local Development (Optional):**
 
 ```bash
-# Import existing AWS resources
-direnv exec . uv run pulumi import aws:s3/bucket:Bucket nf-core-awsmegatests nf-core-awsmegatests
+# If you need to run locally (requires 1Password access)
+direnv allow
+direnv exec . uv run pulumi preview
+direnv exec . uv run pulumi up
+```
+
+### Debugging Features
+
+**🔍 Enhanced Debugging**
+
+The system includes detailed debugging output:
+
+- **Tower CLI Availability**: Checks if Tower CLI is installed and accessible
+- **Authentication Status**: Verifies Tower CLI can authenticate with Seqera Platform
+- **Environment Listing**: Shows available compute environments for troubleshooting
+- **ID Extraction**: Detailed logging of compute environment ID retrieval process
+
+### Common Operations (Core Team)
+
+```bash
+# View current state
+uv run pulumi stack output
 
 # Refresh state to match actual infrastructure
-direnv exec . uv run pulumi refresh
+uv run pulumi refresh
 
 # View infrastructure in Pulumi Console
-direnv exec . uv run pulumi console
+uv run pulumi console
 
-# Clean up resources (use with caution)
-direnv exec . uv run pulumi destroy
+# Debug failed deployments
+uv run pulumi logs
+
+# Import existing AWS resources (if needed)
+uv run pulumi import aws:s3/bucket:Bucket nf-core-awsmegatests nf-core-awsmegatests
 ```
 
 ### Troubleshooting

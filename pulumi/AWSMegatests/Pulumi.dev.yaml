@@ -1,5 +1,10 @@
 config:
+  # AWS Provider Configuration
   aws:region: eu-west-1
-  github:owner: nf-core
+
+  # 1Password Provider Configuration (for core team)
   pulumi-onepassword:service_account_token:
     secure: AAABAA4TU/l5bba53oU5RyMyux7vTyyoCc9U6HGsOYM=
+
+  # GitHub Provider Configuration
+  github:owner: nf-core

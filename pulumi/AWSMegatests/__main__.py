@@ -134,9 +134,39 @@ arm_deploy_cmd = command.local.Command(
 # Extract compute environment IDs after deployment
 def get_compute_env_id(env_name: str, display_name: str, depends_on_cmd) -> str:
     """Get compute environment ID by name after deployment"""
+
+    # Enhanced command with better error handling and debugging
+    enhanced_cmd = f"""
+    set -e
+    echo "DEBUG: Checking Tower CLI availability..."
+    which tw || (echo "ERROR: Tower CLI not found in PATH" && exit 1)
+    
+    echo "DEBUG: Checking Tower authentication..."
+    tw info || (echo "ERROR: Tower CLI authentication failed" && exit 1)
+    
+    echo "DEBUG: Listing compute environments..."
+    tw -o nf-core -w AWSmegatests compute-envs list --format json > /tmp/compute_envs_{env_name}.json
+    
+    echo "DEBUG: Searching for environment: {display_name}"
+    cat /tmp/compute_envs_{env_name}.json | head -20
+    
+    echo "DEBUG: Extracting ID..."
+    COMPUTE_ID=$(cat /tmp/compute_envs_{env_name}.json | jq -r '.[] | select(.name=="{display_name}") | .id')
+    
+    if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
+        echo "ERROR: Could not find compute environment '{display_name}'"
+        echo "Available environments:"
+        cat /tmp/compute_envs_{env_name}.json | jq -r '.[].name'
+        exit 1
+    fi
+    
+    echo "SUCCESS: Found compute environment ID: $COMPUTE_ID"
+    echo "$COMPUTE_ID"
+    """
+
     get_env_cmd = command.local.Command(
         f"get-compute-env-{env_name}",
-        create=f"tw -o nf-core -w AWSmegatests compute-envs list --format json | jq -r '.[] | select(.name==\"{display_name}\") | .id'",
+        create=enhanced_cmd,
         environment=seqerakit_environment,
         opts=pulumi.ResourceOptions(
             additional_secret_outputs=["stdout"], depends_on=[depends_on_cmd]
