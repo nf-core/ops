@@ -18,10 +18,13 @@ onepassword_provider = onepassword.Provider(
 # Get secrets from 1Password using the provider
 tower_access_token_item = onepassword.get_item_output(
     vault="Dev",
-    uuid="zwsrkl26xz3biqwcmw64qizxie",
+    title="Seqera Platform",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
-tower_access_token = tower_access_token_item.credential
+tower_access_token = tower_access_token_item.fields["TOWER_ACCESS_TOKEN"]
+
+# Get workspace ID from 1Password
+tower_workspace_id = tower_access_token_item.fields["AWSMegatests workspace ID"]
 
 github_token_item = onepassword.get_item_output(
     vault="Dev",
@@ -78,6 +81,7 @@ pulumi.export(
 # These are managed by Seqera Platform and should not be imported into Pulumi
 seqerakit_environment = {
     "TOWER_ACCESS_TOKEN": tower_access_token,
+    "TOWER_WORKSPACE_ID": tower_workspace_id,  # Get from 1Password
     "ORGANIZATION_NAME": "nf-core",
     "WORKSPACE_NAME": "AWSmegatests",
     "AWS_CREDENTIALS_NAME": "tower-awstest",
@@ -89,9 +93,12 @@ seqerakit_environment = {
     or os.environ.get("AWS_ACCESS_KEY_ID"),
     "AWS_SECRET_ACCESS_KEY": pulumi.Config("aws").get_secret("secretKey")
     or os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    # Tower CLI configuration - use standard Seqera Cloud endpoint
+    "TOWER_API_ENDPOINT": "https://api.cloud.seqera.io",
 }
 
 # Deploy CPU environment with seqerakit
+# NOTE: Tower access token needs to be valid and have permissions for nf-core/AWSmegatests workspace
 cpu_deploy_cmd = command.local.Command(
     "deploy-cpu-environment",
     create="cd seqerakit && seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml",
@@ -119,16 +126,7 @@ arm_deploy_cmd = command.local.Command(
     ),
 )
 
-# Get workspace ID from Tower CLI
-workspace_cmd = command.local.Command(
-    "get-workspace-id",
-    create="tw -o nf-core workspaces list --format json | jq -r '.[] | select(.name==\"AWSmegatests\") | .id'",
-    environment=seqerakit_environment,
-    opts=pulumi.ResourceOptions(
-        additional_secret_outputs=["stdout"], depends_on=[arm_deploy_cmd]
-    ),
-)
-workspace_id = workspace_cmd.stdout
+# Workspace ID is now retrieved from 1Password (tower_workspace_id)
 
 
 # Extract compute environment IDs after deployment
@@ -213,7 +211,7 @@ pulumi.export(
         "TOWER_COMPUTE_ENV_GPU": gpu_compute_env_id,
         "TOWER_COMPUTE_ENV_ARM": arm_compute_env_id,
         "TOWER_ACCESS_TOKEN": "*** Use Tower access token from 1Password ***",
-        "TOWER_WORKSPACE_ID": workspace_id,
+        "TOWER_WORKSPACE_ID": tower_workspace_id,
     },
 )
 
@@ -224,7 +222,7 @@ pulumi.export(
 )
 
 # Export workspace ID for reference
-pulumi.export("workspace_id", workspace_id)
+pulumi.export("workspace_id", tower_workspace_id)
 
 # Export deployment status for reference
 pulumi.export(
