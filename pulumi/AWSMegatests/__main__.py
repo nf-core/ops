@@ -16,15 +16,17 @@ onepassword_provider = onepassword.Provider(
 )
 
 # Get secrets from 1Password using the provider
+# Get Tower access token from 1Password
 tower_access_token_item = onepassword.get_item_output(
     vault="Dev",
     title="Seqera Platform",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
-tower_access_token = tower_access_token_item.fields["TOWER_ACCESS_TOKEN"]
+tower_access_token = tower_access_token_item.credential
 
-# Get workspace ID from 1Password
-tower_workspace_id = tower_access_token_item.fields["AWSMegatests workspace ID"]
+# For workspace ID, since it's likely a custom field, we'll use environment variable
+# The workspace ID should be set in .envrc as TOWER_WORKSPACE_ID from 1Password
+tower_workspace_id = os.environ.get("TOWER_WORKSPACE_ID")
 
 github_token_item = onepassword.get_item_output(
     vault="Dev",
@@ -145,7 +147,7 @@ def get_compute_env_id(env_name: str, display_name: str, depends_on_cmd) -> str:
 
 # Get compute environment IDs for each environment after deployment
 cpu_compute_env_id = get_compute_env_id(
-    "cpu", "aws_ireland_fusionv2_nvme_cpu", cpu_deploy_cmd
+    "cpu", "aws_ireland_fusionv2_nvme_cpu_snapshots", cpu_deploy_cmd
 )
 gpu_compute_env_id = get_compute_env_id(
     "gpu", "aws_ireland_fusionv2_nvme_gpu_snapshots", gpu_deploy_cmd
