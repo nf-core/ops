@@ -158,62 +158,58 @@ arm_compute_env_id = get_compute_env_id(
 
 # GitHub provider already configured above
 
-# TODO: GitHub secrets commented out due to insufficient token permissions
-# The GitHub token needs admin:org scope to manage organization secrets
-# For now, we'll export the values so they can be manually added
+# Create org-level GitHub secrets for compute environment IDs
+cpu_secret = github.ActionsOrganizationSecret(
+    "tower-compute-env-cpu",
+    visibility="private",
+    secret_name="TOWER_COMPUTE_ENV_CPU",
+    plaintext_value=cpu_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
 
-# # Create org-level GitHub secrets for compute environment IDs
-# cpu_secret = github.ActionsOrganizationSecret(
-#     "tower-compute-env-cpu",
-#     visibility="private",
-#     secret_name="TOWER_COMPUTE_ENV_CPU",
-#     plaintext_value=cpu_compute_env_id,
-#     opts=pulumi.ResourceOptions(provider=github_provider),
-# )
+gpu_secret = github.ActionsOrganizationSecret(
+    "tower-compute-env-gpu",
+    visibility="private",
+    secret_name="TOWER_COMPUTE_ENV_GPU",
+    plaintext_value=gpu_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
 
-# gpu_secret = github.ActionsOrganizationSecret(
-#     "tower-compute-env-gpu",
-#     visibility="private",
-#     secret_name="TOWER_COMPUTE_ENV_GPU",
-#     plaintext_value=gpu_compute_env_id,
-#     opts=pulumi.ResourceOptions(provider=github_provider),
-# )
+arm_secret = github.ActionsOrganizationSecret(
+    "tower-compute-env-arm",
+    visibility="private",
+    secret_name="TOWER_COMPUTE_ENV_ARM",
+    plaintext_value=arm_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
 
-# arm_secret = github.ActionsOrganizationSecret(
-#     "tower-compute-env-arm",
-#     visibility="private",
-#     secret_name="TOWER_COMPUTE_ENV_ARM",
-#     plaintext_value=arm_compute_env_id,
-#     opts=pulumi.ResourceOptions(provider=github_provider),
-# )
+# Create org-level GitHub secret for Seqera Platform API token
+seqera_token_secret = github.ActionsOrganizationSecret(
+    "tower-access-token",
+    visibility="private",
+    secret_name="TOWER_ACCESS_TOKEN",
+    plaintext_value=tower_access_token,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
 
-# # Create org-level GitHub secret for Seqera Platform API token
-# seqera_token_secret = github.ActionsOrganizationSecret(
-#     "tower-access-token",
-#     visibility="private",
-#     secret_name="TOWER_ACCESS_TOKEN",
-#     plaintext_value=tower_access_token,
-#     opts=pulumi.ResourceOptions(provider=github_provider),
-# )
+# Create org-level GitHub secret for workspace ID
+workspace_id_secret = github.ActionsOrganizationSecret(
+    "tower-workspace-id",
+    visibility="private",
+    secret_name="TOWER_WORKSPACE_ID",
+    plaintext_value=tower_workspace_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
 
-# # Create org-level GitHub secret for workspace ID
-# workspace_id_secret = github.ActionsOrganizationSecret(
-#     "tower-workspace-id",
-#     visibility="private",
-#     secret_name="TOWER_WORKSPACE_ID",
-#     plaintext_value=workspace_id,
-#     opts=pulumi.ResourceOptions(provider=github_provider),
-# )
-
-# Export GitHub secret names that need to be created manually
+# Export the created GitHub secrets
 pulumi.export(
-    "github_secrets_to_create",
+    "github_secrets",
     {
-        "TOWER_COMPUTE_ENV_CPU": cpu_compute_env_id,
-        "TOWER_COMPUTE_ENV_GPU": gpu_compute_env_id,
-        "TOWER_COMPUTE_ENV_ARM": arm_compute_env_id,
-        "TOWER_ACCESS_TOKEN": "*** Use Tower access token from 1Password ***",
-        "TOWER_WORKSPACE_ID": tower_workspace_id,
+        "compute_env_cpu": cpu_secret.secret_name,
+        "compute_env_gpu": gpu_secret.secret_name,
+        "compute_env_arm": arm_secret.secret_name,
+        "tower_access_token": seqera_token_secret.secret_name,
+        "tower_workspace_id": workspace_id_secret.secret_name,
     },
 )
 
