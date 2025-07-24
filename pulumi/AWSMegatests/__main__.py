@@ -103,7 +103,7 @@ seqerakit_environment = {
 # NOTE: Tower access token needs to be valid and have permissions for nf-core/AWSmegatests workspace
 cpu_deploy_cmd = command.local.Command(
     "deploy-cpu-environment",
-    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_cpu_current.yml",
+    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
 )
@@ -111,7 +111,7 @@ cpu_deploy_cmd = command.local.Command(
 # Deploy GPU environment with seqerakit (with JSON output)
 gpu_deploy_cmd = command.local.Command(
     "deploy-gpu-environment",
-    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_gpu_current.yml",
+    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_gpu_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[cpu_deploy_cmd]
@@ -121,7 +121,7 @@ gpu_deploy_cmd = command.local.Command(
 # Deploy ARM environment with seqerakit (with JSON output)
 arm_deploy_cmd = command.local.Command(
     "deploy-arm-environment",
-    create="cd seqerakit && seqerakit --json aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
+    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[gpu_deploy_cmd]
@@ -138,48 +138,34 @@ def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
     def create_extraction_command(seqerakit_output: str) -> str:
         extract_cmd = f"""
         set -e
-        echo "DEBUG: Parsing seqerakit JSON output for {env_name}..."
         
         # Save the output to a temp file for processing
         echo '{seqerakit_output}' > /tmp/seqerakit_output_{env_name}.json
         
-        echo "DEBUG: Raw seqerakit output:"
-        cat /tmp/seqerakit_output_{env_name}.json | head -20
-        
-        # Extract JSON from mixed text/JSON output
-        # seqerakit outputs text followed by JSON, so we need to extract just the JSON part
+        # Extract JSON from mixed text/JSON output (redirect debug to stderr)
         JSON_LINE=$(cat /tmp/seqerakit_output_{env_name}.json | grep -E '^\\{{.*\\}}$' | head -1)
         
         if [ -z "$JSON_LINE" ]; then
-            echo "WARNING: No JSON line found in seqerakit output"
-            cat /tmp/seqerakit_output_{env_name}.json
-            echo "FALLBACK: Using placeholder ID"
             echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
             exit 0
         fi
         
-        echo "DEBUG: Found JSON line: $JSON_LINE"
         echo "$JSON_LINE" > /tmp/seqerakit_clean_{env_name}.json
         
-        # Try to extract compute environment ID from clean JSON
-        # Method 1: Look for id field 
+        # Extract compute environment ID from clean JSON
         COMPUTE_ID=$(cat /tmp/seqerakit_clean_{env_name}.json | jq -r '.id // empty' 2>/dev/null || echo "")
         
         if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-            # Method 2: Look for computeEnvId field
+            # Try alternative field name
             COMPUTE_ID=$(cat /tmp/seqerakit_clean_{env_name}.json | jq -r '.computeEnvId // empty' 2>/dev/null || echo "")
         fi
         
         if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-            echo "WARNING: Could not extract compute environment ID from seqerakit output"
-            echo "Seqerakit output structure:"
-            cat /tmp/seqerakit_output_{env_name}.json | jq . 2>/dev/null || echo "Invalid JSON output"
-            echo "FALLBACK: Using placeholder ID"
             echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
             exit 0
         fi
         
-        echo "SUCCESS: Extracted compute environment ID: $COMPUTE_ID"
+        # Output only the compute environment ID (no debug messages)
         echo "$COMPUTE_ID"
         """
         return extract_cmd
@@ -205,41 +191,29 @@ arm_compute_env_id = extract_compute_env_id_from_seqerakit("arm", arm_deploy_cmd
 
 # GitHub provider already configured above
 
-# Create org-level GitHub secrets for compute environment IDs
-# TODO Should be an org variable as this isn't sensitive
-cpu_secret = github.ActionsOrganizationSecret(
+# Create org-level GitHub variables for compute environment IDs (non-sensitive)
+cpu_variable = github.ActionsOrganizationVariable(
     "tower-compute-env-cpu",
     visibility="all",
-    secret_name="TOWER_COMPUTE_ENV_CPU",
-    plaintext_value=cpu_compute_env_id,
-    opts=pulumi.ResourceOptions(
-        provider=github_provider,
-        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
-    ),
+    variable_name="TOWER_COMPUTE_ENV_CPU",
+    value=cpu_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
-# TODO Should be an org variable as this isn't sensitive
-gpu_secret = github.ActionsOrganizationSecret(
+gpu_variable = github.ActionsOrganizationVariable(
     "tower-compute-env-gpu",
     visibility="all",
-    secret_name="TOWER_COMPUTE_ENV_GPU",
-    plaintext_value=gpu_compute_env_id,
-    opts=pulumi.ResourceOptions(
-        provider=github_provider,
-        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
-    ),
+    variable_name="TOWER_COMPUTE_ENV_GPU",
+    value=gpu_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
-# TODO Should be an org variable as this isn't sensitive
-arm_secret = github.ActionsOrganizationSecret(
+arm_variable = github.ActionsOrganizationVariable(
     "tower-compute-env-arm",
     visibility="all",
-    secret_name="TOWER_COMPUTE_ENV_ARM",
-    plaintext_value=arm_compute_env_id,
-    opts=pulumi.ResourceOptions(
-        provider=github_provider,
-        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
-    ),
+    variable_name="TOWER_COMPUTE_ENV_ARM",
+    value=arm_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
 # Create org-level GitHub secret for Seqera Platform API token
@@ -254,28 +228,28 @@ seqera_token_secret = github.ActionsOrganizationSecret(
     ),
 )
 
-# Create org-level GitHub secret for workspace ID
-# TODO Should be an org variable as this isn't sensitive
-workspace_id_secret = github.ActionsOrganizationSecret(
+# Create org-level GitHub variable for workspace ID (non-sensitive)
+workspace_id_variable = github.ActionsOrganizationVariable(
     "tower-workspace-id",
     visibility="all",
-    secret_name="TOWER_WORKSPACE_ID",
-    plaintext_value=tower_workspace_id,
-    opts=pulumi.ResourceOptions(
-        provider=github_provider,
-        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
-    ),
+    variable_name="TOWER_WORKSPACE_ID",
+    value=tower_workspace_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
-# Export the created GitHub secrets
+# Export the created GitHub resources
 pulumi.export(
-    "github_secrets",
+    "github_resources",
     {
-        "compute_env_cpu": cpu_secret.secret_name,
-        "compute_env_gpu": gpu_secret.secret_name,
-        "compute_env_arm": arm_secret.secret_name,
-        "tower_access_token": seqera_token_secret.secret_name,
-        "tower_workspace_id": workspace_id_secret.secret_name,
+        "variables": {
+            "compute_env_cpu": cpu_variable.variable_name,
+            "compute_env_gpu": gpu_variable.variable_name,
+            "compute_env_arm": arm_variable.variable_name,
+            "tower_workspace_id": workspace_id_variable.variable_name,
+        },
+        "secrets": {
+            "tower_access_token": seqera_token_secret.secret_name,
+        },
     },
 )
 
