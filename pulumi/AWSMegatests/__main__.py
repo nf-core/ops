@@ -206,6 +206,7 @@ arm_compute_env_id = extract_compute_env_id_from_seqerakit("arm", arm_deploy_cmd
 # GitHub provider already configured above
 
 # Create org-level GitHub secrets for compute environment IDs
+# TODO Should be an org variable as this isn't sensitive
 cpu_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-cpu",
     visibility="all",
@@ -217,6 +218,7 @@ cpu_secret = github.ActionsOrganizationSecret(
     ),
 )
 
+# TODO Should be an org variable as this isn't sensitive
 gpu_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-gpu",
     visibility="all",
@@ -228,6 +230,7 @@ gpu_secret = github.ActionsOrganizationSecret(
     ),
 )
 
+# TODO Should be an org variable as this isn't sensitive
 arm_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-arm",
     visibility="all",
@@ -252,6 +255,7 @@ seqera_token_secret = github.ActionsOrganizationSecret(
 )
 
 # Create org-level GitHub secret for workspace ID
+# TODO Should be an org variable as this isn't sensitive
 workspace_id_secret = github.ActionsOrganizationSecret(
     "tower-workspace-id",
     visibility="all",
