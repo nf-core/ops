@@ -146,18 +146,28 @@ def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
         echo "DEBUG: Raw seqerakit output:"
         cat /tmp/seqerakit_output_{env_name}.json | head -20
         
-        # Try to extract compute environment ID from JSON
-        # Method 1: Look for computeEnvId field
-        COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.computeEnvId // empty' 2>/dev/null || echo "")
+        # Extract JSON from mixed text/JSON output
+        # seqerakit outputs text followed by JSON, so we need to extract just the JSON part
+        JSON_LINE=$(cat /tmp/seqerakit_output_{env_name}.json | grep -E '^\\{{.*\\}}$' | head -1)
         
-        if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-            # Method 2: Look for id field in compute-envs array
-            COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.["compute-envs"][0].id // empty' 2>/dev/null || echo "")
+        if [ -z "$JSON_LINE" ]; then
+            echo "WARNING: No JSON line found in seqerakit output"
+            cat /tmp/seqerakit_output_{env_name}.json
+            echo "FALLBACK: Using placeholder ID"
+            echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
+            exit 0
         fi
         
+        echo "DEBUG: Found JSON line: $JSON_LINE"
+        echo "$JSON_LINE" > /tmp/seqerakit_clean_{env_name}.json
+        
+        # Try to extract compute environment ID from clean JSON
+        # Method 1: Look for id field 
+        COMPUTE_ID=$(cat /tmp/seqerakit_clean_{env_name}.json | jq -r '.id // empty' 2>/dev/null || echo "")
+        
         if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-            # Method 3: Look for any id field at root level
-            COMPUTE_ID=$(cat /tmp/seqerakit_output_{env_name}.json | jq -r '.id // empty' 2>/dev/null || echo "")
+            # Method 2: Look for computeEnvId field
+            COMPUTE_ID=$(cat /tmp/seqerakit_clean_{env_name}.json | jq -r '.computeEnvId // empty' 2>/dev/null || echo "")
         fi
         
         if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
@@ -198,44 +208,59 @@ arm_compute_env_id = extract_compute_env_id_from_seqerakit("arm", arm_deploy_cmd
 # Create org-level GitHub secrets for compute environment IDs
 cpu_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-cpu",
-    visibility="private",
+    visibility="all",
     secret_name="TOWER_COMPUTE_ENV_CPU",
     plaintext_value=cpu_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
+    ),
 )
 
 gpu_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-gpu",
-    visibility="private",
+    visibility="all",
     secret_name="TOWER_COMPUTE_ENV_GPU",
     plaintext_value=gpu_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
+    ),
 )
 
 arm_secret = github.ActionsOrganizationSecret(
     "tower-compute-env-arm",
-    visibility="private",
+    visibility="all",
     secret_name="TOWER_COMPUTE_ENV_ARM",
     plaintext_value=arm_compute_env_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
+    ),
 )
 
 # Create org-level GitHub secret for Seqera Platform API token
 seqera_token_secret = github.ActionsOrganizationSecret(
     "tower-access-token",
-    visibility="private",
+    visibility="all",
     secret_name="TOWER_ACCESS_TOKEN",
     plaintext_value=tower_access_token,
-    opts=pulumi.ResourceOptions(provider=github_provider),
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
+    ),
 )
 
 # Create org-level GitHub secret for workspace ID
 workspace_id_secret = github.ActionsOrganizationSecret(
     "tower-workspace-id",
-    visibility="private",
+    visibility="all",
     secret_name="TOWER_WORKSPACE_ID",
     plaintext_value=tower_workspace_id,
-    opts=pulumi.ResourceOptions(provider=github_provider),
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
+    ),
 )
 
 # Export the created GitHub secrets
