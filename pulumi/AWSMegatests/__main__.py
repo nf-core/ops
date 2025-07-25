@@ -1,5 +1,6 @@
 """An AWS Python Pulumi program"""
 
+import json
 import os
 import pulumi
 import pulumi_github as github
@@ -99,11 +100,22 @@ seqerakit_environment = {
     "TOWER_API_ENDPOINT": "https://api.cloud.seqera.io",
 }
 
+# Read JSON config files to make them dependencies
+with open("seqerakit/current-env-cpu.json", "r") as f:
+    cpu_config = json.load(f)
+with open("seqerakit/current-env-gpu.json", "r") as f:
+    gpu_config = json.load(f)
+with open("seqerakit/current-env-cpu-arm.json", "r") as f:
+    arm_config = json.load(f)
+
 # Deploy CPU environment with seqerakit (with JSON output)
 # NOTE: Tower access token needs to be valid and have permissions for nf-core/AWSmegatests workspace
 cpu_deploy_cmd = command.local.Command(
     "deploy-cpu-environment",
-    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_current.yml",
+    create=pulumi.Output.concat(
+        "cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_current.yml # Config hash: ",
+        str(hash(json.dumps(cpu_config, sort_keys=True))),
+    ),
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
 )
@@ -111,7 +123,10 @@ cpu_deploy_cmd = command.local.Command(
 # Deploy GPU environment with seqerakit (with JSON output)
 gpu_deploy_cmd = command.local.Command(
     "deploy-gpu-environment",
-    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_gpu_current.yml",
+    create=pulumi.Output.concat(
+        "cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_gpu_current.yml # Config hash: ",
+        str(hash(json.dumps(gpu_config, sort_keys=True))),
+    ),
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[cpu_deploy_cmd]
@@ -121,7 +136,10 @@ gpu_deploy_cmd = command.local.Command(
 # Deploy ARM environment with seqerakit (with JSON output)
 arm_deploy_cmd = command.local.Command(
     "deploy-arm-environment",
-    create="cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_arm_current.yml",
+    create=pulumi.Output.concat(
+        "cd seqerakit && uv run seqerakit --json aws_ireland_fusionv2_nvme_cpu_arm_current.yml # Config hash: ",
+        str(hash(json.dumps(arm_config, sort_keys=True))),
+    ),
     environment=seqerakit_environment,
     opts=pulumi.ResourceOptions(
         additional_secret_outputs=["stdout"], depends_on=[gpu_deploy_cmd]
@@ -224,6 +242,8 @@ seqera_token_secret = github.ActionsOrganizationSecret(
     plaintext_value=tower_access_token,
     opts=pulumi.ResourceOptions(
         provider=github_provider,
+        import_="TOWER_ACCESS_TOKEN",  # Import existing secret
+        protect=True,  # Protect from accidental deletion
         delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
     ),
 )
