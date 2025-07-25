@@ -28,7 +28,7 @@
     ],
     "efsCreate": false,
     "ebsBootSize": 50,
-    "fargateHeadEnabled": true,
+    "fargateHeadEnabled": false,
     "arm64Enabled": true
   },
   "labels": []

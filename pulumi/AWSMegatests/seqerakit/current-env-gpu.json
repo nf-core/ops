@@ -29,7 +29,7 @@
     "efsCreate": false,
     "dragenEnabled": false,
     "ebsBootSize": 50,
-    "fargateHeadEnabled": true
+    "fargateHeadEnabled": false
   },
   "labels": []
 }
