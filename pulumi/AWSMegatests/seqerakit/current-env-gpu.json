@@ -1,11 +1,7 @@
 {
   "discriminator": "aws-batch",
   "region": "eu-west-1",
-  "executionRole": "arn:aws:iam::728131696474:role/TowerForge-7Gjp4zOBlhH9xMIlfs9LM2-ExecutionRole",
-  "headJobRole": "arn:aws:iam::728131696474:role/TowerForge-7Gjp4zOBlhH9xMIlfs9LM2-FargateRole",
   "workDir": "s3://nf-core-awsmegatests",
-  "headJobCpus": 4,
-  "headJobMemoryMb": 16384,
   "environment": [],
   "waveEnabled": true,
   "fusion2Enabled": true,
@@ -29,7 +25,7 @@
     "efsCreate": false,
     "dragenEnabled": false,
     "ebsBootSize": 50,
-    "fargateHeadEnabled": false
+    "fargateHeadEnabled": true
   },
   "labels": []
 }
