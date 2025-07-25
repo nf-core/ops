@@ -1,5 +1,5 @@
 compute-envs:
-  - name: "aws_ireland_fusionv2_nvme_cpu"
+  - name: "aws_ireland_fusionv2_nvme_cpu_snapshots"
     workspace: "$ORGANIZATION_NAME/$WORKSPACE_NAME"
     credentials: "$AWS_CREDENTIALS_NAME"
     wait: "AVAILABLE"

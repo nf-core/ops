@@ -1,11 +1,7 @@
 {
   "discriminator": "aws-batch",
   "region": "eu-west-1",
-  "executionRole": "arn:aws:iam::728131696474:role/TowerForge-5LWYX9a2GxrIFiax8tn9DV-ExecutionRole",
-  "headJobRole": "arn:aws:iam::728131696474:role/TowerForge-5LWYX9a2GxrIFiax8tn9DV-FargateRole",
   "workDir": "s3://nf-core-awsmegatests",
-  "headJobCpus": 4,
-  "headJobMemoryMb": 16384,
   "environment": [],
   "waveEnabled": true,
   "fusion2Enabled": true,
@@ -15,7 +11,7 @@
   "forge": {
     "type": "SPOT",
     "minCpus": 0,
-    "maxCpus": 1000,
+    "maxCpus": 500,
     "gpuEnabled": false,
     "instanceTypes": ["m6gd", "r6gd", "c6gd"],
     "subnets": [],

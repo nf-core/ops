@@ -106,11 +106,12 @@ seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml --delete
 
 ## GitOps Workflow
 
-This repository implements GitOps with GitHub Actions:
+This repository implements GitOps integrated with the main Pulumi AWSMegatests project:
 
-- **Pull Requests**: Automatically validate configurations with `--dryrun`
-- **Main Branch**: Automatically deploy infrastructure changes
-- **1Password Integration**: Secure credential management with `.envrc`
+- **Pulumi Integration**: Compute environment deployment is managed through the parent Pulumi project
+- **Automated Secrets**: Compute environment IDs and credentials automatically pushed to GitHub secrets
+- **1Password Integration**: Secure credential management with `.envrc` and Pulumi 1Password provider
+- **Infrastructure as Code**: All environments managed through version control
 
 ## Infrastructure Files
 

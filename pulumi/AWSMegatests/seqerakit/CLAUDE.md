@@ -4,12 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a seqerakit configuration repository for automating the setup of nf-core megatest infrastructure on the Seqera Platform. Seqerakit is a Python-based Infrastructure as Code (IaC) utility that uses YAML configurations to automate Seqera Platform resource creation and management.
+This directory contains seqerakit configurations for nf-core megatest infrastructure on the Seqera Platform, integrated with the parent Pulumi AWSMegatests project. Seqerakit is a Python-based Infrastructure as Code (IaC) utility that uses YAML configurations to automate Seqera Platform resource creation and management.
+
+**Integration**: These seqerakit configurations are deployed through the parent Pulumi project using the command provider, which automatically extracts compute environment IDs and deploys them as GitHub secrets.
 
 ## Common Commands
 
 ### Prerequisites
 
+**Note**: These configurations are typically deployed through the parent Pulumi project, not directly via seqerakit commands.
+
+For standalone usage:
 ```bash
 # Install seqerakit
 pip install seqerakit
@@ -17,8 +22,8 @@ pip install seqerakit
 # Install direnv (for 1Password integration)
 brew install direnv
 
-# Allow the .envrc file (loads secrets from 1Password)
-direnv allow
+# Allow the .envrc file (loads secrets from 1Password) 
+cd .. && direnv allow
 
 # Alternatively, manually load environment variables
 # export TOWER_ACCESS_TOKEN=<your-token>
@@ -26,6 +31,13 @@ direnv allow
 
 ### Seqerakit Operations
 
+**Recommended**: Use the parent Pulumi project for deployment:
+```bash
+# From parent directory
+cd .. && direnv exec . uv run pulumi up
+```
+
+**Direct seqerakit usage** (for testing/debugging):
 ```bash
 # Dry run to validate configuration
 seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
@@ -34,12 +46,6 @@ seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --dryrun
 seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml
 seqerakit aws_ireland_fusionv2_nvme_cpu_arm_current.yml
 seqerakit aws_ireland_fusionv2_nvme_gpu_current.yml
-
-# Deploy legacy compute environments (for reference)
-seqerakit compute-envs/aws_ireland_fusionv2_nvme_cpu.yml
-seqerakit compute-envs/aws_ireland_fusionv2_nvme_gpu.yml
-seqerakit compute-envs/aws_ireland_fusionv2_nvme_arm.yml
-seqerakit compute-envs/aws_ireland_nofusion.yml
 
 # Delete resources
 seqerakit aws_ireland_fusionv2_nvme_cpu_current.yml --delete
@@ -120,14 +126,16 @@ The typical deployment workflow:
 3. **Deployment**: Execute seqerakit commands to create compute environments
 4. **Management**: Use `--delete` flag to remove resources when needed
 
-## GitOps Workflow
+## Pulumi Integration
 
-This repository implements a GitOps approach for managing Seqera Platform infrastructure:
+### How Seqerakit Integrates with Pulumi
 
-### Workflow Triggers
+These seqerakit configurations are deployed through the parent Pulumi project using:
 
-- **Pull Requests**: Validate configurations with `--dryrun` on changes to `seqerakit/**`
-- **Main Branch**: Deploy infrastructure on merges to main branch
+1. **Command Provider**: Executes seqerakit CLI commands as Pulumi resources
+2. **Output Extraction**: Parses seqerakit output to extract compute environment IDs  
+3. **GitHub Secrets**: Automatically deploys extracted IDs as GitHub organization secrets
+4. **1Password Integration**: Inherits secure credential management from parent project
 
 ### Current Infrastructure Files
 
@@ -138,22 +146,19 @@ This repository implements a GitOps approach for managing Seqera Platform infras
 - `aws_ireland_fusionv2_nvme_cpu_arm_current.yml`: Seqerakit config for CPU ARM environment
 - `aws_ireland_fusionv2_nvme_gpu_current.yml`: Seqerakit config for GPU environment
 
-### GitHub Actions Workflow
+### Deployment Process
 
-The `.github/workflows/deploy-seqerakit.yml` workflow:
+1. **Pulumi Command Resources**: Execute seqerakit deployment commands
+2. **ID Extraction**: Parse seqerakit output to get compute environment IDs
+3. **GitHub Secrets**: Deploy extracted IDs to GitHub organization secrets
+4. **Workspace ID**: Extract and deploy Seqera workspace ID
 
-1. **Validation Job** (on PR):
+### Required Configuration
 
-   - Validates all environment configurations with `seqerakit --dryrun`
-   - Comments on PR with validation results
-
-2. **Deployment Job** (on merge to main):
-   - Deploys all compute environments
-   - Notifies success/failure via commit comments
-
-### Required Secrets
-
-- `TOWER_ACCESS_TOKEN`: Seqera Platform personal access token
+Environment variables are inherited from the parent `.envrc`:
+- `TOWER_ACCESS_TOKEN`: Seqera Platform access token (from 1Password)
+- `ORGANIZATION_NAME`, `WORKSPACE_NAME`: Seqera Platform identifiers
+- AWS credentials for compute environment deployment
 
 ### Migration from Manual Setup
 
