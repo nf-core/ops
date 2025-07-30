@@ -257,6 +257,37 @@ workspace_id_variable = github.ActionsOrganizationVariable(
     opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
+# Legacy compatibility for older nf-core tools templates
+# See: https://github.com/nf-core/ops/issues/162
+# These duplicate the new variable names into the old secret names expected by nf-core tools v3.3.2 and earlier
+
+# Legacy: TOWER_WORKSPACE_ID as secret (duplicates the variable above)
+legacy_workspace_id_secret = github.ActionsOrganizationSecret(
+    "legacy-tower-workspace-id",
+    visibility="all",
+    secret_name="TOWER_WORKSPACE_ID",
+    plaintext_value=tower_workspace_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
+
+# Legacy: TOWER_COMPUTE_ENV as secret (points to CPU environment)
+legacy_compute_env_secret = github.ActionsOrganizationSecret(
+    "legacy-tower-compute-env",
+    visibility="all",
+    secret_name="TOWER_COMPUTE_ENV",
+    plaintext_value=cpu_compute_env_id,
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
+
+# Legacy: AWS_S3_BUCKET as variable
+legacy_s3_bucket_variable = github.ActionsOrganizationVariable(
+    "legacy-aws-s3-bucket",
+    visibility="all",
+    variable_name="AWS_S3_BUCKET",
+    value="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
+
 # Export the created GitHub resources
 pulumi.export(
     "github_resources",
@@ -266,9 +297,12 @@ pulumi.export(
             "compute_env_gpu": gpu_variable.variable_name,
             "compute_env_arm": arm_variable.variable_name,
             "tower_workspace_id": workspace_id_variable.variable_name,
+            "legacy_aws_s3_bucket": legacy_s3_bucket_variable.variable_name,
         },
         "secrets": {
             "tower_access_token": seqera_token_secret.secret_name,
+            "legacy_tower_workspace_id": legacy_workspace_id_secret.secret_name,
+            "legacy_tower_compute_env": legacy_compute_env_secret.secret_name,
         },
     },
 )
