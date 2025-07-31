@@ -239,7 +239,7 @@ def create_query_command(env_name: str, grep_pattern: str):
     return command.local.Command(
         f"query-{env_name}-compute-env",
         create=tower_access_token.apply(create_query_cmd),
-        opts=pulumi.ResourceOptions(additional_secret_outputs=["stdout"]),
+        # Remove additional_secret_outputs to make the compute env IDs visible in variables
     )
 
 
@@ -345,11 +345,11 @@ pulumi.export(
     "github_resources",
     {
         "variables": {
-            "compute_env_cpu": cpu_variable.variable_name,
-            "compute_env_gpu": gpu_variable.variable_name,
-            "compute_env_arm": arm_variable.variable_name,
-            "tower_workspace_id": workspace_id_variable.variable_name,
-            "legacy_aws_s3_bucket": legacy_s3_bucket_variable.variable_name,
+            "compute_env_cpu": pulumi.Output.unsecret(cpu_variable.value),
+            "compute_env_gpu": pulumi.Output.unsecret(gpu_variable.value),
+            "compute_env_arm": pulumi.Output.unsecret(arm_variable.value),
+            "tower_workspace_id": workspace_id_variable.value,
+            "legacy_aws_s3_bucket": legacy_s3_bucket_variable.value,
         },
         "secrets": {
             "tower_access_token": seqera_token_secret.secret_name,
