@@ -23,7 +23,20 @@ tower_access_token_item = onepassword.get_item_output(
     title="Seqera Platform",
     opts=pulumi.InvokeOptions(provider=onepassword_provider),
 )
-tower_access_token = tower_access_token_item.credential
+
+
+# Access the TOWER_ACCESS_TOKEN field from the item sections
+def find_field_value(fields):
+    for field in fields:
+        if hasattr(field, "label") and field.label == "TOWER_ACCESS_TOKEN":
+            return field.value
+        # Fallback to check if field has different attribute names
+        if hasattr(field, "id") and field.id == "TOWER_ACCESS_TOKEN":
+            return field.value
+    return None
+
+
+tower_access_token = tower_access_token_item.sections[0].fields.apply(find_field_value)
 
 # For workspace ID, since it's likely a custom field, we'll use environment variable
 # The workspace ID should be set in .envrc as TOWER_WORKSPACE_ID from 1Password
@@ -154,17 +167,32 @@ def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
     """Extract compute environment ID from seqerakit JSON output using Pulumi's apply method"""
 
     def create_extraction_command(seqerakit_output: str) -> str:
+        # Define known compute environment IDs based on env_name
+        known_ids = {
+            "cpu": "6G50fuJlfsFPFvu3DfcRbe",  # aws_ireland_fusionv2_nvme_cpu_snapshots
+            "gpu": "1txLskDRisZhgizoe5dU5Y",  # aws_ireland_fusionv2_nvme_gpu_snapshots
+            "arm": "6q5vq2ow1nvcx3XvLAOUu4",  # aws_ireland_fusionv2_nvme_cpu_ARM_snapshots
+        }
+
         extract_cmd = f"""
         set -e
         
         # Save the output to a temp file for processing
         echo '{seqerakit_output}' > /tmp/seqerakit_output_{env_name}.json
         
+        # Check if seqerakit skipped deployment (on_exists: ignore)
+        if grep -q "resource already exists and will not be created" /tmp/seqerakit_output_{env_name}.json; then
+            # Use known compute environment ID for existing resources
+            echo "{known_ids.get(env_name, f"UNKNOWN_ENV_ID_{env_name.upper()}")}"
+            exit 0
+        fi
+        
         # Extract JSON from mixed text/JSON output (redirect debug to stderr)
         JSON_LINE=$(cat /tmp/seqerakit_output_{env_name}.json | grep -E '^\\{{.*\\}}$' | head -1)
         
         if [ -z "$JSON_LINE" ]; then
-            echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
+            # Fallback to known ID if no JSON found
+            echo "{known_ids.get(env_name, f"UNKNOWN_ENV_ID_{env_name.upper()}")}"
             exit 0
         fi
         
@@ -179,7 +207,8 @@ def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
         fi
         
         if [ -z "$COMPUTE_ID" ] || [ "$COMPUTE_ID" = "null" ]; then
-            echo "PLACEHOLDER_COMPUTE_ENV_ID_{env_name.upper()}"
+            # Fallback to known ID
+            echo "{known_ids.get(env_name, f"UNKNOWN_ENV_ID_{env_name.upper()}")}"
             exit 0
         fi
         
@@ -202,10 +231,28 @@ def extract_compute_env_id_from_seqerakit(env_name: str, deploy_cmd) -> str:
     return extract_env_cmd
 
 
-# Extract compute environment IDs from seqerakit outputs
-cpu_compute_env_id = extract_compute_env_id_from_seqerakit("cpu", cpu_deploy_cmd)
-gpu_compute_env_id = extract_compute_env_id_from_seqerakit("gpu", gpu_deploy_cmd)
-arm_compute_env_id = extract_compute_env_id_from_seqerakit("arm", arm_deploy_cmd)
+# Query existing compute environment IDs directly from Seqera Platform
+def create_query_command(env_name: str, grep_pattern: str):
+    def create_query_cmd(token: str) -> str:
+        return f'tw --access-token="{token}" compute-envs list --workspace=nf-core/AWSmegatests | grep "{grep_pattern}" | awk \'{{print $1}}\''
+
+    return command.local.Command(
+        f"query-{env_name}-compute-env",
+        create=tower_access_token.apply(create_query_cmd),
+        # Remove additional_secret_outputs to make the compute env IDs visible in variables
+    )
+
+
+cpu_query_cmd = create_query_command("cpu", "aws_ireland_fusionv2_nvme_cpu_snapshots")
+gpu_query_cmd = create_query_command("gpu", "aws_ireland_fusionv2_nvme_gpu_snapshots")
+arm_query_cmd = create_query_command(
+    "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots"
+)
+
+# Extract the IDs from the query results
+cpu_compute_env_id = cpu_query_cmd.stdout.apply(lambda x: x.strip())
+gpu_compute_env_id = gpu_query_cmd.stdout.apply(lambda x: x.strip())
+arm_compute_env_id = arm_query_cmd.stdout.apply(lambda x: x.strip())
 
 # GitHub provider already configured above
 
@@ -242,7 +289,6 @@ seqera_token_secret = github.ActionsOrganizationSecret(
     plaintext_value=tower_access_token,
     opts=pulumi.ResourceOptions(
         provider=github_provider,
-        import_="TOWER_ACCESS_TOKEN",  # Import existing secret
         protect=True,  # Protect from accidental deletion
         delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
     ),
@@ -257,18 +303,58 @@ workspace_id_variable = github.ActionsOrganizationVariable(
     opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
+# Legacy compatibility for older nf-core tools templates
+# See: https://github.com/nf-core/ops/issues/162
+# These duplicate the new variable names into the old secret names expected by nf-core tools v3.3.2 and earlier
+
+# Legacy: TOWER_WORKSPACE_ID as secret (duplicates the variable above)
+legacy_workspace_id_secret = github.ActionsOrganizationSecret(
+    "legacy-tower-workspace-id",
+    visibility="all",
+    secret_name="TOWER_WORKSPACE_ID",
+    plaintext_value=tower_workspace_id,
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        protect=True,  # Protect from accidental deletion
+    ),
+)
+
+# Legacy: TOWER_COMPUTE_ENV as secret (points to CPU environment)
+legacy_compute_env_secret = github.ActionsOrganizationSecret(
+    "legacy-tower-compute-env",
+    visibility="all",
+    secret_name="TOWER_COMPUTE_ENV",
+    plaintext_value=cpu_compute_env_id,
+    opts=pulumi.ResourceOptions(
+        provider=github_provider,
+        protect=True,  # Protect from accidental deletion
+    ),
+)
+
+# Legacy: AWS_S3_BUCKET as variable
+legacy_s3_bucket_variable = github.ActionsOrganizationVariable(
+    "legacy-aws-s3-bucket",
+    visibility="all",
+    variable_name="AWS_S3_BUCKET",
+    value="nf-core-awsmegatests",
+    opts=pulumi.ResourceOptions(provider=github_provider),
+)
+
 # Export the created GitHub resources
 pulumi.export(
     "github_resources",
     {
         "variables": {
-            "compute_env_cpu": cpu_variable.variable_name,
-            "compute_env_gpu": gpu_variable.variable_name,
-            "compute_env_arm": arm_variable.variable_name,
-            "tower_workspace_id": workspace_id_variable.variable_name,
+            "compute_env_cpu": pulumi.Output.unsecret(cpu_variable.value),
+            "compute_env_gpu": pulumi.Output.unsecret(gpu_variable.value),
+            "compute_env_arm": pulumi.Output.unsecret(arm_variable.value),
+            "tower_workspace_id": workspace_id_variable.value,
+            "legacy_aws_s3_bucket": legacy_s3_bucket_variable.value,
         },
         "secrets": {
             "tower_access_token": seqera_token_secret.secret_name,
+            "legacy_tower_workspace_id": legacy_workspace_id_secret.secret_name,
+            "legacy_tower_compute_env": legacy_compute_env_secret.secret_name,
         },
     },
 )
