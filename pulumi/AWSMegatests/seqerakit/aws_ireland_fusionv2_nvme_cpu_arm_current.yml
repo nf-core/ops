@@ -4,4 +4,4 @@ compute-envs:
     credentials: "$AWS_CREDENTIALS_NAME"
     wait: "AVAILABLE"
     file-path: "./current-env-cpu-arm.json"
-    overwrite: True
+    on_exists: "ignore"
