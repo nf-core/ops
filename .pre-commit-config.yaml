@@ -33,6 +33,23 @@ repos:
           - pulumi-github>=6.7.2
           - pulumi-onepassword>=1.1.3
 
+  - repo: local
+    hooks:
+      - id: ty
+        name: ty type checker
+        entry: uv run ty check
+        language: system
+        types: [python]
+        args:
+          [
+            --exclude,
+            "**/venv/**",
+            --exclude,
+            "**/.venv/**",
+            --exclude,
+            "**/__pycache__/**",
+          ]
+
   - repo: https://github.com/renovatebot/pre-commit-hooks
     rev: 41.18.3
     hooks:

@@ -1,20 +1,16 @@
 [project]
-name = "test-datasets"
+name = "nf-core-ops"
 version = "0.1.0"
-description = "Add your description here"
+description = "nf-core operations and infrastructure management"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = [
-    "pulumi>=3.173.0",
-    "pulumi-aws>=6.81.0",
-    "pulumi-github>=6.7.2",
-    "pulumi-onepassword>=1.1.3",
-]
 
 [dependency-groups]
 dev = [
     "ty>=0.0.0a6",
     "mypy>=1.11.1",
+    "pre-commit>=3.0.0",
+    "ruff>=0.12.0",
 ]
 
 # [tool.ty]
@@ -31,3 +27,16 @@ disallow_untyped_defs = true
 no_implicit_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
+exclude = [
+    "venv/",
+    ".venv/",
+    "__pycache__/",
+]
+
+[tool.ruff]
+# Keep existing ruff configuration
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = ["I"]  # isort 
