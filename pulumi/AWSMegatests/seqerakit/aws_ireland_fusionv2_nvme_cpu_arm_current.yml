@@ -4,4 +4,5 @@ compute-envs:
     credentials: "$AWS_CREDENTIALS_NAME"
     wait: "AVAILABLE"
     file-path: "./current-env-cpu-arm.json"
-    on_exists: "ignore"
+    config: "./cpu-arm-nextflow.config"
+    overwrite: True
