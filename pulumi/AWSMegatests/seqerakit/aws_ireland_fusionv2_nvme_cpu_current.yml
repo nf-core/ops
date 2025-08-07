@@ -4,5 +4,4 @@ compute-envs:
     credentials: "$AWS_CREDENTIALS_NAME"
     wait: "AVAILABLE"
     file-path: "./current-env-cpu.json"
-    config: "./cpu-nextflow.config"
     overwrite: True

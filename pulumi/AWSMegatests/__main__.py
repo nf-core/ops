@@ -9,11 +9,11 @@ import pulumi_aws as aws
 from pulumi_aws import s3
 from towerforge_credentials import create_towerforge_credentials
 
-# Configure the 1Password provider explicitly
-onepassword_config = pulumi.Config("pulumi-onepassword")
+# Configure the 1Password provider to use CLI-based authentication
+# This works with the OP_ACCOUNT environment variable set in .envrc
 onepassword_provider = onepassword.Provider(
     "onepassword-provider",
-    service_account_token=onepassword_config.require_secret("service_account_token"),
+    account="nf-core",  # Use CLI-based authentication instead of service account token
 )
 
 # Get secrets from 1Password using the provider

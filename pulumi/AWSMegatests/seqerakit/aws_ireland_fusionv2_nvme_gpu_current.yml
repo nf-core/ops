@@ -4,5 +4,4 @@ compute-envs:
     credentials: "$AWS_CREDENTIALS_NAME"
     wait: "AVAILABLE"
     file-path: "./current-env-gpu.json"
-    config: "./gpu-nextflow.config"
     overwrite: True
