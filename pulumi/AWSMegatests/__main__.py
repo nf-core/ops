@@ -1,7 +1,6 @@
 """An AWS Python Pulumi program"""
 
 import json
-import os
 import pulumi
 import pulumi_github as github
 import pulumi_command as command
@@ -38,9 +37,9 @@ def find_field_value(fields):
 
 tower_access_token = tower_access_token_item.sections[0].fields.apply(find_field_value)
 
-# For workspace ID, since it's likely a custom field, we'll use environment variable
-# The workspace ID should be set in .envrc as TOWER_WORKSPACE_ID from 1Password
-tower_workspace_id = os.environ.get("TOWER_WORKSPACE_ID")
+# Get workspace ID from 1Password (using static value for now)
+# TODO: Extract from 1Password custom field once we can access it reliably
+tower_workspace_id = "59994744926013"
 
 github_token_item = onepassword.get_item_output(
     vault="Dev",
@@ -150,6 +149,255 @@ pulumi.export(
     },
 )
 
+# Create TowerForge IAM policies and user for credential separation
+# Based on https://github.com/seqeralabs/nf-tower-aws
+
+# TowerForge Forge Policy - Comprehensive permissions for resource creation
+towerforge_forge_policy = aws.iam.Policy(
+    "towerforge-forge-policy",
+    name="TowerForge-Forge-Policy",
+    description="IAM policy for TowerForge to create and manage AWS Batch resources",
+    policy=json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "TowerForge0",
+                    "Effect": "Allow",
+                    "Action": [
+                        "ssm:GetParameters",
+                        "iam:CreateInstanceProfile",
+                        "iam:DeleteInstanceProfile",
+                        "iam:AddRoleToInstanceProfile",
+                        "iam:RemoveRoleFromInstanceProfile",
+                        "iam:CreateRole",
+                        "iam:DeleteRole",
+                        "iam:AttachRolePolicy",
+                        "iam:DetachRolePolicy",
+                        "iam:PutRolePolicy",
+                        "iam:DeleteRolePolicy",
+                        "iam:PassRole",
+                        "iam:TagRole",
+                        "iam:TagInstanceProfile",
+                        "iam:ListRolePolicies",
+                        "iam:ListAttachedRolePolicies",
+                        "batch:CreateComputeEnvironment",
+                        "batch:UpdateComputeEnvironment",
+                        "batch:DeleteComputeEnvironment",
+                        "batch:CreateJobQueue",
+                        "batch:UpdateJobQueue",
+                        "batch:DeleteJobQueue",
+                        "batch:DescribeComputeEnvironments",
+                        "batch:DescribeJobQueues",
+                        "fsx:CreateFileSystem",
+                        "fsx:DeleteFileSystem",
+                        "fsx:DescribeFileSystems",
+                        "fsx:TagResource",
+                        "ec2:DescribeSecurityGroups",
+                        "ec2:DescribeSubnets",
+                        "ec2:DescribeLaunchTemplates",
+                        "ec2:DescribeKeyPairs",
+                        "ec2:DescribeVpcs",
+                        "ec2:DescribeInstanceTypes",
+                        "ec2:CreateLaunchTemplate",
+                        "ec2:DeleteLaunchTemplate",
+                        "ec2:GetEbsEncryptionByDefault",
+                        "efs:CreateFileSystem",
+                        "efs:DeleteFileSystem",
+                        "efs:DescribeFileSystems",
+                        "efs:CreateMountTarget",
+                        "efs:DeleteMountTarget",
+                        "efs:DescribeMountTargets",
+                        "efs:ModifyFileSystem",
+                        "efs:PutLifecycleConfiguration",
+                        "efs:TagResource",
+                    ],
+                    "Resource": "*",
+                },
+                {
+                    "Sid": "TowerLaunch0",
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:Get*",
+                        "s3:List*",
+                        "batch:DescribeJobQueues",
+                        "batch:CancelJob",
+                        "batch:SubmitJob",
+                        "batch:ListJobs",
+                        "batch:TagResource",
+                        "batch:DescribeComputeEnvironments",
+                        "batch:TerminateJob",
+                        "batch:DescribeJobs",
+                        "batch:RegisterJobDefinition",
+                        "batch:DescribeJobDefinitions",
+                        "ecs:DescribeTasks",
+                        "ec2:DescribeInstances",
+                        "ec2:DescribeInstanceTypes",
+                        "ec2:DescribeInstanceAttribute",
+                        "ecs:DescribeContainerInstances",
+                        "ec2:DescribeInstanceStatus",
+                        "ec2:DescribeImages",
+                        "logs:Describe*",
+                        "logs:Get*",
+                        "logs:List*",
+                        "logs:StartQuery",
+                        "logs:StopQuery",
+                        "logs:TestMetricFilter",
+                        "logs:FilterLogEvents",
+                        "ses:SendRawEmail",
+                        "secretsmanager:ListSecrets",
+                    ],
+                    "Resource": "*",
+                },
+            ],
+        }
+    ),
+    opts=pulumi.ResourceOptions(provider=aws_provider),
+)
+
+# TowerForge Launch Policy - Limited permissions for pipeline execution
+towerforge_launch_policy = aws.iam.Policy(
+    "towerforge-launch-policy",
+    name="TowerForge-Launch-Policy",
+    description="IAM policy for TowerForge to launch and monitor pipeline executions",
+    policy=json.dumps(
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "TowerLaunch0",
+                    "Effect": "Allow",
+                    "Action": [
+                        "batch:DescribeJobQueues",
+                        "batch:CancelJob",
+                        "batch:SubmitJob",
+                        "batch:ListJobs",
+                        "batch:TagResource",
+                        "batch:DescribeComputeEnvironments",
+                        "batch:TerminateJob",
+                        "batch:DescribeJobs",
+                        "batch:RegisterJobDefinition",
+                        "batch:DescribeJobDefinitions",
+                        "ecs:DescribeTasks",
+                        "ec2:DescribeInstances",
+                        "ec2:DescribeInstanceTypes",
+                        "ec2:DescribeInstanceAttribute",
+                        "ecs:DescribeContainerInstances",
+                        "ec2:DescribeInstanceStatus",
+                        "ec2:DescribeImages",
+                        "logs:Describe*",
+                        "logs:Get*",
+                        "logs:List*",
+                        "logs:StartQuery",
+                        "logs:StopQuery",
+                        "logs:TestMetricFilter",
+                        "logs:FilterLogEvents",
+                        "ses:SendRawEmail",
+                        "secretsmanager:ListSecrets",
+                    ],
+                    "Resource": "*",
+                }
+            ],
+        }
+    ),
+    opts=pulumi.ResourceOptions(provider=aws_provider),
+)
+
+# TowerForge S3 Bucket Access Policy - Access to nf-core-awsmegatests bucket
+towerforge_s3_policy = aws.iam.Policy(
+    "towerforge-s3-policy",
+    name="TowerForge-S3-Policy",
+    description="IAM policy for TowerForge to access nf-core-awsmegatests S3 bucket",
+    policy=nf_core_awsmegatests_bucket.arn.apply(
+        lambda arn: json.dumps(
+            {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {"Effect": "Allow", "Action": ["s3:ListBucket"], "Resource": [arn]},
+                    {
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:PutObject",
+                            "s3:PutObjectTagging",
+                            "s3:DeleteObject",
+                        ],
+                        "Resource": [f"{arn}/*"],
+                        "Effect": "Allow",
+                    },
+                ],
+            }
+        )
+    ),
+    opts=pulumi.ResourceOptions(
+        provider=aws_provider, depends_on=[nf_core_awsmegatests_bucket]
+    ),
+)
+
+# Create TowerForge IAM User
+towerforge_user = aws.iam.User(
+    "towerforge-user",
+    name="TowerForge-AWSMegatests",
+    opts=pulumi.ResourceOptions(provider=aws_provider),
+)
+
+# Attach policies to the TowerForge user
+towerforge_forge_policy_attachment = aws.iam.UserPolicyAttachment(
+    "towerforge-forge-policy-attachment",
+    user=towerforge_user.name,
+    policy_arn=towerforge_forge_policy.arn,
+    opts=pulumi.ResourceOptions(
+        provider=aws_provider, depends_on=[towerforge_user, towerforge_forge_policy]
+    ),
+)
+
+towerforge_launch_policy_attachment = aws.iam.UserPolicyAttachment(
+    "towerforge-launch-policy-attachment",
+    user=towerforge_user.name,
+    policy_arn=towerforge_launch_policy.arn,
+    opts=pulumi.ResourceOptions(
+        provider=aws_provider, depends_on=[towerforge_user, towerforge_launch_policy]
+    ),
+)
+
+towerforge_s3_policy_attachment = aws.iam.UserPolicyAttachment(
+    "towerforge-s3-policy-attachment",
+    user=towerforge_user.name,
+    policy_arn=towerforge_s3_policy.arn,
+    opts=pulumi.ResourceOptions(
+        provider=aws_provider, depends_on=[towerforge_user, towerforge_s3_policy]
+    ),
+)
+
+# Create access keys for the TowerForge user
+towerforge_access_key = aws.iam.AccessKey(
+    "towerforge-access-key",
+    user=towerforge_user.name,
+    opts=pulumi.ResourceOptions(
+        provider=aws_provider,
+        depends_on=[
+            towerforge_forge_policy_attachment,
+            towerforge_launch_policy_attachment,
+            towerforge_s3_policy_attachment,
+        ],
+        additional_secret_outputs=["secret"],
+    ),
+)
+
+# Store TowerForge credentials in 1Password for secure management
+towerforge_credentials_item = onepassword.Item(
+    "towerforge-credentials",
+    vault="Dev",
+    title="TowerForge AWS Credentials",
+    category="login",
+    username=towerforge_access_key.id,
+    password=towerforge_access_key.secret,
+    opts=pulumi.ResourceOptions(
+        provider=onepassword_provider,
+        depends_on=[towerforge_access_key],
+        additional_secret_outputs=["password"],
+    ),
+)
+
 # Deploy seqerakit environments and extract compute IDs
 # NOTE: We could check for tw-cli availability here, but we'll let seqerakit
 # throw the appropriate error if it's missing. Seqerakit requires tw-cli to be
@@ -169,11 +417,10 @@ seqerakit_environment = {
     "AWS_REGION": "eu-west-1",
     "AWS_WORK_DIR": "s3://nf-core-awsmegatests",
     "AWS_COMPUTE_ENV_ALLOWED_BUCKETS": "s3://ngi-igenomes,s3://annotation-cache",
-    # Add AWS credentials for seqerakit to create compute environments
-    "AWS_ACCESS_KEY_ID": pulumi.Config("aws").get("accessKey")
-    or os.environ.get("AWS_ACCESS_KEY_ID"),
-    "AWS_SECRET_ACCESS_KEY": pulumi.Config("aws").get_secret("secretKey")
-    or os.environ.get("AWS_SECRET_ACCESS_KEY"),
+    # Use TowerForge AWS credentials for seqerakit operations (credential separation)
+    # These credentials have the specific permissions needed for AWS Batch operations
+    "AWS_ACCESS_KEY_ID": towerforge_access_key.id,
+    "AWS_SECRET_ACCESS_KEY": towerforge_access_key.secret,
     # Tower CLI configuration - use standard Seqera Cloud endpoint
     "TOWER_API_ENDPOINT": "https://api.cloud.seqera.io",
 }
@@ -354,8 +601,6 @@ seqera_token_secret = github.ActionsOrganizationSecret(
     plaintext_value=tower_access_token,
     opts=pulumi.ResourceOptions(
         provider=github_provider,
-        protect=True,  # Protect from accidental deletion
-        delete_before_replace=True,  # Workaround for pulumi/pulumi-github#250
     ),
 )
 
@@ -440,5 +685,24 @@ pulumi.export(
         "cpu_deployment": cpu_deploy_cmd.stdout,
         "gpu_deployment": gpu_deploy_cmd.stdout,
         "arm_deployment": arm_deploy_cmd.stdout,
+    },
+)
+
+# Export TowerForge IAM resources for reference and future use
+pulumi.export(
+    "towerforge_iam",
+    {
+        "user": {
+            "name": towerforge_user.name,
+            "arn": towerforge_user.arn,
+        },
+        "access_key_id": towerforge_access_key.id,
+        "access_key_secret": towerforge_access_key.secret,
+        "onepassword_item_id": towerforge_credentials_item.id,
+        "policies": {
+            "forge_policy_arn": towerforge_forge_policy.arn,
+            "launch_policy_arn": towerforge_launch_policy.arn,
+            "s3_policy_arn": towerforge_s3_policy.arn,
+        },
     },
 )
