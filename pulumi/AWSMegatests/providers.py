@@ -1,5 +1,6 @@
 """Provider configurations for AWS Megatests infrastructure"""
 
+import pulumi
 import pulumi_aws as aws
 import pulumi_github as github
 import pulumi_onepassword as onepassword
@@ -8,21 +9,29 @@ import pulumi_onepassword as onepassword
 def create_providers():
     """Create and configure all required providers"""
 
-    # Configure the 1Password provider to use CLI-based authentication
-    # This works with the OP_ACCOUNT environment variable set in .envrc
+    # Configure the 1Password provider using service account token from Pulumi config
+    # This avoids dependency on environment variables and direnv
+    onepassword_config = pulumi.Config("pulumi-onepassword")
     onepassword_provider = onepassword.Provider(
-        "onepassword-provider",
-        account="nf-core",  # Use CLI-based authentication instead of service account token
+        "onepassword-provider-v2",
+        service_account_token=onepassword_config.require_secret(
+            "service_account_token"
+        ),
     )
-
-    # Use default AWS provider which will read from environment variables
-    # (set via .envrc with 1Password integration)
-    aws_provider = aws.Provider("aws-provider", region="eu-west-1")
 
     return {
         "onepassword": onepassword_provider,
-        "aws": aws_provider,
     }
+
+
+def create_aws_provider(aws_access_key_id, aws_secret_access_key):
+    """Create AWS provider with credentials from 1Password"""
+    return aws.Provider(
+        "aws-provider",
+        region="eu-west-1",
+        access_key=aws_access_key_id,
+        secret_key=aws_secret_access_key,
+    )
 
 
 def create_github_provider(github_token):

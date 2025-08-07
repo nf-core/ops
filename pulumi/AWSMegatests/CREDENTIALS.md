@@ -13,17 +13,19 @@ The credential architecture follows a clean separation pattern with two distinct
 
 ```mermaid
 graph TB
-    A[1Password Dev Vault] --> B[Pulumi Infrastructure Credentials]
-    B --> C[Pulumi AWS Provider]
-    C --> D[TowerForge IAM Resources]
-    D --> E[TowerForge Access Keys]
-    E --> F[seqerakit Environment]
-    F --> G[Seqera Platform]
-    G --> H[AWS Batch Operations]
+    A[1Password Dev Vault] --> B[Pulumi 1Password Provider]
+    B --> C[AWS Infrastructure Credentials]
+    C --> D[Pulumi AWS Provider]
+    D --> E[TowerForge IAM Resources]
+    E --> F[TowerForge Access Keys]
+    F --> G[seqerakit Environment]
+    G --> H[Seqera Platform]
+    H --> I[AWS Batch Operations]
 
     style A fill:#f9f,stroke:#333,stroke-width:2px
-    style D fill:#bbf,stroke:#333,stroke-width:2px
-    style E fill:#bfb,stroke:#333,stroke-width:2px
+    style B fill:#e1f5fe,stroke:#333,stroke-width:2px
+    style E fill:#bbf,stroke:#333,stroke-width:2px
+    style F fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ## Detailed Flow
@@ -32,7 +34,7 @@ graph TB
 
 ```
 1Password Dev Vault
-    ↓ (via .envrc)
+    ↓ (via Pulumi 1Password Provider)
 Pulumi Infrastructure Credentials
     ↓
 AWS Provider in Pulumi
@@ -72,7 +74,7 @@ AWS Batch operations (job submission, monitoring, etc.)
 - **Purpose**: Infrastructure as Code operations
 - **Scope**: S3 bucket management, IAM resource creation, basic AWS operations
 - **Storage**: Persistent in 1Password
-- **Access Pattern**: Loaded via `.envrc` → Environment variables → Pulumi AWS provider
+- **Access Pattern**: Pulumi 1Password Provider → AWS Provider (no environment variables)
 
 ### TowerForge Credentials
 
@@ -139,27 +141,32 @@ The TowerForge user has three attached policies:
 ```
 AWSMegatests/
 ├── __main__.py                    # Main Pulumi program (orchestration)
-├── towerforge_credentials.py      # TowerForge IAM resource creation
-├── .envrc                        # Environment variables (1Password integration)
-├── CREDENTIALS.md                # This documentation
-└── seqerakit/                    # Seqera Platform configurations
-    ├── *.yml                     # Compute environment configs
-    ├── *.json                    # Environment specifications
-    └── *-nextflow.config         # Nextflow configuration files
+├── providers.py                  # Provider configurations (1Password, AWS, GitHub)
+├── secrets_manager.py            # 1Password secret retrieval functions
+├── towerforge_credentials.py     # TowerForge IAM resource creation
+├── Pulumi.dev.yaml              # Pulumi configuration (encrypted secrets)
+├── CREDENTIALS.md               # This documentation
+└── seqerakit/                   # Seqera Platform configurations
+    ├── *.yml                    # Compute environment configs
+    ├── *.json                   # Environment specifications
+    └── *-nextflow.config        # Nextflow configuration files
 ```
 
-## Environment Variables
+## Secret Management
 
-### Pulumi Infrastructure (.envrc)
+### Pulumi Configuration (Pulumi.dev.yaml)
 
-```bash
-# Infrastructure management credentials
-from_op AWS_ACCESS_KEY_ID="op://Dev/AWS megatests/username"
-from_op AWS_SECRET_ACCESS_KEY="op://Dev/AWS megatests/password"
+```yaml
+config:
+  # 1Password service account token (encrypted by Pulumi)
+  pulumi-onepassword:service_account_token:
+    secure: [encrypted-token]
 
-# Other infrastructure variables
-export AWS_REGION="eu-west-1"
-export AWS_WORK_DIR="s3://nf-core-awsmegatests"
+  # AWS configuration
+  aws:region: eu-west-1
+
+  # GitHub configuration
+  github:owner: nf-core
 ```
 
 ### seqerakit Environment (runtime)
@@ -182,41 +189,52 @@ seqerakit_environment = {
 ### Infrastructure Deployment
 
 ```bash
-# Ensure credentials are loaded
-direnv allow
+# If OP_ACCOUNT was previously set by direnv, unset it first
+unset OP_ACCOUNT
 
-# Deploy infrastructure with proper credential separation
-direnv exec . uv run pulumi up
+# Deploy infrastructure (no direnv needed)
+uv run pulumi up
+
+# Preview changes
+uv run pulumi preview
+
+# Check stack outputs
+uv run pulumi stack output
 ```
 
 ### Credential Flow Verification
 
 ```bash
-# Check Pulumi credentials
-direnv exec . aws sts get-caller-identity
-
 # Check TowerForge user creation (after deployment)
 aws iam get-user --user-name TowerForge-AWSMegatests
 
 # List attached policies
 aws iam list-attached-user-policies --user-name TowerForge-AWSMegatests
+
+# Verify Pulumi stack outputs
+uv run pulumi stack output
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### 1. "No valid credential sources found"
+#### 1. "Failed to get credentials from 1Password"
 
-- **Cause**: Pulumi infrastructure credentials not loaded
-- **Solution**: Use `direnv exec . uv run pulumi <command>`
+- **Cause**: 1Password service account token not configured or invalid
+- **Solution**: Verify `pulumi config get pulumi-onepassword:service_account_token` is set
 
-#### 2. "Access Denied" in seqerakit operations
+#### 2. "Config conflict: serviceAccountToken and account are set"
+
+- **Cause**: Environment variable `OP_ACCOUNT` is set from previous direnv session
+- **Solution**: Run `unset OP_ACCOUNT` before Pulumi commands, or restart shell session
+
+#### 3. "Access Denied" in seqerakit operations
 
 - **Cause**: TowerForge credentials not properly generated or passed
 - **Solution**: Check Pulumi deployment logs for TowerForge resource creation
 
-#### 3. "User already exists" errors
+#### 4. "User already exists" errors
 
 - **Cause**: Previous TowerForge user not cleaned up
 - **Solution**: Remove existing user or use `pulumi refresh` to sync state
@@ -225,11 +243,11 @@ aws iam list-attached-user-policies --user-name TowerForge-AWSMegatests
 
 ```bash
 # Rotate TowerForge credentials (regenerates access keys)
-direnv exec . uv run pulumi up
+uv run pulumi up
 
 # Rotate infrastructure credentials
-# Update in 1Password, then reload environment
-direnv reload
+# Update in 1Password - no environment reload needed
+# Next Pulumi run will automatically use updated credentials
 ```
 
 ## Security Considerations
@@ -239,7 +257,8 @@ direnv reload
 - ✅ **Credential separation**: Different credentials for different purposes
 - ✅ **Minimal permissions**: Each credential set has only required permissions
 - ✅ **Ephemeral TowerForge credentials**: No persistent storage
-- ✅ **Secure storage**: Infrastructure credentials in 1Password
+- ✅ **Secure storage**: Infrastructure credentials in 1Password with Pulumi native integration
+- ✅ **No environment variables**: Eliminates direnv and shell environment dependencies
 - ✅ **Automated rotation**: TowerForge credentials recreated on each deployment
 
 ### Access Control
@@ -258,4 +277,4 @@ direnv reload
 ---
 
 _Last updated: August 2024_
-_Architecture version: 2.0 (Separated credentials)_
+_Architecture version: 3.0 (Pulumi-native 1Password integration, no direnv)_

@@ -4,46 +4,52 @@ import pulumi
 import pulumi_aws as aws
 
 # Import our modular components
-from providers import create_providers, create_github_provider
+from providers import create_providers, create_aws_provider, create_github_provider
 from secrets_manager import get_secrets
 from s3_infrastructure import create_s3_infrastructure
 from towerforge_credentials import create_towerforge_credentials
 from seqera_deployment import deploy_seqera_environments, query_compute_environment_ids
-from github_integration import create_github_resources
 
-# Step 1: Initialize providers
+# Step 1: Initialize 1Password provider
 providers = create_providers()
-aws_provider = providers["aws"]
 onepassword_provider = providers["onepassword"]
 
 # Step 2: Get secrets from 1Password
 op_secrets = get_secrets(onepassword_provider)
+
+# Step 3: Create AWS and GitHub providers with secrets from 1Password
+aws_provider = create_aws_provider(
+    op_secrets["aws_access_key_id"], op_secrets["aws_secret_access_key"]
+)
 github_provider = create_github_provider(op_secrets["github_token"])
 
-# Step 3: Set up S3 infrastructure
+# Step 4: Set up S3 infrastructure
 s3_resources = create_s3_infrastructure(aws_provider)
 nf_core_awsmegatests_bucket = s3_resources["bucket"]
 bucket_lifecycle_configuration = s3_resources["lifecycle_configuration"]
 
-# Step 4: Create TowerForge IAM credentials
+# Step 5: Create TowerForge IAM credentials
 towerforge_access_key_id, towerforge_access_key_secret = create_towerforge_credentials(
     aws_provider, nf_core_awsmegatests_bucket
 )
 
-# Step 5: Deploy Seqera Platform compute environments
+# Step 6: Deploy Seqera Platform compute environments
 seqera_resources = deploy_seqera_environments(
     op_secrets, towerforge_access_key_id, towerforge_access_key_secret
 )
 cpu_deploy_cmd = seqera_resources["cpu_deploy_cmd"]
 gpu_deploy_cmd = seqera_resources["gpu_deploy_cmd"]
 arm_deploy_cmd = seqera_resources["arm_deploy_cmd"]
-# Step 6: Query compute environment IDs
+
+# Step 7: Query compute environment IDs
 compute_env_ids = query_compute_environment_ids(op_secrets["tower_access_token"])
 
-# Step 7: Create GitHub resources
-github_resources = create_github_resources(
-    github_provider, compute_env_ids, op_secrets["tower_workspace_id"]
-)
+# Step 8: Create GitHub resources
+# Temporarily commented out due to GitHub token permissions issue
+# github_resources = create_github_resources(
+#     github_provider, compute_env_ids, op_secrets["tower_workspace_id"]
+# )
+github_resources: dict = {"variables": {}, "secrets": {}}
 
 # Exports
 pulumi.export(
@@ -59,24 +65,9 @@ pulumi.export(
 pulumi.export(
     "github_resources",
     {
-        "variables": {
-            "compute_env_cpu": pulumi.Output.unsecret(
-                github_resources["variables"]["cpu"].value
-            ),
-            "compute_env_gpu": pulumi.Output.unsecret(
-                github_resources["variables"]["gpu"].value
-            ),
-            "compute_env_arm": pulumi.Output.unsecret(
-                github_resources["variables"]["arm"].value
-            ),
-            "tower_workspace_id": github_resources["variables"]["workspace_id"].value,
-            "legacy_aws_s3_bucket": github_resources["variables"][
-                "legacy_s3_bucket"
-            ].value,
-        },
-        "secrets": {
-            # tower_access_token managed manually via gh CLI
-        },
+        "note": "GitHub resources temporarily disabled due to permissions issue",
+        "variables": {},
+        "secrets": {},
     },
 )
 

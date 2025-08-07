@@ -40,8 +40,17 @@ def get_secrets(onepassword_provider):
     )
     github_token = github_token_item.credential
 
+    # Get AWS credentials from 1Password
+    aws_credentials_item = onepassword.get_item_output(
+        vault="Dev",
+        title="AWS megatests",
+        opts=pulumi.InvokeOptions(provider=onepassword_provider),
+    )
+
     return {
         "tower_access_token": tower_access_token,
         "tower_workspace_id": tower_workspace_id,
         "github_token": github_token,
+        "aws_access_key_id": aws_credentials_item.username,
+        "aws_secret_access_key": aws_credentials_item.password,
     }
