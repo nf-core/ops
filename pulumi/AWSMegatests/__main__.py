@@ -351,16 +351,14 @@ arm_variable = github.ActionsOrganizationVariable(
     opts=pulumi.ResourceOptions(provider=github_provider),
 )
 
-# Create org-level GitHub secret for Seqera Platform API token
-seqera_token_secret = github.ActionsOrganizationSecret(
-    "tower-access-token",
-    visibility="all",
-    secret_name="TOWER_ACCESS_TOKEN",
-    plaintext_value=tower_access_token,
-    opts=pulumi.ResourceOptions(
-        provider=github_provider,
-    ),
-)
+# GitHub organization secret for Seqera Platform API token must be managed manually
+# due to GitHub permission requirements (org admin or actions secrets fine-grained permission)
+#
+# To set the secret manually, use:
+# gh secret set TOWER_ACCESS_TOKEN --org nf-core --body "$TOWER_ACCESS_TOKEN"
+#
+# This secret was removed from Pulumi management to avoid 403 permission errors:
+# "403 You must be an org admin or have the actions secrets fine-grained permission"
 
 # Create org-level GitHub variable for workspace ID (non-sensitive)
 workspace_id_variable = github.ActionsOrganizationVariable(
@@ -420,9 +418,7 @@ pulumi.export(
             "legacy_aws_s3_bucket": legacy_s3_bucket_variable.value,
         },
         "secrets": {
-            "tower_access_token": seqera_token_secret.secret_name,
-            "legacy_tower_workspace_id": legacy_workspace_id_secret.secret_name,
-            "legacy_tower_compute_env": legacy_compute_env_secret.secret_name,
+            # tower_access_token managed manually via gh CLI
         },
     },
 )
