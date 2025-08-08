@@ -93,18 +93,18 @@ def create_github_resources(
 
         # Legacy workspace ID secret
         commands.append(
-            f'gh secret set TOWER_WORKSPACE_ID --org nf-core --body "{workspace_id_val}"'
+            f'gh secret set TOWER_WORKSPACE_ID --org nf-core --body "{workspace_id_val}" --visibility all'
         )
 
         # Legacy compute env secret (CPU)
         commands.append(
-            f'gh secret set TOWER_COMPUTE_ENV --org nf-core --body "{cpu_env_id_val}"'
+            f'gh secret set TOWER_COMPUTE_ENV --org nf-core --body "{cpu_env_id_val}" --visibility all'
         )
 
         # Tower access token (if provided)
         if tower_token_val:
             commands.append(
-                "OP_ACCOUNT=nf-core gh secret set TOWER_ACCESS_TOKEN --org nf-core --body \"$(op read 'op://Dev/Seqera Platform/TOWER_ACCESS_TOKEN')\""
+                "OP_ACCOUNT=nf-core gh secret set TOWER_ACCESS_TOKEN --org nf-core --body \"$(op read 'op://Dev/Seqera Platform/TOWER_ACCESS_TOKEN')\" --visibility all"
             )
 
         return commands

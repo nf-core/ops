@@ -74,7 +74,7 @@ pulumi.export(
         "name": nf_core_awsmegatests_bucket.bucket,
         "arn": nf_core_awsmegatests_bucket.arn,
         "region": "eu-west-1",
-        "lifecycle_configuration": bucket_lifecycle_configuration.id,
+        "lifecycle_configuration": "managed-manually",
     },
 )
 
