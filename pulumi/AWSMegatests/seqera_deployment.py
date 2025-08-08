@@ -96,7 +96,27 @@ def query_compute_environment_ids(tower_access_token):
 
     def create_query_command(env_name: str, grep_pattern: str):
         def create_query_cmd(token: str) -> str:
-            return f'tw --access-token="{token}" compute-envs list --workspace=nf-core/AWSmegatests | grep "{grep_pattern}" | awk \'{{print $1}}\''
+            # Enhanced command with better error handling and debugging
+            return f'''
+            echo "Querying {env_name} compute environment..." >&2
+            result=$(tw --access-token="{token}" compute-envs list --workspace=nf-core/AWSmegatests 2>&1)
+            if [ $? -ne 0 ]; then
+                echo "Error querying Tower CLI: $result" >&2
+                echo "tower-query-failed-{env_name}"
+                exit 1
+            fi
+            
+            env_id=$(echo "$result" | grep "{grep_pattern}" | awk '{{print $1}}' | head -1)
+            if [ -z "$env_id" ]; then
+                echo "No compute environment found matching pattern: {grep_pattern}" >&2
+                echo "Available compute environments:" >&2
+                echo "$result" >&2
+                echo "no-match-{env_name}-{grep_pattern}"
+                exit 1
+            fi
+            
+            echo "$env_id"
+            '''
 
         return command.local.Command(
             f"query-{env_name}-compute-env",
@@ -114,11 +134,27 @@ def query_compute_environment_ids(tower_access_token):
         "arm", "aws_ireland_fusionv2_nvme_cpu_ARM_snapshots"
     )
 
-    # Extract the IDs from the query results
+    # Extract the IDs from the query results with validation
+    def validate_env_id(env_name: str, env_id: str) -> str:
+        """Validate compute environment ID and provide fallback"""
+        env_id = env_id.strip()
+        
+        # Check for error patterns
+        if env_id.startswith("tower-query-failed-") or env_id.startswith("no-match-"):
+            pulumi.log.warn(f"Failed to query {env_name} compute environment: {env_id}")
+            return f"query-failed-{env_name}"
+        
+        # Check for valid UUID-like format (compute env IDs are typically long alphanumeric)
+        if len(env_id) < 10 or not env_id.replace("-", "").isalnum():
+            pulumi.log.warn(f"Invalid {env_name} compute environment ID format: {env_id}")
+            return f"invalid-format-{env_name}"
+        
+        return env_id
+
     compute_env_ids = {
-        "cpu": cpu_query_cmd.stdout.apply(lambda x: x.strip()),
-        "gpu": gpu_query_cmd.stdout.apply(lambda x: x.strip()),
-        "arm": arm_query_cmd.stdout.apply(lambda x: x.strip()),
+        "cpu": cpu_query_cmd.stdout.apply(lambda x: validate_env_id("cpu", x)),
+        "gpu": gpu_query_cmd.stdout.apply(lambda x: validate_env_id("gpu", x)),
+        "arm": arm_query_cmd.stdout.apply(lambda x: validate_env_id("arm", x)),
     }
 
     return compute_env_ids

@@ -9,6 +9,7 @@ from secrets_manager import get_secrets
 from s3_infrastructure import create_s3_infrastructure
 from towerforge_credentials import create_towerforge_credentials
 from seqera_deployment import deploy_seqera_environments, query_compute_environment_ids
+from github_integration import create_github_resources, execute_github_cli_fallback
 
 # Step 1: Initialize 1Password provider
 providers = create_providers()
@@ -45,11 +46,29 @@ arm_deploy_cmd = seqera_resources["arm_deploy_cmd"]
 compute_env_ids = query_compute_environment_ids(op_secrets["tower_access_token"])
 
 # Step 8: Create GitHub resources
-# Temporarily commented out due to GitHub token permissions issue
-# github_resources = create_github_resources(
-#     github_provider, compute_env_ids, op_secrets["tower_workspace_id"]
-# )
-github_resources: dict = {"variables": {}, "secrets": {}}
+# Full GitHub integration enabled - creates both variables and secrets
+try:
+    github_resources = create_github_resources(
+        github_provider, 
+        compute_env_ids, 
+        op_secrets["tower_workspace_id"],
+        tower_access_token=op_secrets["tower_access_token"],
+        enable_gh_cli_fallback=True  # Use gh CLI fallback to work around pulumi/pulumi-github#250
+    )
+    
+    # Execute gh CLI fallback for secrets if enabled
+    gh_cli_fallback_cmd = None
+    if github_resources.get("using_gh_cli_fallback") and github_resources.get("gh_cli_commands"):
+        gh_cli_fallback_cmd = execute_github_cli_fallback(
+            github_resources["gh_cli_commands"], 
+            op_secrets["tower_access_token"]
+        )
+    
+    pulumi.log.info("Successfully created GitHub variables and configured secrets fallback")
+except Exception as e:
+    pulumi.log.warn(f"Failed to create GitHub resources: {e}")
+    github_resources = {"variables": {}, "secrets": {}, "gh_cli_commands": [], "using_gh_cli_fallback": False}
+    gh_cli_fallback_cmd = None
 
 # Exports
 pulumi.export(
@@ -65,9 +84,17 @@ pulumi.export(
 pulumi.export(
     "github_resources",
     {
-        "note": "GitHub resources temporarily disabled due to permissions issue",
-        "variables": {},
-        "secrets": {},
+        "variables": {k: v.id for k, v in github_resources.get("variables", {}).items()} if github_resources.get("variables") else {},
+        "secrets": {k: v.id for k, v in github_resources.get("secrets", {}).items()} if github_resources.get("secrets") else {},
+        "using_gh_cli_fallback": github_resources.get("using_gh_cli_fallback", False),
+        "gh_cli_fallback_status": "active" if gh_cli_fallback_cmd else "not_configured",
+        "gh_cli_fallback_cmd_id": gh_cli_fallback_cmd.id if gh_cli_fallback_cmd else None,
+        "manual_secret_commands": github_resources.get("gh_cli_commands", []) if isinstance(github_resources.get("gh_cli_commands"), list) else [],
+        "workaround_info": {
+            "issue_url": "https://github.com/pulumi/pulumi-github/issues/250",
+            "workaround": "delete_before_replace + gh CLI fallback",
+            "status": "implemented"
+        }
     },
 )
 

@@ -32,13 +32,13 @@ def get_secrets(onepassword_provider):
     # TODO: Extract from 1Password custom field once we can access it reliably
     tower_workspace_id = "59994744926013"
 
-    # Get GitHub token from 1Password
+    # Get GitHub token from 1Password using Pulumi provider
     github_token_item = onepassword.get_item_output(
         vault="Dev",
         title="GitHub nf-core PA Token Pulumi",
         opts=pulumi.InvokeOptions(provider=onepassword_provider),
     )
-    github_token = github_token_item.credential
+    github_token = github_token_item.password
 
     # Get AWS credentials from 1Password
     aws_credentials_item = onepassword.get_item_output(
