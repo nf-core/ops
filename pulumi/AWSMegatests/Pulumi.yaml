@@ -1,10 +1,12 @@
 name: AWSMegatests
+description: AWS Megatests Production Infrastructure
 runtime:
   name: python
   options:
-    virtualenv: venv
-description: Pulling in the infrastructure that was pre-infra-as-code
+    toolchain: uv
+    virtualenv: .venv
 config:
-  pulumi:tags:
-    value:
-      pulumi:template: ""
+  # GitHub Provider Configuration
+  github:owner: nf-core
+  # Note: AWS and other tokens are provided via ESC environment
+  # AWS credentials should come from ESC OIDC integration

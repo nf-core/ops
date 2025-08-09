@@ -118,9 +118,17 @@ def query_compute_environment_ids(tower_access_token):
             echo "$env_id"
             '''
 
+        # Handle both string and Pulumi Output types
+        if hasattr(tower_access_token, "apply"):
+            # It's a Pulumi Output
+            create_cmd = tower_access_token.apply(create_query_cmd)
+        else:
+            # It's a regular string
+            create_cmd = create_query_cmd(tower_access_token)
+
         return command.local.Command(
             f"query-{env_name}-compute-env",
-            create=tower_access_token.apply(create_query_cmd),
+            create=create_cmd,
             # Remove additional_secret_outputs to make the compute env IDs visible in variables
         )
 
@@ -138,17 +146,19 @@ def query_compute_environment_ids(tower_access_token):
     def validate_env_id(env_name: str, env_id: str) -> str:
         """Validate compute environment ID and provide fallback"""
         env_id = env_id.strip()
-        
+
         # Check for error patterns
         if env_id.startswith("tower-query-failed-") or env_id.startswith("no-match-"):
             pulumi.log.warn(f"Failed to query {env_name} compute environment: {env_id}")
             return f"query-failed-{env_name}"
-        
+
         # Check for valid UUID-like format (compute env IDs are typically long alphanumeric)
         if len(env_id) < 10 or not env_id.replace("-", "").isalnum():
-            pulumi.log.warn(f"Invalid {env_name} compute environment ID format: {env_id}")
+            pulumi.log.warn(
+                f"Invalid {env_name} compute environment ID format: {env_id}"
+            )
             return f"invalid-format-{env_name}"
-        
+
         return env_id
 
     compute_env_ids = {

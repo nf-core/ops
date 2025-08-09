@@ -4,25 +4,20 @@ import pulumi
 import pulumi_aws as aws
 
 # Import our modular components
-from providers import create_providers, create_aws_provider, create_github_provider
-from secrets_manager import get_secrets
+from providers import create_aws_provider, create_github_provider
+from secrets_manager import get_configuration
 from s3_infrastructure import create_s3_infrastructure
 from towerforge_credentials import create_towerforge_credentials
 from seqera_deployment import deploy_seqera_environments, query_compute_environment_ids
 from github_integration import create_github_resources
 
-# Step 1: Initialize 1Password provider
-providers = create_providers()
-onepassword_provider = providers["onepassword"]
+# Step 1: Get configuration from ESC environment and config
+config = get_configuration()
 
-# Step 2: Get secrets from 1Password
-op_secrets = get_secrets(onepassword_provider)
-
-# Step 3: Create AWS and GitHub providers with secrets from 1Password
-aws_provider = create_aws_provider(
-    op_secrets["aws_access_key_id"], op_secrets["aws_secret_access_key"]
-)
-github_provider = create_github_provider(op_secrets["github_token"])
+# Step 2: Create AWS and GitHub providers
+# AWS provider uses ESC-provided credentials automatically
+aws_provider = create_aws_provider()
+github_provider = create_github_provider(config["github_token"])
 
 # Step 4: Set up S3 infrastructure
 s3_resources = create_s3_infrastructure(aws_provider)
@@ -36,14 +31,14 @@ towerforge_access_key_id, towerforge_access_key_secret = create_towerforge_crede
 
 # Step 6: Deploy Seqera Platform compute environments
 seqera_resources = deploy_seqera_environments(
-    op_secrets, towerforge_access_key_id, towerforge_access_key_secret
+    config, towerforge_access_key_id, towerforge_access_key_secret
 )
 cpu_deploy_cmd = seqera_resources["cpu_deploy_cmd"]
 gpu_deploy_cmd = seqera_resources["gpu_deploy_cmd"]
 arm_deploy_cmd = seqera_resources["arm_deploy_cmd"]
 
 # Step 7: Query compute environment IDs
-compute_env_ids = query_compute_environment_ids(op_secrets["tower_access_token"])
+compute_env_ids = query_compute_environment_ids(config["tower_access_token"])
 
 # Step 8: Create GitHub resources
 # Full GitHub integration enabled - creates both variables and secrets
@@ -51,8 +46,8 @@ try:
     github_resources = create_github_resources(
         github_provider,
         compute_env_ids,
-        op_secrets["tower_workspace_id"],
-        tower_access_token=op_secrets["tower_access_token"],
+        config["tower_workspace_id"],
+        tower_access_token=config["tower_access_token"],
     )
 
     pulumi.log.info(
@@ -98,7 +93,7 @@ pulumi.export(
 )
 
 pulumi.export("compute_env_ids", compute_env_ids)
-pulumi.export("workspace_id", op_secrets["tower_workspace_id"])
+pulumi.export("workspace_id", config["tower_workspace_id"])
 
 pulumi.export(
     "seqerakit_deployments",

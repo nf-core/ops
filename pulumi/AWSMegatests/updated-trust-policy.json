@@ -1,0 +1,22 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::728131696474:oidc-provider/api.pulumi.com/oidc"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "api.pulumi.com/oidc:aud": "nf-core",
+          "api.pulumi.com/oidc:sub": [
+            "pulumi:environments:org:nf-core:env:nf-core-aws",
+            "pulumi:environments:org:nf-core:project:default:env:nf-core-aws",
+            "pulumi:environments:org:nf-core:project:AWSMegatestsProd:env:aws"
+          ]
+        }
+      }
+    }
+  ]
+}
