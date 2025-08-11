@@ -2,25 +2,101 @@
 
 This module creates and manages IAM resources for TowerForge AWS operations,
 including policies for Forge operations, Launch operations, and S3 bucket access.
+It also uploads the credentials to Seqera Platform for use by compute environments.
 """
 
 import json
+from typing import Optional
 import pulumi
 import pulumi_aws as aws
+import pulumi_seqera as seqera
 
 
-def create_towerforge_credentials(aws_provider: aws.Provider, s3_bucket) -> tuple:
-    """Create TowerForge IAM resources and return access key credentials.
+def create_seqera_credentials(
+    seqera_provider: seqera.Provider,
+    workspace_id: float,
+    access_key_id: pulumi.Output[str],
+    access_key_secret: pulumi.Output[str],
+) -> seqera.Credential:
+    """Upload TowerForge AWS credentials to Seqera Platform.
 
-    Creates IAM policies, user, and access keys for TowerForge operations.
+    Args:
+        seqera_provider: Configured Seqera provider instance
+        workspace_id: Seqera Platform workspace ID
+        access_key_id: AWS access key ID from TowerForge IAM user
+        access_key_secret: AWS secret access key from TowerForge IAM user
+
+    Returns:
+        seqera.Credential: Seqera credential resource with credentials_id
+    """
+
+    pulumi.log.info("Uploading TowerForge credentials to Seqera Platform")
+
+    # Create AWS credentials configuration for Seqera Platform
+    aws_keys = seqera.CredentialKeysArgs(
+        aws=seqera.CredentialKeysAwsArgs(
+            access_key=access_key_id,
+            secret_key=access_key_secret,
+            # Note: assume_role_arn is optional and not needed for direct IAM user credentials
+        )
+    )
+
+    # Upload credentials to Seqera Platform
+    try:
+        seqera_credential = seqera.Credential(
+            "towerforge-aws-credential",
+            name="TowerForge-AWSMegatests-Dynamic",
+            description="Dynamically created TowerForge credentials for AWS Megatests compute environments",
+            provider_type="aws",
+            workspace_id=workspace_id,
+            keys=aws_keys,
+            opts=pulumi.ResourceOptions(
+                provider=seqera_provider,
+                # Ensure credentials are uploaded after IAM access key is created
+                custom_timeouts=pulumi.CustomTimeouts(
+                    create="5m", update="5m", delete="2m"
+                ),
+            ),
+        )
+
+        pulumi.log.info(
+            "Successfully uploaded TowerForge credentials to Seqera Platform"
+        )
+        return seqera_credential
+
+    except Exception as e:
+        error_msg = (
+            f"Failed to upload credentials to Seqera Platform: {e}. "
+            "Common causes: "
+            "1. Seqera provider not properly configured "
+            "2. Invalid workspace ID "
+            "3. Network connectivity issues to api.cloud.seqera.io "
+            "4. Invalid AWS credentials format"
+        )
+        pulumi.log.error(error_msg)
+        raise RuntimeError(error_msg)
+
+
+def create_towerforge_credentials(
+    aws_provider: aws.Provider,
+    s3_bucket,
+    seqera_provider: seqera.Provider,
+    workspace_id: float,
+) -> tuple:
+    """Create TowerForge IAM resources and upload to Seqera Platform.
+
+    Creates IAM policies, user, and access keys for TowerForge operations,
+    then uploads the credentials to Seqera Platform for use by compute environments.
     Based on https://github.com/seqeralabs/nf-tower-aws
 
     Args:
         aws_provider: Configured AWS provider instance
         s3_bucket: S3 bucket resource for policy attachment
+        seqera_provider: Configured Seqera provider instance
+        workspace_id: Seqera Platform workspace ID
 
     Returns:
-        tuple: (access_key_id, access_key_secret) for use by seqerakit
+        tuple: (access_key_id, access_key_secret, seqera_credentials_id)
     """
 
     # TowerForge Forge Policy - Comprehensive permissions for resource creation
@@ -257,11 +333,28 @@ def create_towerforge_credentials(aws_provider: aws.Provider, s3_bucket) -> tupl
         ),
     )
 
-    # Return the access key credentials for use by seqerakit
-    return towerforge_access_key.id, towerforge_access_key.secret
+    # Upload the credentials to Seqera Platform
+    seqera_credential = create_seqera_credentials(
+        seqera_provider=seqera_provider,
+        workspace_id=workspace_id,
+        access_key_id=towerforge_access_key.id,
+        access_key_secret=towerforge_access_key.secret,
+    )
+
+    # Return the access key credentials and Seqera credentials ID
+    return (
+        towerforge_access_key.id,
+        towerforge_access_key.secret,
+        seqera_credential.credentials_id,
+    )
 
 
-def get_towerforge_resources(aws_provider: aws.Provider, s3_bucket) -> dict:
+def get_towerforge_resources(
+    aws_provider: aws.Provider,
+    s3_bucket,
+    seqera_provider: Optional[seqera.Provider] = None,
+    workspace_id: Optional[float] = None,
+) -> dict:
     """Create TowerForge resources and return resource information for exports.
 
     This function creates the TowerForge IAM resources and returns a dictionary
@@ -270,14 +363,25 @@ def get_towerforge_resources(aws_provider: aws.Provider, s3_bucket) -> dict:
     Args:
         aws_provider: Configured AWS provider instance
         s3_bucket: S3 bucket resource for policy attachment
+        seqera_provider: Optional Seqera provider for credential upload
+        workspace_id: Optional workspace ID for Seqera Platform
 
     Returns:
         dict: Resource information for Pulumi exports
     """
     # Create the credentials (this will create all the resources)
-    access_key_id, access_key_secret = create_towerforge_credentials(
-        aws_provider, s3_bucket
-    )
+    if seqera_provider and workspace_id:
+        access_key_id, access_key_secret, seqera_credentials_id = (
+            create_towerforge_credentials(
+                aws_provider, s3_bucket, seqera_provider, workspace_id
+            )
+        )
+    else:
+        # Fallback for backward compatibility - this will raise an error since signature changed
+        raise ValueError(
+            "get_towerforge_resources now requires seqera_provider and workspace_id parameters. "
+            "Please update your code to use the new signature or call create_towerforge_credentials directly."
+        )
 
     # Get references to the created resources for export
     # Note: We need to reference the resources by their logical names since they're created
@@ -290,6 +394,9 @@ def get_towerforge_resources(aws_provider: aws.Provider, s3_bucket) -> dict:
         },
         "access_key_id": access_key_id,
         "access_key_secret": access_key_secret,
+        "seqera_credentials_id": seqera_credentials_id
+        if seqera_provider and workspace_id
+        else None,
         "policies": {
             "forge_policy_name": "TowerForge-Forge-Policy",
             "launch_policy_name": "TowerForge-Launch-Policy",

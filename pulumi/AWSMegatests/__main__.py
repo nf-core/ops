@@ -11,6 +11,7 @@ from towerforge_credentials import create_towerforge_credentials
 
 # seqera_deployment deprecated - using Terraform provider only
 from seqera_terraform import (
+    create_seqera_provider,
     deploy_seqera_environments_terraform,
     get_compute_environment_ids_terraform,
 )
@@ -23,19 +24,27 @@ def main():
     # Step 1: Get configuration from ESC environment and config
     config = get_configuration()
 
-    # Step 2: Create AWS and GitHub providers
+    # Step 2: Create AWS, GitHub, and Seqera providers
     # AWS provider uses ESC-provided credentials automatically
     aws_provider = create_aws_provider()
     github_provider = create_github_provider(config["github_token"])
+
+    # Create Seqera provider early for credential upload
+    seqera_provider = create_seqera_provider(config)
 
     # Step 4: Set up S3 infrastructure
     s3_resources = create_s3_infrastructure(aws_provider)
     nf_core_awsmegatests_bucket = s3_resources["bucket"]
     # Note: lifecycle_configuration is managed manually, not used in exports
 
-    # Step 5: Create TowerForge IAM credentials
-    towerforge_access_key_id, towerforge_access_key_secret = (
-        create_towerforge_credentials(aws_provider, nf_core_awsmegatests_bucket)
+    # Step 5: Create TowerForge IAM credentials and upload to Seqera Platform
+    towerforge_access_key_id, towerforge_access_key_secret, seqera_credentials_id = (
+        create_towerforge_credentials(
+            aws_provider,
+            nf_core_awsmegatests_bucket,
+            seqera_provider,
+            float(config["tower_workspace_id"]),
+        )
     )
 
     # Step 6: Deploy Seqera Platform compute environments using Terraform provider
@@ -44,10 +53,11 @@ def main():
             "Deploying Seqera compute environments using Terraform provider"
         )
 
-        # Deploy using Seqera Terraform provider
+        # Deploy using Seqera Terraform provider with dynamic credentials ID
         terraform_resources = deploy_seqera_environments_terraform(
             config,
-            "tower-awstest",  # AWS credentials name in Seqera Platform
+            seqera_credentials_id,  # Dynamic TowerForge credentials ID from Seqera Platform
+            seqera_provider,  # Reuse existing Seqera provider
         )
 
         # Get compute environment IDs from Terraform provider
@@ -63,7 +73,7 @@ def main():
             "Common solutions: "
             "1. Verify TOWER_ACCESS_TOKEN has WORKSPACE_ADMIN permissions "
             "2. Check workspace ID is correct in ESC environment "
-            "3. Ensure 'tower-awstest' credentials exist in Seqera Platform "
+            "3. Ensure TowerForge credentials were successfully uploaded to Seqera Platform "
             "4. Verify network connectivity to api.cloud.seqera.io"
         )
         pulumi.log.error(error_msg)

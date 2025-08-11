@@ -108,6 +108,8 @@ def create_compute_environment(
             workspace_id=workspace_id,
             opts=pulumi.ResourceOptions(
                 provider=provider,
+                # Force delete before replace to avoid name conflicts
+                delete_before_replace=True,
                 # Add custom timeout for compute environment creation
                 custom_timeouts=pulumi.CustomTimeouts(
                     create="10m", update="10m", delete="5m"
@@ -131,19 +133,26 @@ def create_compute_environment(
         raise RuntimeError(error_msg)
 
 
-def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
+def deploy_seqera_environments_terraform(
+    config, towerforge_credentials_id, seqera_provider=None
+):
     """Deploy Seqera Platform compute environments using Terraform provider with comprehensive error handling"""
 
     pulumi.log.info(
         "Starting Seqera compute environment deployment using Terraform provider"
     )
 
-    # Create Seqera provider with error handling
-    try:
-        provider = create_seqera_provider(config)
-    except Exception as e:
-        pulumi.log.error(f"Failed to create Seqera provider: {e}")
-        raise
+    # Use provided seqera provider or create a new one
+    if seqera_provider is not None:
+        provider = seqera_provider
+        pulumi.log.info("Using existing Seqera provider")
+    else:
+        # Create Seqera provider with error handling (fallback for backward compatibility)
+        try:
+            provider = create_seqera_provider(config)
+        except Exception as e:
+            pulumi.log.error(f"Failed to create Seqera provider: {e}")
+            raise
 
     # Read existing seqerakit configurations with error handling
     def load_config_file(filename):
