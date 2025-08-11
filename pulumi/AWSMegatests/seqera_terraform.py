@@ -132,13 +132,11 @@ def create_compute_environment(
 
 
 def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
-    """Deploy Seqera Platform compute environments using Terraform provider with comprehensive error handling"""
+    """Use existing Seqera Platform compute environments - they already exist and don't need to be created"""
 
-    pulumi.log.info(
-        "Starting Seqera compute environment deployment using Terraform provider"
-    )
+    pulumi.log.info("Using existing Seqera compute environments (already deployed)")
 
-    # Create Seqera provider with error handling
+    # Create Seqera provider with error handling for data source lookups
     try:
         provider = create_seqera_provider(config)
     except Exception as e:
@@ -163,13 +161,16 @@ def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
         except Exception as e:
             raise RuntimeError(f"Failed to load configuration file {filename}: {e}")
 
-    # Load all configuration files
+    # Configuration files exist and are validated, but since we're using existing
+    # compute environments, we don't need to load the config for creation
+    # Just validate the files exist for consistency
     try:
-        cpu_config = load_config_file("seqerakit/current-env-cpu.json")
-        gpu_config = load_config_file("seqerakit/current-env-gpu.json")
-        arm_config = load_config_file("seqerakit/current-env-cpu-arm.json")
+        load_config_file("seqerakit/current-env-cpu.json")
+        load_config_file("seqerakit/current-env-gpu.json")
+        load_config_file("seqerakit/current-env-cpu-arm.json")
+        pulumi.log.info("Configuration files validated (using existing environments)")
     except Exception as e:
-        pulumi.log.error(f"Configuration loading failed: {e}")
+        pulumi.log.error(f"Configuration validation failed: {e}")
         raise
 
     # Validate workspace ID
@@ -179,34 +180,37 @@ def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
     except (ValueError, KeyError) as e:
         raise ValueError(f"Invalid or missing workspace ID: {e}")
 
-    # Create CPU compute environment
-    cpu_env = create_compute_environment(
-        provider=provider,
-        name="aws_ireland_fusionv2_nvme_cpu_snapshots",
-        credentials_id=towerforge_credentials_id,
-        workspace_id=workspace_id,
-        config_args=cpu_config,
-        description="CPU compute environment with Fusion v2 and NVMe storage",
+    # Use existing compute environments via data sources - they already exist
+    # These were created previously and are available in the workspace
+
+    # Reference existing CPU compute environment
+    cpu_env = seqera.get_compute_env(
+        compute_env_id="5Em1iaBk1eURc0bgQ5sTyt",
+        workspace_id=str(int(workspace_id)),
+        opts=pulumi.InvokeOptions(provider=provider),
+    )
+    pulumi.log.info(
+        "Referenced existing CPU compute environment: aws_ireland_fusionv2_nvme_cpu_snapshots"
     )
 
-    # Create GPU compute environment
-    gpu_env = create_compute_environment(
-        provider=provider,
-        name="aws_ireland_fusionv2_nvme_gpu_snapshots",
-        credentials_id=towerforge_credentials_id,
-        workspace_id=workspace_id,
-        config_args=gpu_config,
-        description="GPU compute environment with Fusion v2 and NVMe storage",
+    # Reference existing GPU compute environment
+    gpu_env = seqera.get_compute_env(
+        compute_env_id="13V9MOywZKcaj0beaRaBhy",
+        workspace_id=str(int(workspace_id)),
+        opts=pulumi.InvokeOptions(provider=provider),
+    )
+    pulumi.log.info(
+        "Referenced existing GPU compute environment: aws_ireland_fusionv2_nvme_gpu_snapshots"
     )
 
-    # Create ARM compute environment
-    arm_env = create_compute_environment(
-        provider=provider,
-        name="aws_ireland_fusionv2_nvme_cpu_ARM_snapshots",
-        credentials_id=towerforge_credentials_id,
-        workspace_id=workspace_id,
-        config_args=arm_config,
-        description="ARM CPU compute environment with Fusion v2 and NVMe storage",
+    # Reference existing ARM compute environment
+    arm_env = seqera.get_compute_env(
+        compute_env_id="6TOF7J19ySsTnpf7SuUDO4",
+        workspace_id=str(int(workspace_id)),
+        opts=pulumi.InvokeOptions(provider=provider),
+    )
+    pulumi.log.info(
+        "Referenced existing ARM compute environment: aws_ireland_fusionv2_nvme_cpu_ARM_snapshots"
     )
 
     return {
@@ -218,7 +222,7 @@ def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
 
 
 def get_compute_environment_ids_terraform(terraform_resources):
-    """Extract compute environment IDs from Terraform provider resources"""
+    """Extract compute environment IDs from existing environments (data sources)"""
     return {
         "cpu": terraform_resources["cpu_env"].compute_env_id,
         "gpu": terraform_resources["gpu_env"].compute_env_id,
