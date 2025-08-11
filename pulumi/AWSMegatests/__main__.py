@@ -38,28 +38,32 @@ def main():
         create_towerforge_credentials(aws_provider, nf_core_awsmegatests_bucket)
     )
 
-    # Step 6: Reference existing Seqera Platform compute environments
+    # Step 6: Deploy Seqera Platform compute environments using Terraform provider
     try:
-        pulumi.log.info("Referencing existing Seqera compute environments")
-
-        # Use existing Seqera compute environments (data sources)
-        terraform_resources = deploy_seqera_environments_terraform(
-            config,
-            "tower-awstest",  # AWS credentials name (not used for existing envs)
+        pulumi.log.info(
+            "Deploying Seqera compute environments using Terraform provider"
         )
 
-        # Get compute environment IDs from existing environments
-        compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
-        deployment_method = "existing-environments"
+        # Deploy using Seqera Terraform provider
+        terraform_resources = deploy_seqera_environments_terraform(
+            config,
+            "tower-awstest",  # AWS credentials name in Seqera Platform
+        )
 
-        pulumi.log.info("Successfully referenced existing Seqera compute environments")
+        # Get compute environment IDs from Terraform provider
+        compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
+        deployment_method = "terraform-provider"
+
+        pulumi.log.info(
+            "Successfully deployed compute environments using Seqera Terraform provider"
+        )
     except Exception as e:
         error_msg = (
-            f"Seqera environment reference failed: {e}. "
+            f"Seqera deployment failed: {e}. "
             "Common solutions: "
-            "1. Verify TOWER_ACCESS_TOKEN has read access to workspace "
+            "1. Verify TOWER_ACCESS_TOKEN has WORKSPACE_ADMIN permissions "
             "2. Check workspace ID is correct in ESC environment "
-            "3. Ensure compute environments exist in Seqera Platform "
+            "3. Ensure 'tower-awstest' credentials exist in Seqera Platform "
             "4. Verify network connectivity to api.cloud.seqera.io"
         )
         pulumi.log.error(error_msg)
@@ -133,14 +137,14 @@ def main():
     pulumi.export("workspace_id", config["tower_workspace_id"])
     pulumi.export("deployment_method", deployment_method)
 
-    # Export existing compute environment references
+    # Export Terraform provider resources
     pulumi.export(
-        "seqera_environments",
+        "terraform_resources",
         {
             "cpu_env_id": terraform_resources["cpu_env"].compute_env_id,
             "gpu_env_id": terraform_resources["gpu_env"].compute_env_id,
             "arm_env_id": terraform_resources["arm_env"].compute_env_id,
-            "deployment_method": "existing-environments-data-source",
+            "deployment_method": "seqera-terraform-provider",
         },
     )
 
