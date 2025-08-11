@@ -8,8 +8,12 @@ from providers import create_aws_provider, create_github_provider
 from secrets_manager import get_configuration
 from s3_infrastructure import create_s3_infrastructure
 from towerforge_credentials import create_towerforge_credentials
-from seqera_deployment import deploy_seqera_environments, query_compute_environment_ids
-from seqera_terraform import deploy_seqera_environments_terraform, get_compute_environment_ids_terraform
+
+# seqera_deployment deprecated - using Terraform provider only
+from seqera_terraform import (
+    deploy_seqera_environments_terraform,
+    get_compute_environment_ids_terraform,
+)
 from github_integration import create_github_resources
 
 # Step 1: Get configuration from ESC environment and config
@@ -30,41 +34,21 @@ towerforge_access_key_id, towerforge_access_key_secret = create_towerforge_crede
     aws_provider, nf_core_awsmegatests_bucket
 )
 
-# Step 6: Deploy Seqera Platform compute environments using both approaches
+# Step 6: Deploy Seqera Platform compute environments using Terraform provider
 
-# Option A: Original seqerakit approach (maintained for backup/comparison)
-seqera_resources = deploy_seqera_environments(
-    config, towerforge_access_key_id, towerforge_access_key_secret
+# Deploy using Seqera Terraform provider
+terraform_resources = deploy_seqera_environments_terraform(
+    config,
+    "tower-awstest",  # AWS credentials name in Seqera Platform
 )
-cpu_deploy_cmd = seqera_resources["cpu_deploy_cmd"]
-gpu_deploy_cmd = seqera_resources["gpu_deploy_cmd"]
-arm_deploy_cmd = seqera_resources["arm_deploy_cmd"]
 
-# Query compute environment IDs from seqerakit approach
-compute_env_ids_seqerakit = query_compute_environment_ids(config["tower_access_token"])
+# Get compute environment IDs from Terraform provider
+compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
+deployment_method = "terraform-provider"
 
-# Option B: New Terraform provider approach (primary deployment method)
-try:
-    # We need to pass the credentials_id as a string - using the TowerForge credentials name
-    terraform_resources = deploy_seqera_environments_terraform(
-        config, 
-        "tower-awstest"  # This should match the AWS_CREDENTIALS_NAME from seqerakit
-    )
-    
-    # Get compute environment IDs from Terraform provider
-    compute_env_ids_terraform = get_compute_environment_ids_terraform(terraform_resources)
-    
-    # Use Terraform provider IDs as primary
-    compute_env_ids = compute_env_ids_terraform
-    deployment_method = "terraform-provider"
-    
-    pulumi.log.info("Successfully deployed compute environments using Seqera Terraform provider")
-    
-except Exception as e:
-    # Fallback to seqerakit approach if Terraform provider fails
-    pulumi.log.warn(f"Terraform provider deployment failed, falling back to seqerakit: {e}")
-    compute_env_ids = compute_env_ids_seqerakit
-    deployment_method = "seqerakit-fallback"
+pulumi.log.info(
+    "Successfully deployed compute environments using Seqera Terraform provider"
+)
 
 # Step 8: Create GitHub resources
 # Full GitHub integration enabled - creates both variables and secrets
@@ -122,28 +106,14 @@ pulumi.export("compute_env_ids", compute_env_ids)
 pulumi.export("workspace_id", config["tower_workspace_id"])
 pulumi.export("deployment_method", deployment_method)
 
-# Export both deployment approaches for comparison
-pulumi.export("compute_env_ids_seqerakit", compute_env_ids_seqerakit)
-
-# Export Terraform provider resources if available
-if deployment_method == "terraform-provider":
-    pulumi.export(
-        "terraform_resources",
-        {
-            "cpu_env_id": terraform_resources["cpu_env"].compute_env_id,
-            "gpu_env_id": terraform_resources["gpu_env"].compute_env_id,
-            "arm_env_id": terraform_resources["arm_env"].compute_env_id,
-            "deployment_method": "seqera-terraform-provider",
-        },
-    )
-
+# Export Terraform provider resources
 pulumi.export(
-    "seqerakit_deployments",
+    "terraform_resources",
     {
-        "cpu_deployment": cpu_deploy_cmd.stdout,
-        "gpu_deployment": gpu_deploy_cmd.stdout,
-        "arm_deployment": arm_deploy_cmd.stdout,
-        "note": "Legacy seqerakit deployment maintained for backup/comparison",
+        "cpu_env_id": terraform_resources["cpu_env"].compute_env_id,
+        "gpu_env_id": terraform_resources["gpu_env"].compute_env_id,
+        "arm_env_id": terraform_resources["arm_env"].compute_env_id,
+        "deployment_method": "seqera-terraform-provider",
     },
 )
 
