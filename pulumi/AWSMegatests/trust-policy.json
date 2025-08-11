@@ -9,12 +9,10 @@
       "Action": "sts:AssumeRoleWithWebIdentity",
       "Condition": {
         "StringEquals": {
-          "api.pulumi.com/oidc:aud": "nf-core",
-          "api.pulumi.com/oidc:sub": [
-            "pulumi:environments:org:nf-core:env:nf-core-aws",
-            "pulumi:environments:org:nf-core:project:default:env:nf-core-aws",
-            "pulumi:environments:org:nf-core:project:AWSMegatestsProd:env:aws"
-          ]
+          "api.pulumi.com/oidc:aud": "aws:nf-core"
+        },
+        "StringLike": {
+          "api.pulumi.com/oidc:sub": ["pulumi:environments:org:nf-core:env:*"]
         }
       }
     }

@@ -42,3 +42,78 @@ def create_s3_infrastructure(aws_provider):
         "bucket": nf_core_awsmegatests_bucket,
         "lifecycle_configuration": bucket_lifecycle_configuration,
     }
+
+
+# uv run pulumi import aws:s3/bucket:Bucket nf-core-awsmegatests nf-core-awsmegatests
+# nf_core_awsmegatests = aws.s3.Bucket("nf-core-awsmegatests",
+#     arn="arn:aws:s3:::nf-core-awsmegatests",
+#     bucket="nf-core-awsmegatests",
+#     cors_rules=[{
+#         "allowed_headers": ["*"],
+#         "allowed_methods": [
+#             "HEAD",
+#             "GET",
+#         ],
+#         "allowed_origins": [
+#             "https://s3.amazonaws.com",
+#             "https://s3-eu-west-1.amazonaws.com",
+#             "https://s3.eu-west-1.amazonaws.com",
+#             "*",
+#         ],
+#         "expose_headers": [
+#             "ETag",
+#             "x-amz-meta-custom-header",
+#         ],
+#     }],
+#     hosted_zone_id="Z1BKCTXD74EZPE",
+#     lifecycle_rules=[
+#         {
+#             "enabled": True,
+#             "id": "preserve-metadata-files",
+#             "tags": {
+#                 "nextflow.io/metadata": "true",
+#             },
+#             "transitions": [
+#                 {
+#                     "days": 30,
+#                     "storage_class": "STANDARD_IA",
+#                 },
+#                 {
+#                     "days": 90,
+#                     "storage_class": "GLACIER",
+#                 },
+#             ],
+#         },
+#         {
+#             "enabled": True,
+#             "expiration": {
+#                 "days": 30,
+#             },
+#             "id": "cleanup-temporary-files",
+#             "tags": {
+#                 "nextflow.io/temporary": "true",
+#             },
+#         },
+#         {
+#             "enabled": True,
+#             "expiration": {
+#                 "days": 90,
+#             },
+#             "id": "cleanup-work-directory",
+#             "prefix": "work/",
+#         },
+#         {
+#             "abort_incomplete_multipart_upload_days": 7,
+#             "enabled": True,
+#             "id": "cleanup-incomplete-multipart-uploads",
+#         },
+#     ],
+#     request_payer="BucketOwner",
+#     server_side_encryption_configuration={
+#         "rule": {
+#             "apply_server_side_encryption_by_default": {
+#                 "sse_algorithm": "AES256",
+#             },
+#         },
+#     },
+#     opts = pulumi.ResourceOptions(protect=True))

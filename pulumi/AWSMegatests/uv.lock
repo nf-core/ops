@@ -28,6 +28,7 @@ dependencies = [
     { name = "pulumi-aws" },
     { name = "pulumi-command" },
     { name = "pulumi-github" },
+    { name = "pulumi-seqera" },
 ]
 
 [package.metadata]
@@ -36,6 +37,7 @@ requires-dist = [
     { name = "pulumi-aws", specifier = ">=6.81.0,<7.0.0" },
     { name = "pulumi-command", specifier = ">=1.0.1,<2.0.0" },
     { name = "pulumi-github", specifier = ">=6.4.0,<7.0.0" },
+    { name = "pulumi-seqera", directory = "sdks/seqera" },
 ]
 
 [[package]]
@@ -183,6 +185,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e6/aa/97611dbf7c0c4ea622b6eef1890b3379d4c7fc0f9be22de092b00a743124/pulumi_github-6.7.3.tar.gz", hash = "sha256:7cce624ab8800ad94ecc906f0b09081957b2a1345f46392d43e49d145ca42434", size = 203054 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/10/da/ca6b46064fd67a3357a4105f4d6a0ad14bb8b73932fbd56564561a1d6b2c/pulumi_github-6.7.3-py3-none-any.whl", hash = "sha256:aa154bb245bb614ed2dfd879ef9363ff10d8073337c1639280e0744097dba2b6", size = 369378 },
+]
+
+[[package]]
+name = "pulumi-seqera"
+version = "0.25.2"
+source = { directory = "sdks/seqera" }
+dependencies = [
+    { name = "parver" },
+    { name = "pulumi" },
+    { name = "semver" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "parver", specifier = ">=0.2.1" },
+    { name = "pulumi", specifier = ">=3.165.0,<4.0.0" },
+    { name = "semver", specifier = ">=2.8.1" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'", specifier = ">=4.11,<5" },
 ]
 
 [[package]]

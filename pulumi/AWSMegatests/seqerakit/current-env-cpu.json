@@ -27,14 +27,5 @@
     "fargateHeadEnabled": true,
     "arm64Enabled": false
   },
-  "labels": [
-    "architecture=x86_64",
-    "compute_type=cpu",
-    "fusion=enabled",
-    "fusion_snapshots=enabled",
-    "nvme_storage=enabled",
-    "wave=enabled",
-    "instance_types=c6id,m6id,r6id",
-    "spot_instances=enabled"
-  ]
+  "labels": []
 }

@@ -1,2 +1,5 @@
 *.pyc
 venv/
+
+# Auto-generated Seqera SDK
+sdks/
