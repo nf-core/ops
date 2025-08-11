@@ -76,27 +76,16 @@ def create_github_resources(
         ),
     )
 
-    # Legacy: AWS_S3_BUCKET as variable
-    legacy_s3_bucket_variable = github.ActionsOrganizationVariable(
-        "legacy-aws-s3-bucket",
-        visibility="all",
-        variable_name="AWS_S3_BUCKET",
-        value="nf-core-awsmegatests",
-        opts=pulumi.ResourceOptions(
-            provider=github_provider,
-            delete_before_replace=True,  # Workaround for GitHub provider issue #250
-            ignore_changes=[
-                "visibility"
-            ],  # Ignore changes to visibility if variable exists
-        ),
-    )
+    # Legacy: AWS_S3_BUCKET as variable - MANAGED EXTERNALLY
+    # This variable already exists in the GitHub organization and is managed outside of Pulumi
+    # Value: "nf-core-awsmegatests" - no Pulumi management needed
 
     variables = {
         "cpu": cpu_variable,
         "gpu": gpu_variable,
         "arm": arm_variable,
         "workspace_id": workspace_id_variable,
-        "legacy_s3_bucket": legacy_s3_bucket_variable,
+        # legacy_s3_bucket: managed externally, already exists
     }
 
     # GitHub Secrets Management - Manual Commands Only

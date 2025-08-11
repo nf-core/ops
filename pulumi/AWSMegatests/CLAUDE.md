@@ -171,6 +171,7 @@ The project uses **Pulumi ESC** for all configuration and secrets:
 - **Cause**: GitHub organization variables from previous deployments
 - **Behavior**: Pulumi will update values automatically with `delete_before_replace=True`
 - **No action required**: This is expected behavior when re-deploying
+- **External Variables**: Some variables like `AWS_S3_BUCKET` are managed outside Pulumi to avoid conflicts
 
 **GitHub API Permission Issues**
 - **Cause**: GITHUB_TOKEN lacks organization-level permissions
