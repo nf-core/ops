@@ -16,118 +16,129 @@ from seqera_terraform import (
 )
 from github_integration import create_github_resources
 
-# Step 1: Get configuration from ESC environment and config
-config = get_configuration()
 
-# Step 2: Create AWS and GitHub providers
-# AWS provider uses ESC-provided credentials automatically
-aws_provider = create_aws_provider()
-github_provider = create_github_provider(config["github_token"])
+def main():
+    """Main Pulumi program function"""
 
-# Step 4: Set up S3 infrastructure
-s3_resources = create_s3_infrastructure(aws_provider)
-nf_core_awsmegatests_bucket = s3_resources["bucket"]
-bucket_lifecycle_configuration = s3_resources["lifecycle_configuration"]
+    # Step 1: Get configuration from ESC environment and config
+    config = get_configuration()
 
-# Step 5: Create TowerForge IAM credentials
-towerforge_access_key_id, towerforge_access_key_secret = create_towerforge_credentials(
-    aws_provider, nf_core_awsmegatests_bucket
-)
+    # Step 2: Create AWS and GitHub providers
+    # AWS provider uses ESC-provided credentials automatically
+    aws_provider = create_aws_provider()
+    github_provider = create_github_provider(config["github_token"])
 
-# Step 6: Deploy Seqera Platform compute environments using Terraform provider
+    # Step 4: Set up S3 infrastructure
+    s3_resources = create_s3_infrastructure(aws_provider)
+    nf_core_awsmegatests_bucket = s3_resources["bucket"]
+    # Note: lifecycle_configuration is managed manually, not used in exports
 
-# Deploy using Seqera Terraform provider
-terraform_resources = deploy_seqera_environments_terraform(
-    config,
-    "tower-awstest",  # AWS credentials name in Seqera Platform
-)
-
-# Get compute environment IDs from Terraform provider
-compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
-deployment_method = "terraform-provider"
-
-pulumi.log.info(
-    "Successfully deployed compute environments using Seqera Terraform provider"
-)
-
-# Step 8: Create GitHub resources
-# Full GitHub integration enabled - creates both variables and secrets
-try:
-    github_resources = create_github_resources(
-        github_provider,
-        compute_env_ids,
-        config["tower_workspace_id"],
-        tower_access_token=config["tower_access_token"],
+    # Step 5: Create TowerForge IAM credentials
+    towerforge_access_key_id, towerforge_access_key_secret = (
+        create_towerforge_credentials(aws_provider, nf_core_awsmegatests_bucket)
     )
+
+    # Step 6: Deploy Seqera Platform compute environments using Terraform provider
+
+    # Deploy using Seqera Terraform provider
+    terraform_resources = deploy_seqera_environments_terraform(
+        config,
+        "tower-awstest",  # AWS credentials name in Seqera Platform
+    )
+
+    # Get compute environment IDs from Terraform provider
+    compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
+    deployment_method = "terraform-provider"
 
     pulumi.log.info(
-        "Successfully created GitHub variables. Manual secret commands available in outputs."
+        "Successfully deployed compute environments using Seqera Terraform provider"
     )
-except Exception as e:
-    pulumi.log.warn(f"Failed to create GitHub resources: {e}")
-    github_resources = {
-        "variables": {},
-        "secrets": {},
-        "gh_cli_commands": [],
-        "note": "Failed to create resources",
-    }
 
-# Exports
-pulumi.export(
-    "megatests_bucket",
-    {
-        "name": nf_core_awsmegatests_bucket.bucket,
-        "arn": nf_core_awsmegatests_bucket.arn,
-        "region": "eu-west-1",
-        "lifecycle_configuration": "managed-manually",
-    },
-)
+    # Step 8: Create GitHub resources
+    # Full GitHub integration enabled - creates both variables and secrets
+    try:
+        github_resources = create_github_resources(
+            github_provider,
+            compute_env_ids,
+            config["tower_workspace_id"],
+            tower_access_token=config["tower_access_token"],
+        )
 
-pulumi.export(
-    "github_resources",
-    {
-        "variables": {k: v.id for k, v in github_resources.get("variables", {}).items()}
-        if github_resources.get("variables")
-        else {},
-        "secrets": {k: v.id for k, v in github_resources.get("secrets", {}).items()}
-        if github_resources.get("secrets")
-        else {},
-        "manual_secret_commands": github_resources.get("gh_cli_commands", []),
-        "note": github_resources.get("note", ""),
-        "workaround_info": {
-            "issue_url": "https://github.com/pulumi/pulumi-github/issues/250",
-            "workaround": "Variables via Pulumi with delete_before_replace, secrets via manual gh CLI",
-            "instructions": "Run the commands in 'manual_secret_commands' to set GitHub secrets",
+        pulumi.log.info(
+            "Successfully created GitHub variables. Manual secret commands available in outputs."
+        )
+    except Exception as e:
+        pulumi.log.warn(f"Failed to create GitHub resources: {e}")
+        github_resources = {
+            "variables": {},
+            "secrets": {},
+            "gh_cli_commands": [],
+            "note": "Failed to create resources",
+        }
+
+    # Exports - All within proper Pulumi program context
+    pulumi.export(
+        "megatests_bucket",
+        {
+            "name": nf_core_awsmegatests_bucket.bucket,
+            "arn": nf_core_awsmegatests_bucket.arn,
+            "region": "eu-west-1",
+            "lifecycle_configuration": "managed-manually",
         },
-    },
-)
+    )
 
-pulumi.export("compute_env_ids", compute_env_ids)
-pulumi.export("workspace_id", config["tower_workspace_id"])
-pulumi.export("deployment_method", deployment_method)
+    pulumi.export(
+        "github_resources",
+        {
+            "variables": {
+                k: v.id for k, v in github_resources.get("variables", {}).items()
+            }
+            if github_resources.get("variables")
+            else {},
+            "secrets": {k: v.id for k, v in github_resources.get("secrets", {}).items()}
+            if github_resources.get("secrets")
+            else {},
+            "manual_secret_commands": github_resources.get("gh_cli_commands", []),
+            "note": github_resources.get("note", ""),
+            "workaround_info": {
+                "issue_url": "https://github.com/pulumi/pulumi-github/issues/250",
+                "workaround": "Variables via Pulumi with delete_before_replace, secrets via manual gh CLI",
+                "instructions": "Run the commands in 'manual_secret_commands' to set GitHub secrets",
+            },
+        },
+    )
 
-# Export Terraform provider resources
-pulumi.export(
-    "terraform_resources",
-    {
-        "cpu_env_id": terraform_resources["cpu_env"].compute_env_id,
-        "gpu_env_id": terraform_resources["gpu_env"].compute_env_id,
-        "arm_env_id": terraform_resources["arm_env"].compute_env_id,
-        "deployment_method": "seqera-terraform-provider",
-    },
-)
+    pulumi.export("compute_env_ids", compute_env_ids)
+    pulumi.export("workspace_id", config["tower_workspace_id"])
+    pulumi.export("deployment_method", deployment_method)
 
-towerforge_resources = {
-    "user": {
-        "name": "TowerForge-AWSMegatests",
-        "arn": f"arn:aws:iam::{aws.get_caller_identity(opts=pulumi.InvokeOptions(provider=aws_provider)).account_id}:user/TowerForge-AWSMegatests",
-    },
-    "access_key_id": towerforge_access_key_id,
-    "access_key_secret": towerforge_access_key_secret,
-    "policies": {
-        "forge_policy_name": "TowerForge-Forge-Policy",
-        "launch_policy_name": "TowerForge-Launch-Policy",
-        "s3_policy_name": "TowerForge-S3-Policy",
-    },
-}
-pulumi.export("towerforge_iam", towerforge_resources)
+    # Export Terraform provider resources
+    pulumi.export(
+        "terraform_resources",
+        {
+            "cpu_env_id": terraform_resources["cpu_env"].compute_env_id,
+            "gpu_env_id": terraform_resources["gpu_env"].compute_env_id,
+            "arm_env_id": terraform_resources["arm_env"].compute_env_id,
+            "deployment_method": "seqera-terraform-provider",
+        },
+    )
+
+    towerforge_resources = {
+        "user": {
+            "name": "TowerForge-AWSMegatests",
+            "arn": f"arn:aws:iam::{aws.get_caller_identity(opts=pulumi.InvokeOptions(provider=aws_provider)).account_id}:user/TowerForge-AWSMegatests",
+        },
+        "access_key_id": towerforge_access_key_id,
+        "access_key_secret": towerforge_access_key_secret,
+        "policies": {
+            "forge_policy_name": "TowerForge-Forge-Policy",
+            "launch_policy_name": "TowerForge-Launch-Policy",
+            "s3_policy_name": "TowerForge-S3-Policy",
+        },
+    }
+    pulumi.export("towerforge_iam", towerforge_resources)
+
+
+# Proper Pulumi program entry point
+if __name__ == "__main__":
+    main()
