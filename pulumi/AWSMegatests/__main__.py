@@ -4,18 +4,18 @@ import pulumi
 import pulumi_aws as aws
 
 # Import our modular components
-from providers import create_aws_provider, create_github_provider
-from secrets_manager import get_configuration
-from s3_infrastructure import create_s3_infrastructure
-from towerforge_credentials import create_towerforge_credentials
-
-# seqera_deployment deprecated - using Terraform provider only
-from seqera_terraform import (
+from src.providers import (
+    create_aws_provider,
+    create_github_provider,
     create_seqera_provider,
+)
+from src.config import get_configuration
+from src.infrastructure import create_s3_infrastructure, create_towerforge_credentials
+from src.infrastructure import (
     deploy_seqera_environments_terraform,
     get_compute_environment_ids_terraform,
 )
-from github_integration import create_github_resources
+from src.integrations import create_github_resources
 
 
 def main():

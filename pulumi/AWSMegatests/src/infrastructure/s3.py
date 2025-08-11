@@ -1,19 +1,29 @@
-"""S3 infrastructure management for AWS Megatests"""
+"""S3 infrastructure management for AWS Megatests."""
+
+from typing import Dict, Any, Optional
 
 import pulumi
 from pulumi_aws import s3
 
+from ..utils.constants import S3_BUCKET_NAME
 
-def create_s3_infrastructure(aws_provider):
-    """Create S3 bucket and lifecycle configuration"""
 
+def create_s3_infrastructure(aws_provider) -> Dict[str, Any]:
+    """Create S3 bucket and lifecycle configuration.
+
+    Args:
+        aws_provider: Configured AWS provider instance
+
+    Returns:
+        Dict[str, Any]: Dictionary containing bucket and lifecycle configuration
+    """
     # Import existing AWS resources used by nf-core megatests
     # S3 bucket for Nextflow work directory (already exists)
     nf_core_awsmegatests_bucket = s3.Bucket(
         "nf-core-awsmegatests",
-        bucket="nf-core-awsmegatests",
+        bucket=S3_BUCKET_NAME,
         opts=pulumi.ResourceOptions(
-            import_="nf-core-awsmegatests",  # Import existing bucket
+            import_=S3_BUCKET_NAME,  # Import existing bucket
             protect=True,  # Protect from accidental deletion
             provider=aws_provider,  # Use configured AWS provider
             ignore_changes=[
@@ -36,7 +46,7 @@ def create_s3_infrastructure(aws_provider):
 
     # Placeholder for lifecycle configuration (managed externally)
     # This ensures the bucket resource exists for other dependencies
-    bucket_lifecycle_configuration = None
+    bucket_lifecycle_configuration: Optional[Any] = None
 
     return {
         "bucket": nf_core_awsmegatests_bucket,

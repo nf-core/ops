@@ -13,6 +13,25 @@ This is a **Pulumi Infrastructure as Code (IaC) project** that manages AWS infra
 
 ## Architecture
 
+### Code Organization (Updated Structure)
+
+The codebase has been restructured for better maintainability and organization:
+
+**Key Improvements:**
+- **Modular Structure**: Code is organized into logical modules (`config`, `providers`, `infrastructure`, `integrations`, `utils`)
+- **Separation of Concerns**: Each module has a specific responsibility
+- **Type Safety**: Comprehensive type hints and custom exception classes
+- **Centralized Constants**: All configuration values and constants in one place
+- **Better Error Handling**: Custom exception hierarchies with clear error messages
+- **Improved Testing**: More modular code structure makes testing easier
+
+**Module Responsibilities:**
+- `config/`: Configuration management with typed classes and validation
+- `providers/`: Individual provider configurations (AWS, GitHub, Seqera)
+- `infrastructure/`: Core infrastructure components (S3, credentials, compute environments)
+- `integrations/`: Third-party service integrations (GitHub)
+- `utils/`: Shared utilities, constants, and logging functions
+
 ### Core Components
 
 1. **S3 Bucket Management**
@@ -36,21 +55,38 @@ This is a **Pulumi Infrastructure as Code (IaC) project** that manages AWS infra
 
 ```
 AWSMegatests/
-├── __main__.py                 # Main Pulumi program
-├── seqera_terraform.py         # Seqera Terraform provider integration
-├── s3_infrastructure.py        # S3 bucket management
-├── towerforge_credentials.py   # AWS IAM credentials for TowerForge
-├── github_integration.py       # GitHub variables and secrets
-├── providers.py                # Provider configurations
-├── secrets_manager.py          # ESC configuration management
-├── requirements.txt            # Python dependencies
-├── Pulumi.yaml                # Pulumi project configuration
-├── README.md                  # Project documentation
-├── CLAUDE.md                  # This file - Claude context
-├── sdks/seqera/               # Auto-generated Seqera SDK
-└── seqerakit/                 # Configuration files (read-only)
-    ├── *.yml                  # Seqerakit YAML configurations (for reference)
-    └── *.json                 # Compute environment JSON specs (used by Terraform provider)
+├── __main__.py                 # Main Pulumi program entry point
+├── src/                        # Organized source code modules
+│   ├── __init__.py
+│   ├── config/                 # Configuration management
+│   │   ├── __init__.py
+│   │   └── settings.py         # ESC configuration management (typed)
+│   ├── providers/              # Provider configurations
+│   │   ├── __init__.py
+│   │   ├── aws.py              # AWS provider configuration
+│   │   ├── github.py           # GitHub provider configuration
+│   │   └── seqera.py           # Seqera provider configuration
+│   ├── infrastructure/         # Infrastructure components
+│   │   ├── __init__.py
+│   │   ├── s3.py               # S3 bucket management
+│   │   ├── credentials.py      # AWS IAM credentials for TowerForge
+│   │   └── compute_environments.py  # Seqera compute environment deployment
+│   ├── integrations/           # Third-party integrations
+│   │   ├── __init__.py
+│   │   └── github.py           # GitHub variables and secrets management
+│   └── utils/                  # Utility functions and constants
+│       ├── __init__.py
+│       ├── constants.py        # Centralized constants and configuration
+│       └── logging.py          # Logging utilities
+├── pyproject.toml              # Python project configuration
+├── uv.lock                     # UV lock file
+├── Pulumi.yaml                 # Pulumi project configuration
+├── README.md                   # Project documentation
+├── CLAUDE.md                   # This file - Claude context
+├── sdks/seqera/                # Auto-generated Seqera SDK
+└── seqerakit/                  # Configuration files (read-only)
+    ├── *.yml                   # Seqerakit YAML configurations (for reference)
+    └── *.json                  # Compute environment JSON specs (used by Terraform provider)
 ```
 
 ## Common Commands
