@@ -2,15 +2,36 @@
 
 import pulumi
 import pulumi_seqera as seqera
+import json
+import os
 
 
 def create_seqera_provider(config):
-    """Create and configure the Seqera provider"""
-    return seqera.Provider(
-        "seqera-provider",
-        bearer_auth=config["tower_access_token"],
-        server_url="https://api.cloud.seqera.io",
-    )
+    """Create and configure the Seqera provider with error handling"""
+
+    # Validate required configuration
+    if not config.get("tower_access_token"):
+        raise ValueError(
+            "TOWER_ACCESS_TOKEN is required for Seqera provider. "
+            "Please ensure it's set in your ESC environment with proper permissions: "
+            "WORKSPACE_ADMIN or COMPUTE_ENV_ADMIN scope."
+        )
+
+    pulumi.log.info("Creating Seqera provider with Cloud API endpoint")
+
+    try:
+        return seqera.Provider(
+            "seqera-provider",
+            bearer_auth=config["tower_access_token"],
+            server_url="https://api.cloud.seqera.io",
+        )
+    except Exception as e:
+        pulumi.log.error(f"Failed to create Seqera provider: {e}")
+        raise RuntimeError(
+            f"Seqera provider initialization failed: {e}. "
+            "This usually indicates token permissions issues. "
+            "Ensure your TOWER_ACCESS_TOKEN has WORKSPACE_ADMIN or COMPUTE_ENV_ADMIN permissions."
+        )
 
 
 def create_compute_environment(
@@ -21,7 +42,18 @@ def create_compute_environment(
     config_args: dict,
     description: str | None = None,
 ):
-    """Create a Seqera compute environment using Terraform provider"""
+    """Create a Seqera compute environment using Terraform provider with error handling"""
+
+    pulumi.log.info(f"Creating compute environment: {name}")
+
+    # Validate input parameters
+    if not name or not credentials_id:
+        raise ValueError(f"Missing required parameters for compute environment {name}")
+
+    if not config_args:
+        raise ValueError(
+            f"Configuration arguments are required for compute environment {name}"
+        )
 
     # Create the forge configuration for AWS Batch
     forge_config = seqera.ComputeEnvComputeEnvConfigAwsBatchForgeArgs(
@@ -68,34 +100,84 @@ def create_compute_environment(
         description=description,
     )
 
-    # Create the compute environment resource
-    compute_env = seqera.ComputeEnv(
-        name,
-        compute_env=compute_env_args,
-        workspace_id=workspace_id,
-        opts=pulumi.ResourceOptions(provider=provider),
-    )
+    # Create the compute environment resource with error handling
+    try:
+        compute_env = seqera.ComputeEnv(
+            name,
+            compute_env=compute_env_args,
+            workspace_id=workspace_id,
+            opts=pulumi.ResourceOptions(
+                provider=provider,
+                # Add custom timeout for compute environment creation
+                custom_timeouts=pulumi.CustomTimeouts(
+                    create="10m", update="10m", delete="5m"
+                ),
+            ),
+        )
 
-    return compute_env
+        pulumi.log.info(f"Successfully created compute environment: {name}")
+        return compute_env
+
+    except Exception as e:
+        error_msg = (
+            f"Failed to create compute environment '{name}': {e}. "
+            "Common causes: "
+            "1. Seqera API token lacks required permissions (403 Forbidden) "
+            "2. Invalid credentials_id reference "
+            "3. Workspace access restrictions "
+            "4. Network connectivity issues"
+        )
+        pulumi.log.error(error_msg)
+        raise RuntimeError(error_msg)
 
 
 def deploy_seqera_environments_terraform(config, towerforge_credentials_id):
-    """Deploy Seqera Platform compute environments using Terraform provider"""
+    """Deploy Seqera Platform compute environments using Terraform provider with comprehensive error handling"""
 
-    # Create Seqera provider
-    provider = create_seqera_provider(config)
+    pulumi.log.info(
+        "Starting Seqera compute environment deployment using Terraform provider"
+    )
 
-    # Read existing seqerakit configurations
-    import json
+    # Create Seqera provider with error handling
+    try:
+        provider = create_seqera_provider(config)
+    except Exception as e:
+        pulumi.log.error(f"Failed to create Seqera provider: {e}")
+        raise
 
-    with open("seqerakit/current-env-cpu.json", "r") as f:
-        cpu_config = json.load(f)
-    with open("seqerakit/current-env-gpu.json", "r") as f:
-        gpu_config = json.load(f)
-    with open("seqerakit/current-env-cpu-arm.json", "r") as f:
-        arm_config = json.load(f)
+    # Read existing seqerakit configurations with error handling
+    def load_config_file(filename):
+        """Load configuration file with error handling"""
+        try:
+            if not os.path.exists(filename):
+                raise FileNotFoundError(f"Configuration file not found: {filename}")
 
-    workspace_id = float(config["tower_workspace_id"])
+            with open(filename, "r") as f:
+                config_data = json.load(f)
+
+            pulumi.log.info(f"Successfully loaded configuration from {filename}")
+            return config_data
+
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON in configuration file {filename}: {e}")
+        except Exception as e:
+            raise RuntimeError(f"Failed to load configuration file {filename}: {e}")
+
+    # Load all configuration files
+    try:
+        cpu_config = load_config_file("seqerakit/current-env-cpu.json")
+        gpu_config = load_config_file("seqerakit/current-env-gpu.json")
+        arm_config = load_config_file("seqerakit/current-env-cpu-arm.json")
+    except Exception as e:
+        pulumi.log.error(f"Configuration loading failed: {e}")
+        raise
+
+    # Validate workspace ID
+    try:
+        workspace_id = float(config["tower_workspace_id"])
+        pulumi.log.info(f"Using workspace ID: {workspace_id}")
+    except (ValueError, KeyError) as e:
+        raise ValueError(f"Invalid or missing workspace ID: {e}")
 
     # Create CPU compute environment
     cpu_env = create_compute_environment(

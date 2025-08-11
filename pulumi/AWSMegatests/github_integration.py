@@ -18,6 +18,7 @@ def create_github_resources(
 
     # Create org-level GitHub variables for compute environment IDs (non-sensitive)
     # Using delete_before_replace to work around pulumi/pulumi-github#250
+    # Additional protection against 409 conflicts with ignore_changes for existing variables
     cpu_variable = github.ActionsOrganizationVariable(
         "tower-compute-env-cpu",
         visibility="all",
@@ -26,6 +27,9 @@ def create_github_resources(
         opts=pulumi.ResourceOptions(
             provider=github_provider,
             delete_before_replace=True,  # Workaround for GitHub provider issue #250
+            ignore_changes=[
+                "visibility"
+            ],  # Ignore changes to visibility if variable exists
         ),
     )
 
@@ -37,6 +41,9 @@ def create_github_resources(
         opts=pulumi.ResourceOptions(
             provider=github_provider,
             delete_before_replace=True,  # Workaround for GitHub provider issue #250
+            ignore_changes=[
+                "visibility"
+            ],  # Ignore changes to visibility if variable exists
         ),
     )
 
@@ -48,6 +55,9 @@ def create_github_resources(
         opts=pulumi.ResourceOptions(
             provider=github_provider,
             delete_before_replace=True,  # Workaround for GitHub provider issue #250
+            ignore_changes=[
+                "visibility"
+            ],  # Ignore changes to visibility if variable exists
         ),
     )
 
@@ -60,6 +70,9 @@ def create_github_resources(
         opts=pulumi.ResourceOptions(
             provider=github_provider,
             delete_before_replace=True,  # Workaround for GitHub provider issue #250
+            ignore_changes=[
+                "visibility"
+            ],  # Ignore changes to visibility if variable exists
         ),
     )
 
@@ -72,6 +85,9 @@ def create_github_resources(
         opts=pulumi.ResourceOptions(
             provider=github_provider,
             delete_before_replace=True,  # Workaround for GitHub provider issue #250
+            ignore_changes=[
+                "visibility"
+            ],  # Ignore changes to visibility if variable exists
         ),
     )
 

@@ -137,6 +137,8 @@ The project uses **Pulumi ESC** for all configuration and secrets:
 
 ### Common Issues and Solutions
 
+#### Infrastructure and Configuration
+
 **"No valid credential sources found"**
 - Solution: Ensure Pulumi ESC environment is properly configured
 - Check: `pulumi env ls` and `pulumi env open <env-name>`
@@ -148,6 +150,98 @@ The project uses **Pulumi ESC** for all configuration and secrets:
 **Protected resource errors**
 - Solution: Unprotect then delete from state: `pulumi state unprotect <urn>` then `pulumi state delete <urn>`
 - Note: This removes from Pulumi state without affecting actual cloud resources
+
+#### API-Specific Issues and Troubleshooting
+
+**Seqera API 403 Forbidden Errors**
+- **Cause**: TOWER_ACCESS_TOKEN lacks required permissions
+- **Solution**: 
+  1. Verify token has `WORKSPACE_ADMIN` or `COMPUTE_ENV_ADMIN` scope
+  2. Check token is valid and not expired
+  3. Ensure workspace ID is correct
+- **ESC Environment**: Add `TOWER_ACCESS_TOKEN` with proper permissions
+- **Commands to verify**:
+  ```bash
+  curl -H "Authorization: Bearer $TOWER_ACCESS_TOKEN" \
+       https://api.cloud.seqera.io/user-info
+  ```
+
+**GitHub API 409 Already Exists (Variables)**
+- **Status**: Usually harmless - indicates variables already exist
+- **Cause**: GitHub organization variables from previous deployments
+- **Behavior**: Pulumi will update values automatically with `delete_before_replace=True`
+- **No action required**: This is expected behavior when re-deploying
+
+**GitHub API Permission Issues**
+- **Cause**: GITHUB_TOKEN lacks organization-level permissions
+- **Solution**: Ensure token has `admin:org` scope for organization variables
+- **ESC Environment**: Add `GITHUB_TOKEN` with proper permissions
+
+**Missing Variable Values**
+- **Cause**: Environment variables not properly set in ESC
+- **Solution**: Add missing variables to ESC environment:
+  - `TOWER_WORKSPACE_ID`: Seqera workspace ID
+  - `TOWER_ACCESS_TOKEN`: Seqera API token with admin permissions
+  - `GITHUB_TOKEN`: GitHub token with org admin permissions
+
+#### Debugging Commands
+
+**Check ESC Environment Variables**:
+```bash
+# List environments
+pulumi env ls
+
+# Open environment in editor
+pulumi env open <env-name>
+
+# Get specific environment values  
+pulumi env get <env-name>
+```
+
+**Test API Connectivity**:
+```bash
+# Test Seqera API
+curl -H "Authorization: Bearer $TOWER_ACCESS_TOKEN" \
+     https://api.cloud.seqera.io/user-info
+
+# Test GitHub API
+curl -H "Authorization: token $GITHUB_TOKEN" \
+     https://api.github.com/orgs/nf-core
+```
+
+**Pulumi Diagnostics**:
+```bash
+# Detailed logging during deployment
+uv run pulumi up --verbose 2 --continue-on-error --diff
+
+# Show current stack outputs
+uv run pulumi stack output
+
+# Refresh state to match actual resources
+uv run pulumi refresh
+```
+
+#### Error Recovery Strategies
+
+1. **Seqera 403 Errors**: Update token permissions in ESC environment
+2. **GitHub 409 Errors**: Ignore - variables will be updated automatically  
+3. **Configuration Errors**: Verify all required environment variables in ESC
+4. **Network Issues**: Check connectivity to api.cloud.seqera.io and api.github.com
+
+#### Expected Warnings vs Critical Errors
+
+**Expected/Harmless**:
+- GitHub 409 "Already exists" for organization variables
+- Seqera compute environment updates (existing resources)
+- S3 bucket "already exists" messages (imported resource)
+
+**Critical Issues Requiring Action**:
+- Seqera 403 "Forbidden" - fix token permissions
+- Missing TOWER_ACCESS_TOKEN or GITHUB_TOKEN
+- Invalid workspace ID
+- Network connectivity failures
+
+The infrastructure includes comprehensive error handling with detailed diagnostic messages to help identify and resolve these common API issues.
 
 ### Code Patterns
 
@@ -190,6 +284,36 @@ The project uses the native Seqera Terraform provider for compute environment ma
 - **Features**: All environments have fusion snapshots enabled
 
 The `seqerakit/` directory contains configuration files that are read by the Terraform provider integration but are not actively used for deployment.
+
+## ESC Environment Setup
+
+The project requires the following environment variables in Pulumi ESC:
+
+### Required Variables
+```yaml
+# ESC Environment Configuration Example
+values:
+  # Seqera Platform Configuration
+  TOWER_ACCESS_TOKEN: "your-seqera-api-token-with-admin-permissions"
+  TOWER_WORKSPACE_ID: "59994744926013"  # Add to avoid fallback warning
+  
+  # GitHub Integration
+  GITHUB_TOKEN: "your-github-token-with-org-admin-scope"
+  
+  # AWS credentials are provided by ESC OIDC integration
+```
+
+### Token Permission Requirements
+
+**TOWER_ACCESS_TOKEN**:
+- Scope: `WORKSPACE_ADMIN` or `COMPUTE_ENV_ADMIN`
+- Used for: Creating and managing compute environments
+- Test command: `curl -H "Authorization: Bearer $TOWER_ACCESS_TOKEN" https://api.cloud.seqera.io/user-info`
+
+**GITHUB_TOKEN**:
+- Scope: `admin:org` (organization administration)
+- Used for: Creating organization variables for CI/CD workflows
+- Test command: `curl -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/orgs/nf-core`
 
 ## Outputs and Monitoring
 
