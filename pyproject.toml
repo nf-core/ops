@@ -1,0 +1,15 @@
+[tool.mypy]
+python_version = "3.12"
+explicit_package_bases = true
+namespace_packages = true
+
+# Exclude all __main__.py files to avoid duplicate module conflicts
+exclude = [
+    ".*/__main__\\.py$"
+]
+
+# Global mypy configuration
+warn_return_any = false  # Too noisy for Pulumi projects
+warn_unused_configs = true
+disallow_untyped_defs = false  # Too strict for Pulumi projects
+show_error_codes = true

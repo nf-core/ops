@@ -2,12 +2,12 @@
   "discriminator": "aws-batch",
   "region": "eu-west-1",
   "workDir": "s3://nf-core-awsmegatests",
+  "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n    publishDir = [\n        path: { params.outdir },\n        mode: 'copy',\n        tags: [\n            'compute_env': 'aws_ireland_fusionv2_nvme_cpu_ARM_snapshots',\n            'pipeline': { workflow.manifest.name },\n            'session': { workflow.sessionId },\n            'timestamp': { new Date().format('yyyy-MM-dd_HH-mm-ss') },\n            'architecture': 'arm64',\n            'fusion': 'enabled',\n            'fusionSnapshots': 'enabled'\n        ]\n    ]\n}\nfusion {\n    tags = '[.command.*|.exitcode|.fusion.*](nextflow.io/metadata=true),[*](nextflow.io/temporary=true)'\n}",
   "environment": [],
   "waveEnabled": true,
   "fusion2Enabled": true,
   "nvnmeStorageEnabled": true,
   "fusionSnapshots": true,
-  "nextflowConfig": "aws.batch.maxSpotAttempts=5\nprocess {\n    maxRetries = 2\n    errorStrategy = { task.exitStatus in ((130..145) + 104 + 175) ? 'retry' : 'terminate' }\n}\n",
   "forge": {
     "type": "SPOT",
     "minCpus": 0,
