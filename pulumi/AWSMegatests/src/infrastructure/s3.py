@@ -96,21 +96,21 @@ def create_s3_lifecycle_configuration(aws_provider, bucket):
                 ),
                 expiration=s3.BucketLifecycleConfigurationV2RuleExpirationArgs(days=30),
             ),
-            # Rule 3: Clean up work directory after 14 days (aggressive cleanup)
+            # Rule 3: Clean up work directory after 30 days
             s3.BucketLifecycleConfigurationV2RuleArgs(
                 id="cleanup-work-directory",
                 status="Enabled",
                 filter=s3.BucketLifecycleConfigurationV2RuleFilterArgs(prefix="work/"),
-                expiration=s3.BucketLifecycleConfigurationV2RuleExpirationArgs(days=14),
+                expiration=s3.BucketLifecycleConfigurationV2RuleExpirationArgs(days=30),
             ),
-            # Rule 4: Clean up scratch directory after 7 days
+            # Rule 4: Clean up scratch directory after 30 days
             s3.BucketLifecycleConfigurationV2RuleArgs(
                 id="cleanup-scratch-directory",
                 status="Enabled",
                 filter=s3.BucketLifecycleConfigurationV2RuleFilterArgs(
                     prefix="scratch/"
                 ),
-                expiration=s3.BucketLifecycleConfigurationV2RuleExpirationArgs(days=7),
+                expiration=s3.BucketLifecycleConfigurationV2RuleExpirationArgs(days=30),
             ),
             # Rule 5: Clean up cache directories after 30 days
             s3.BucketLifecycleConfigurationV2RuleArgs(
