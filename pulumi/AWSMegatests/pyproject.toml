@@ -14,3 +14,9 @@ dependencies = [
 
 [tool.uv.sources]
 pulumi-seqera = { path = "sdks/seqera" }
+
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.1",
+]

@@ -39,7 +39,6 @@ github_provider = github.Provider(
 
 test_datasets_bucket = aws.s3.Bucket(
     "test-datasets-bucket",
-    arn="arn:aws:s3:::nf-core-test-datasets",
     bucket="nf-core-test-datasets",
     acl="public-read",
     cors_rules=[
