@@ -48,68 +48,25 @@ def main():
     )
 
     # Step 6: Deploy Seqera Platform compute environments using Terraform provider
-    try:
-        pulumi.log.info(
-            "Deploying Seqera compute environments using Terraform provider"
-        )
+    # Deploy using Seqera Terraform provider with dynamic credentials ID
+    terraform_resources = deploy_seqera_environments_terraform(
+        config,
+        seqera_credentials_id,  # Dynamic TowerForge credentials ID from Seqera Platform
+        seqera_provider,  # Reuse existing Seqera provider
+    )
 
-        # Deploy using Seqera Terraform provider with dynamic credentials ID
-        terraform_resources = deploy_seqera_environments_terraform(
-            config,
-            seqera_credentials_id,  # Dynamic TowerForge credentials ID from Seqera Platform
-            seqera_provider,  # Reuse existing Seqera provider
-        )
-
-        # Get compute environment IDs from Terraform provider
-        compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
-        deployment_method = "terraform-provider"
-
-        pulumi.log.info(
-            "Successfully deployed compute environments using Seqera Terraform provider"
-        )
-    except Exception as e:
-        error_msg = (
-            f"Seqera deployment failed: {e}. "
-            "Common solutions: "
-            "1. Verify TOWER_ACCESS_TOKEN has WORKSPACE_ADMIN permissions "
-            "2. Check workspace ID is correct in ESC environment "
-            "3. Ensure TowerForge credentials were successfully uploaded to Seqera Platform "
-            "4. Verify network connectivity to api.cloud.seqera.io"
-        )
-        pulumi.log.error(error_msg)
-        raise RuntimeError(error_msg)
+    # Get compute environment IDs from Terraform provider
+    compute_env_ids = get_compute_environment_ids_terraform(terraform_resources)
+    deployment_method = "terraform-provider"
 
     # Step 8: Create GitHub resources
     # Full GitHub integration enabled - creates both variables and secrets
-    try:
-        pulumi.log.info("Creating GitHub organization variables and secrets")
-
-        github_resources = create_github_resources(
-            github_provider,
-            compute_env_ids,
-            config["tower_workspace_id"],
-            tower_access_token=config["tower_access_token"],
-        )
-
-        pulumi.log.info(
-            "Successfully created GitHub variables. Manual secret commands available in outputs."
-        )
-    except Exception as e:
-        error_msg = (
-            f"GitHub integration failed: {e}. "
-            "This is often harmless if variables already exist (409 errors). "
-            "Common issues: "
-            "1. GitHub token lacks org-level permissions "
-            "2. Variables already exist (409 Already Exists - harmless) "
-            "3. Network connectivity to api.github.com"
-        )
-        pulumi.log.warn(error_msg)
-        github_resources = {
-            "variables": {},
-            "secrets": {},
-            "gh_cli_commands": [],
-            "note": f"GitHub integration failed: {e}",
-        }
+    github_resources = create_github_resources(
+        github_provider,
+        compute_env_ids,
+        config["tower_workspace_id"],
+        tower_access_token=config["tower_access_token"],
+    )
 
     # Exports - All within proper Pulumi program context
     pulumi.export(

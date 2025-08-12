@@ -42,24 +42,15 @@ def load_config_file(filename: str) -> Dict[str, Any]:
     Raises:
         ConfigurationError: If file loading or parsing fails
     """
-    try:
-        if not os.path.exists(filename):
-            raise FileNotFoundError(
-                ERROR_MESSAGES["config_file_not_found"].format(filename)
-            )
+    if not os.path.exists(filename):
+        raise FileNotFoundError(
+            ERROR_MESSAGES["config_file_not_found"].format(filename)
+        )
 
-        with open(filename, "r") as f:
-            config_data = json.load(f)
+    with open(filename, "r") as f:
+        config_data = json.load(f)
 
-        pulumi.log.info(f"Successfully loaded configuration from {filename}")
-        return config_data
-
-    except json.JSONDecodeError as e:
-        error_msg = ERROR_MESSAGES["invalid_json"].format(filename, e)
-        raise ConfigurationError(error_msg) from e
-    except Exception as e:
-        error_msg = ERROR_MESSAGES["config_load_failed"].format(filename, e)
-        raise ConfigurationError(error_msg) from e
+    return config_data
 
 
 def create_forge_config(
@@ -179,32 +170,25 @@ def create_compute_environment(
         description=description,
     )
 
-    # Create the compute environment resource with error handling
-    try:
-        compute_env = seqera.ComputeEnv(
-            name,
-            compute_env=compute_env_args,
-            workspace_id=workspace_id,
-            opts=pulumi.ResourceOptions(
-                provider=provider,
-                # Force delete before replace to avoid name conflicts
-                delete_before_replace=True,
-                # Add custom timeout for compute environment creation
-                custom_timeouts=pulumi.CustomTimeouts(
-                    create=TIMEOUTS["compute_env_create"],
-                    update=TIMEOUTS["compute_env_update"],
-                    delete=TIMEOUTS["compute_env_delete"],
-                ),
+    # Create the compute environment resource
+    compute_env = seqera.ComputeEnv(
+        name,
+        compute_env=compute_env_args,
+        workspace_id=workspace_id,
+        opts=pulumi.ResourceOptions(
+            provider=provider,
+            # Force delete before replace to avoid name conflicts
+            delete_before_replace=True,
+            # Add custom timeout for compute environment creation
+            custom_timeouts=pulumi.CustomTimeouts(
+                create=TIMEOUTS["compute_env_create"],
+                update=TIMEOUTS["compute_env_update"],
+                delete=TIMEOUTS["compute_env_delete"],
             ),
-        )
+        ),
+    )
 
-        pulumi.log.info(f"Successfully created compute environment: {name}")
-        return compute_env
-
-    except Exception as e:
-        error_msg = ERROR_MESSAGES["compute_env_create_failed"].format(name, e)
-        pulumi.log.error(error_msg)
-        raise ComputeEnvironmentError(error_msg) from e
+    return compute_env
 
 
 def deploy_seqera_environments_terraform(
@@ -239,28 +223,15 @@ def deploy_seqera_environments_terraform(
         # Import here to avoid circular imports
         from ..providers.seqera import create_seqera_provider
 
-        try:
-            provider = create_seqera_provider(config)
-        except Exception as e:
-            pulumi.log.error(f"Failed to create Seqera provider: {e}")
-            raise
+        provider = create_seqera_provider(config)
 
     # Load all configuration files
-    try:
-        cpu_config = load_config_file(CONFIG_FILES["cpu"])
-        gpu_config = load_config_file(CONFIG_FILES["gpu"])
-        arm_config = load_config_file(CONFIG_FILES["arm"])
-    except ConfigurationError as e:
-        pulumi.log.error(f"Configuration loading failed: {e}")
-        raise
+    cpu_config = load_config_file(CONFIG_FILES["cpu"])
+    gpu_config = load_config_file(CONFIG_FILES["gpu"])
+    arm_config = load_config_file(CONFIG_FILES["arm"])
 
     # Validate workspace ID
-    try:
-        workspace_id = float(config["tower_workspace_id"])
-        pulumi.log.info(f"Using workspace ID: {workspace_id}")
-    except (ValueError, KeyError) as e:
-        error_msg = ERROR_MESSAGES["invalid_workspace_id"].format(e)
-        raise ValueError(error_msg) from e
+    workspace_id = float(config["tower_workspace_id"])
 
     # Create all three compute environments
     environments = {}

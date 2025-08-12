@@ -18,7 +18,6 @@ from ..utils.constants import (
     TOWERFORGE_CREDENTIAL_NAME,
     TOWERFORGE_CREDENTIAL_DESCRIPTION,
     TIMEOUTS,
-    ERROR_MESSAGES,
 )
 
 
@@ -230,34 +229,25 @@ def create_seqera_credentials(
     )
 
     # Upload credentials to Seqera Platform
-    try:
-        seqera_credential = seqera.Credential(
-            "towerforge-aws-credential",
-            name=TOWERFORGE_CREDENTIAL_NAME,
-            description=TOWERFORGE_CREDENTIAL_DESCRIPTION,
-            provider_type="aws",
-            workspace_id=workspace_id,
-            keys=aws_keys,
-            opts=pulumi.ResourceOptions(
-                provider=seqera_provider,
-                # Ensure credentials are uploaded after IAM access key is created
-                custom_timeouts=pulumi.CustomTimeouts(
-                    create=TIMEOUTS["seqera_credential_create"],
-                    update=TIMEOUTS["seqera_credential_update"],
-                    delete=TIMEOUTS["seqera_credential_delete"],
-                ),
+    seqera_credential = seqera.Credential(
+        "towerforge-aws-credential",
+        name=TOWERFORGE_CREDENTIAL_NAME,
+        description=TOWERFORGE_CREDENTIAL_DESCRIPTION,
+        provider_type="aws",
+        workspace_id=workspace_id,
+        keys=aws_keys,
+        opts=pulumi.ResourceOptions(
+            provider=seqera_provider,
+            # Ensure credentials are uploaded after IAM access key is created
+            custom_timeouts=pulumi.CustomTimeouts(
+                create=TIMEOUTS["seqera_credential_create"],
+                update=TIMEOUTS["seqera_credential_update"],
+                delete=TIMEOUTS["seqera_credential_delete"],
             ),
-        )
+        ),
+    )
 
-        pulumi.log.info(
-            "Successfully uploaded TowerForge credentials to Seqera Platform"
-        )
-        return seqera_credential
-
-    except Exception as e:
-        error_msg = f"{ERROR_MESSAGES['credential_upload_failed']} Error: {e}"
-        pulumi.log.error(error_msg)
-        raise CredentialError(error_msg) from e
+    return seqera_credential
 
 
 def _create_iam_policies(

@@ -31,13 +31,8 @@ def create_seqera_provider(config: Dict[str, Any]) -> seqera.Provider:
 
     pulumi.log.info("Creating Seqera provider with Cloud API endpoint")
 
-    try:
-        return seqera.Provider(
-            "seqera-provider",
-            bearer_auth=config["tower_access_token"],
-            server_url=SEQERA_API_URL,
-        )
-    except Exception as e:
-        error_msg = f"{ERROR_MESSAGES['seqera_provider_init_failed']} Error: {e}"
-        pulumi.log.error(error_msg)
-        raise SeqeraProviderError(error_msg) from e
+    return seqera.Provider(
+        "seqera-provider",
+        bearer_auth=config["tower_access_token"],
+        server_url=SEQERA_API_URL,
+    )

@@ -36,15 +36,9 @@ def create_s3_infrastructure(aws_provider) -> Dict[str, Any]:
 
     # S3 bucket lifecycle configuration
     # Create lifecycle rules for automated cost optimization and cleanup
-    try:
-        bucket_lifecycle_configuration = create_s3_lifecycle_configuration(
-            aws_provider, nf_core_awsmegatests_bucket
-        )
-        pulumi.log.info("S3 lifecycle configuration created successfully")
-    except Exception as e:
-        # Fall back to manual management if permissions are insufficient
-        pulumi.log.warn(f"S3 lifecycle configuration failed, managing manually: {e}")
-        bucket_lifecycle_configuration = None
+    bucket_lifecycle_configuration = create_s3_lifecycle_configuration(
+        aws_provider, nf_core_awsmegatests_bucket
+    )
 
     return {
         "bucket": nf_core_awsmegatests_bucket,

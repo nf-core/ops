@@ -101,75 +101,69 @@ def create_github_resources(
     Raises:
         GitHubIntegrationError: If GitHub resource creation fails
     """
-    try:
-        # Create org-level GitHub variables for compute environment IDs (non-sensitive)
-        # Using delete_before_replace to work around pulumi/pulumi-github#250
-        variables = {}
+    # Create org-level GitHub variables for compute environment IDs (non-sensitive)
+    # Using delete_before_replace to work around pulumi/pulumi-github#250
+    variables = {}
 
-        # Compute environment variables
-        for env_type in ["cpu", "gpu", "arm"]:
-            var_name = GITHUB_VARIABLE_NAMES[env_type]
-            resource_name = f"tower-compute-env-{env_type}"
+    # Compute environment variables
+    for env_type in ["cpu", "gpu", "arm"]:
+        var_name = GITHUB_VARIABLE_NAMES[env_type]
+        resource_name = f"tower-compute-env-{env_type}"
 
-            variables[env_type] = _create_organization_variable(
-                github_provider,
-                resource_name,
-                var_name,
-                compute_env_ids[env_type],
-            )
-
-        # Workspace ID variable
-        variables["workspace_id"] = _create_organization_variable(
+        variables[env_type] = _create_organization_variable(
             github_provider,
-            "tower-workspace-id",
-            GITHUB_VARIABLE_NAMES["workspace_id"],
-            tower_workspace_id,
+            resource_name,
+            var_name,
+            compute_env_ids[env_type],
         )
 
-        # Legacy S3 bucket variable
-        variables["legacy_s3_bucket"] = _create_organization_variable(
-            github_provider,
-            "legacy-aws-s3-bucket",
-            GITHUB_VARIABLE_NAMES["s3_bucket"],
-            S3_BUCKET_NAME,
+    # Workspace ID variable
+    variables["workspace_id"] = _create_organization_variable(
+        github_provider,
+        "tower-workspace-id",
+        GITHUB_VARIABLE_NAMES["workspace_id"],
+        tower_workspace_id,
+    )
+
+    # Legacy S3 bucket variable
+    variables["legacy_s3_bucket"] = _create_organization_variable(
+        github_provider,
+        "legacy-aws-s3-bucket",
+        GITHUB_VARIABLE_NAMES["s3_bucket"],
+        S3_BUCKET_NAME,
+    )
+
+    # GitHub Secrets Management - Manual Commands Only
+    # NOTE: Due to pulumi/pulumi-github#250, secrets must be managed manually
+    # https://github.com/nf-core/ops/issues/162 - Legacy compatibility needed
+
+    # Generate manual gh CLI commands for secrets management
+    if all(isinstance(compute_env_ids[k], str) for k in compute_env_ids) and isinstance(
+        tower_workspace_id, str
+    ):
+        # All static values
+        gh_cli_commands: Union[List[str], pulumi.Output[List[str]]] = (
+            _create_gh_commands(
+                tower_workspace_id,
+                compute_env_ids["cpu"],
+                "<TOWER_ACCESS_TOKEN>" if tower_access_token else None,
+            )
+        )
+    else:
+        # Dynamic values - create commands that will be resolved at runtime
+        gh_cli_commands = pulumi.Output.all(
+            workspace_id=tower_workspace_id, cpu_env_id=compute_env_ids["cpu"]
+        ).apply(
+            lambda args: _create_gh_commands(
+                args["workspace_id"],
+                args["cpu_env_id"],
+                "<TOWER_ACCESS_TOKEN>" if tower_access_token else None,
+            )
         )
 
-        # GitHub Secrets Management - Manual Commands Only
-        # NOTE: Due to pulumi/pulumi-github#250, secrets must be managed manually
-        # https://github.com/nf-core/ops/issues/162 - Legacy compatibility needed
-
-        # Generate manual gh CLI commands for secrets management
-        if all(
-            isinstance(compute_env_ids[k], str) for k in compute_env_ids
-        ) and isinstance(tower_workspace_id, str):
-            # All static values
-            gh_cli_commands: Union[List[str], pulumi.Output[List[str]]] = (
-                _create_gh_commands(
-                    tower_workspace_id,
-                    compute_env_ids["cpu"],
-                    "<TOWER_ACCESS_TOKEN>" if tower_access_token else None,
-                )
-            )
-        else:
-            # Dynamic values - create commands that will be resolved at runtime
-            gh_cli_commands = pulumi.Output.all(
-                workspace_id=tower_workspace_id, cpu_env_id=compute_env_ids["cpu"]
-            ).apply(
-                lambda args: _create_gh_commands(
-                    args["workspace_id"],
-                    args["cpu_env_id"],
-                    "<TOWER_ACCESS_TOKEN>" if tower_access_token else None,
-                )
-            )
-
-        return {
-            "variables": variables,
-            "secrets": {},  # No Pulumi-managed secrets due to provider issue
-            "gh_cli_commands": gh_cli_commands,
-            "note": "Secrets must be managed manually due to pulumi/pulumi-github#250",
-        }
-
-    except Exception as e:
-        error_msg = f"GitHub integration failed: {e}"
-        pulumi.log.error(error_msg)
-        raise GitHubIntegrationError(error_msg) from e
+    return {
+        "variables": variables,
+        "secrets": {},  # No Pulumi-managed secrets due to provider issue
+        "gh_cli_commands": gh_cli_commands,
+        "note": "Secrets must be managed manually due to pulumi/pulumi-github#250",
+    }
