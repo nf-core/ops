@@ -11,6 +11,7 @@ from ..utils.constants import (
     COMPUTE_ENV_NAMES,
     COMPUTE_ENV_DESCRIPTIONS,
     CONFIG_FILES,
+    NEXTFLOW_CONFIG_FILES,
     DEFAULT_COMPUTE_ENV_CONFIG,
     DEFAULT_FORGE_CONFIG,
     TIMEOUTS,
@@ -28,6 +29,36 @@ class ConfigurationError(Exception):
     """Exception raised when configuration loading fails."""
 
     pass
+
+
+def load_nextflow_config(env_type: str) -> str:
+    """Load Nextflow configuration from external file.
+
+    Args:
+        env_type: Environment type (cpu, gpu, arm)
+
+    Returns:
+        str: Nextflow configuration content
+
+    Raises:
+        ConfigurationError: If file loading fails
+    """
+    config_file = NEXTFLOW_CONFIG_FILES.get(env_type)
+    if not config_file:
+        raise ConfigurationError(
+            f"No Nextflow config file defined for environment type: {env_type}"
+        )
+
+    if not os.path.exists(config_file):
+        raise FileNotFoundError(f"Nextflow config file not found: {config_file}")
+
+    try:
+        with open(config_file, "r") as f:
+            return f.read().strip()
+    except Exception as e:
+        raise ConfigurationError(
+            f"Failed to read Nextflow config file {config_file}: {e}"
+        )
 
 
 def load_config_file(filename: str) -> Dict[str, Any]:
@@ -103,6 +134,7 @@ def create_compute_environment(
     credentials_id: str,
     workspace_id: float,
     config_args: Dict[str, Any],
+    env_type: str,
     description: Optional[str] = None,
 ) -> seqera.ComputeEnv:
     """Create a Seqera compute environment using Terraform provider with error handling.
@@ -113,6 +145,7 @@ def create_compute_environment(
         credentials_id: Seqera credentials ID
         workspace_id: Seqera workspace ID
         config_args: Configuration arguments from JSON file
+        env_type: Environment type (cpu, gpu, arm) for loading external nextflow config
         description: Optional description for the compute environment
 
     Returns:
@@ -121,6 +154,7 @@ def create_compute_environment(
     Raises:
         ComputeEnvironmentError: If compute environment creation fails
         ValueError: If required parameters are missing
+        ConfigurationError: If nextflow config loading fails
     """
     pulumi.log.info(f"Creating compute environment: {name}")
 
@@ -133,6 +167,9 @@ def create_compute_environment(
 
     # Create the forge configuration
     forge_config = create_forge_config(config_args)
+
+    # Load Nextflow configuration from external file
+    nextflow_config = load_nextflow_config(env_type)
 
     # Create AWS Batch configuration
     aws_batch_config = seqera.ComputeEnvComputeEnvConfigAwsBatchArgs(
@@ -151,9 +188,7 @@ def create_compute_environment(
         fusion_snapshots=config_args.get(
             "fusionSnapshots", DEFAULT_COMPUTE_ENV_CONFIG["fusionSnapshots"]
         ),
-        nextflow_config=config_args.get(
-            "nextflowConfig", DEFAULT_COMPUTE_ENV_CONFIG["nextflowConfig"]
-        ),
+        nextflow_config=nextflow_config,  # Use external config file
     )
 
     # Create the compute environment configuration
@@ -250,6 +285,7 @@ def deploy_seqera_environments_terraform(
             credentials_id=towerforge_credentials_id,
             workspace_id=workspace_id,
             config_args=config_data,
+            env_type=env_type,
             description=description,
         )
 

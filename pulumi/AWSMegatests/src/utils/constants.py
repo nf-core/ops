@@ -29,6 +29,13 @@ CONFIG_FILES = {
     "arm": "seqerakit/current-env-cpu-arm.json",
 }
 
+# Nextflow configuration files for compute environments
+NEXTFLOW_CONFIG_FILES = {
+    "cpu": "seqerakit/configs/nextflow-cpu.config",
+    "gpu": "seqerakit/configs/nextflow-gpu.config",
+    "arm": "seqerakit/configs/nextflow-arm.config",
+}
+
 # TowerForge Configuration
 TOWERFORGE_USER_NAME = "TowerForge-AWSMegatests"
 TOWERFORGE_POLICY_NAMES = {
