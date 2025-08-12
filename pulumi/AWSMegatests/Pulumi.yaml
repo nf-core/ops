@@ -14,6 +14,6 @@ config:
 packages:
   seqera:
     source: terraform-provider
-    version: 0.13.0
+    version: 0.25.2
     parameters:
       - registry.terraform.io/seqeralabs/seqera
