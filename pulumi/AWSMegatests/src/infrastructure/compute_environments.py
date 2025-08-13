@@ -136,6 +136,8 @@ def create_compute_environment(
     config_args: Dict[str, Any],
     env_type: str,
     description: Optional[str] = None,
+    depends_on: Optional[list] = None,
+    iam_policy_version: Optional[str] = None,
 ) -> seqera.ComputeEnv:
     """Create a Seqera compute environment using Terraform provider with error handling.
 
@@ -147,6 +149,8 @@ def create_compute_environment(
         config_args: Configuration arguments from JSON file
         env_type: Environment type (cpu, gpu, arm) for loading external nextflow config
         description: Optional description for the compute environment
+        depends_on: Optional list of resources this compute environment depends on
+        iam_policy_version: Optional IAM policy version hash to trigger recreation on policy changes
 
     Returns:
         seqera.ComputeEnv: Created compute environment resource
@@ -205,22 +209,49 @@ def create_compute_environment(
         description=description,
     )
 
+    # Add IAM policy version to compute environment description to trigger recreation on policy changes
+    if iam_policy_version:
+        # Append policy version hash to description to force recreation when IAM policies change
+        policy_suffix = f" (IAM Policy Version: {iam_policy_version[:8]})"
+        if description:
+            compute_env_args = seqera.ComputeEnvComputeEnvArgs(
+                name=name,
+                platform="aws-batch",
+                credentials_id=credentials_id,
+                config=compute_env_config,
+                description=f"{description}{policy_suffix}",
+            )
+        else:
+            compute_env_args = seqera.ComputeEnvComputeEnvArgs(
+                name=name,
+                platform="aws-batch",
+                credentials_id=credentials_id,
+                config=compute_env_config,
+                description=f"Compute environment{policy_suffix}",
+            )
+
     # Create the compute environment resource
+    resource_options = pulumi.ResourceOptions(
+        provider=provider,
+        # Force delete before replace to avoid name conflicts
+        delete_before_replace=True,
+        # Add custom timeout for compute environment creation
+        custom_timeouts=pulumi.CustomTimeouts(
+            create=TIMEOUTS["compute_env_create"],
+            update=TIMEOUTS["compute_env_update"],
+            delete=TIMEOUTS["compute_env_delete"],
+        ),
+    )
+
+    # Add dependencies if specified
+    if depends_on:
+        resource_options.depends_on = depends_on
+
     compute_env = seqera.ComputeEnv(
         name,
         compute_env=compute_env_args,
         workspace_id=workspace_id,
-        opts=pulumi.ResourceOptions(
-            provider=provider,
-            # Force delete before replace to avoid name conflicts
-            delete_before_replace=True,
-            # Add custom timeout for compute environment creation
-            custom_timeouts=pulumi.CustomTimeouts(
-                create=TIMEOUTS["compute_env_create"],
-                update=TIMEOUTS["compute_env_update"],
-                delete=TIMEOUTS["compute_env_delete"],
-            ),
-        ),
+        opts=resource_options,
     )
 
     return compute_env
@@ -230,6 +261,8 @@ def deploy_seqera_environments_terraform(
     config: Dict[str, Any],
     towerforge_credentials_id: str,
     seqera_provider: Optional[seqera.Provider] = None,
+    seqera_credential_resource: Optional[seqera.Credential] = None,
+    iam_policy_hash: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Deploy Seqera Platform compute environments using Terraform provider.
 
@@ -237,6 +270,8 @@ def deploy_seqera_environments_terraform(
         config: Configuration dictionary
         towerforge_credentials_id: Dynamic TowerForge credentials ID
         seqera_provider: Optional existing Seqera provider instance
+        seqera_credential_resource: Optional Seqera credential resource for dependency
+        iam_policy_hash: Optional IAM policy hash to force recreation on policy changes
 
     Returns:
         Dict[str, Any]: Dictionary containing created compute environments and provider
@@ -271,6 +306,11 @@ def deploy_seqera_environments_terraform(
     # Create all three compute environments
     environments = {}
 
+    # Set up dependencies - compute environments depend on Seqera credential resource
+    depends_on_resources = []
+    if seqera_credential_resource:
+        depends_on_resources.append(seqera_credential_resource)
+
     for env_type, config_data in [
         ("cpu", cpu_config),
         ("gpu", gpu_config),
@@ -287,6 +327,8 @@ def deploy_seqera_environments_terraform(
             config_args=config_data,
             env_type=env_type,
             description=description,
+            depends_on=depends_on_resources if depends_on_resources else None,
+            iam_policy_version=iam_policy_hash,
         )
 
     return {

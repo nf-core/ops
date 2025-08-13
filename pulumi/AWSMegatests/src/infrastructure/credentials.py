@@ -6,6 +6,7 @@ It also uploads the credentials to Seqera Platform for use by compute environmen
 """
 
 import json
+import hashlib
 from typing import Optional, Tuple, Dict, Any
 
 import pulumi
@@ -309,12 +310,47 @@ def _create_iam_policies(
     return forge_policy, launch_policy, s3_policy
 
 
+def _generate_policy_hash(
+    forge_policy: aws.iam.Policy,
+    launch_policy: aws.iam.Policy,
+    s3_policy: aws.iam.Policy,
+) -> str:
+    """Generate a hash of IAM policies to detect changes.
+
+    Args:
+        forge_policy: TowerForge Forge policy
+        launch_policy: TowerForge Launch policy
+        s3_policy: TowerForge S3 policy
+
+    Returns:
+        str: SHA256 hash of the combined policy documents
+    """
+    # Create a deterministic hash of all policy documents
+    forge_doc = _create_forge_policy_document()
+    launch_doc = _create_launch_policy_document()
+
+    # Combine all policy documents for hashing
+    combined_policies = json.dumps(
+        {
+            "forge": forge_doc,
+            "launch": launch_doc,
+            # Note: S3 policy is bucket-specific, so we'll use a placeholder for consistent hashing
+            "s3": {"bucket_dependent": True},
+        },
+        sort_keys=True,
+    )
+
+    return hashlib.sha256(combined_policies.encode()).hexdigest()
+
+
 def create_towerforge_credentials(
     aws_provider: aws.Provider,
     s3_bucket,
     seqera_provider: seqera.Provider,
     workspace_id: float,
-) -> Tuple[pulumi.Output[str], pulumi.Output[str], pulumi.Output[str]]:
+) -> Tuple[
+    pulumi.Output[str], pulumi.Output[str], pulumi.Output[str], seqera.Credential, str
+]:
     """Create TowerForge IAM resources and upload to Seqera Platform.
 
     Creates IAM policies, user, and access keys for TowerForge operations,
@@ -328,12 +364,15 @@ def create_towerforge_credentials(
         workspace_id: Seqera Platform workspace ID
 
     Returns:
-        Tuple: (access_key_id, access_key_secret, seqera_credentials_id)
+        Tuple: (access_key_id, access_key_secret, seqera_credentials_id, seqera_credential_resource, iam_policy_hash)
     """
     # Create IAM policies
     forge_policy, launch_policy, s3_policy = _create_iam_policies(
         aws_provider, s3_bucket
     )
+
+    # Generate policy version hash for compute environment recreation on policy changes
+    iam_policy_hash = _generate_policy_hash(forge_policy, launch_policy, s3_policy)
 
     # Create TowerForge IAM User
     towerforge_user = aws.iam.User(
@@ -390,11 +429,13 @@ def create_towerforge_credentials(
         access_key_secret=towerforge_access_key.secret,
     )
 
-    # Return the access key credentials and Seqera credentials ID
+    # Return the access key credentials, Seqera credentials ID, credential resource, and policy hash
     return (
         towerforge_access_key.id,
         towerforge_access_key.secret,
         seqera_credential.credentials_id,
+        seqera_credential,
+        iam_policy_hash,
     )
 
 
@@ -423,10 +464,14 @@ def get_towerforge_resources(
     """
     # Create the credentials (this will create all the resources)
     if seqera_provider and workspace_id:
-        access_key_id, access_key_secret, seqera_credentials_id = (
-            create_towerforge_credentials(
-                aws_provider, s3_bucket, seqera_provider, workspace_id
-            )
+        (
+            access_key_id,
+            access_key_secret,
+            seqera_credentials_id,
+            seqera_credential,
+            iam_policy_hash,
+        ) = create_towerforge_credentials(
+            aws_provider, s3_bucket, seqera_provider, workspace_id
         )
     else:
         # Fallback for backward compatibility - this will raise an error since signature changed

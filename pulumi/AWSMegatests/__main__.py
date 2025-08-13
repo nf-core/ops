@@ -38,13 +38,17 @@ def main():
     # Note: lifecycle_configuration is managed manually, not used in exports
 
     # Step 5: Create TowerForge IAM credentials and upload to Seqera Platform
-    towerforge_access_key_id, towerforge_access_key_secret, seqera_credentials_id = (
-        create_towerforge_credentials(
-            aws_provider,
-            nf_core_awsmegatests_bucket,
-            seqera_provider,
-            float(config["tower_workspace_id"]),
-        )
+    (
+        towerforge_access_key_id,
+        towerforge_access_key_secret,
+        seqera_credentials_id,
+        seqera_credential_resource,
+        iam_policy_hash,
+    ) = create_towerforge_credentials(
+        aws_provider,
+        nf_core_awsmegatests_bucket,
+        seqera_provider,
+        float(config["tower_workspace_id"]),
     )
 
     # Step 6: Deploy Seqera Platform compute environments using Terraform provider
@@ -53,6 +57,8 @@ def main():
         config,
         seqera_credentials_id,  # Dynamic TowerForge credentials ID from Seqera Platform
         seqera_provider,  # Reuse existing Seqera provider
+        seqera_credential_resource,  # Seqera credential resource for dependency
+        iam_policy_hash,  # IAM policy hash to force CE recreation on policy changes
     )
 
     # Get compute environment IDs from Terraform provider
