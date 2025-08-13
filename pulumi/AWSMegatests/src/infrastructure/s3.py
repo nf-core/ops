@@ -154,7 +154,8 @@ def create_s3_cors_configuration(aws_provider, bucket):
         S3 bucket CORS configuration resource
     """
     # S3 CORS configuration for Seqera Data Explorer compatibility
-    # Based on https://docs.seqera.io/platform/supported-software/aws/s3#cors-configuration
+    # Based on official Seqera documentation:
+    # https://docs.seqera.io/platform-cloud/data/data-explorer#amazon-s3-cors-configuration
     cors_configuration = s3.BucketCorsConfigurationV2(
         "nf-core-awsmegatests-cors",
         bucket=bucket.id,
@@ -169,14 +170,7 @@ def create_s3_cors_configuration(aws_provider, bucket):
                     "https://cloud.seqera.io",
                     "https://tower.nf",
                 ],
-                expose_headers=[
-                    "ETag",
-                    "x-amz-meta-*",
-                    "x-amz-request-id",
-                    "x-amz-id-2",
-                    "x-amz-server-side-encryption",
-                    "x-amz-server-side-encryption-aws-kms-key-id",
-                ],
+                expose_headers=["ETag"],
                 max_age_seconds=3000,
             ),
             # Additional rule for direct browser access
