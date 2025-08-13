@@ -32,13 +32,13 @@ class ConfigurationError(Exception):
 
 
 def load_nextflow_config(env_type: str) -> str:
-    """Load Nextflow configuration from external file.
+    """Load and merge Nextflow configuration from base and environment-specific files.
 
     Args:
         env_type: Environment type (cpu, gpu, arm)
 
     Returns:
-        str: Nextflow configuration content
+        str: Merged Nextflow configuration content
 
     Raises:
         ConfigurationError: If file loading fails
@@ -52,13 +52,45 @@ def load_nextflow_config(env_type: str) -> str:
     if not os.path.exists(config_file):
         raise FileNotFoundError(f"Nextflow config file not found: {config_file}")
 
+    # Load base configuration
+    base_config_file = os.path.join(
+        os.path.dirname(config_file), "nextflow-base.config"
+    )
+    base_config = ""
+    if os.path.exists(base_config_file):
+        try:
+            with open(base_config_file, "r") as f:
+                base_config = f.read().strip()
+        except Exception as e:
+            raise ConfigurationError(
+                f"Failed to read base Nextflow config file {base_config_file}: {e}"
+            )
+
+    # Load environment-specific configuration
     try:
         with open(config_file, "r") as f:
-            return f.read().strip()
+            env_config = f.read().strip()
     except Exception as e:
         raise ConfigurationError(
             f"Failed to read Nextflow config file {config_file}: {e}"
         )
+
+    # Remove includeConfig line from environment config since we're injecting base config
+    env_config_lines = env_config.split("\n")
+    env_config_filtered = [
+        line
+        for line in env_config_lines
+        if not line.strip().startswith("includeConfig")
+    ]
+    env_config_clean = "\n".join(env_config_filtered)
+
+    # Merge base config with environment-specific config
+    if base_config:
+        merged_config = f"{base_config}\n\n{env_config_clean}"
+    else:
+        merged_config = env_config_clean
+
+    return merged_config.strip()
 
 
 def load_config_file(filename: str) -> Dict[str, Any]:
