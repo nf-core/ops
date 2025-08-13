@@ -9,11 +9,11 @@ config:
   # GitHub Provider Configuration
   github:owner:
     value: nf-core
-  # Note: AWS and other tokens are provided via ESC environment
-  # AWS credentials should come from ESC OIDC integration
+    # Note: AWS and other tokens are provided via ESC environment
+    # AWS credentials should come from ESC OIDC integration
 packages:
   seqera:
     source: terraform-provider
-    version: 0.13.0
+    version: 0.25.2
     parameters:
       - registry.terraform.io/seqeralabs/seqera

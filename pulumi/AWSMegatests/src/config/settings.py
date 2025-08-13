@@ -42,9 +42,10 @@ class InfrastructureConfig:
             missing_vars.append("GITHUB_TOKEN")
 
         # Validate workspace ID is numeric
-        try:
-            float(self.tower_workspace_id)
-        except (ValueError, TypeError):
+        if (
+            not self.tower_workspace_id
+            or not self.tower_workspace_id.replace(".", "").isdigit()
+        ):
             missing_vars.append("TOWER_WORKSPACE_ID (must be numeric)")
 
         if missing_vars:
@@ -110,16 +111,3 @@ def get_configuration() -> Dict[str, Any]:
         # AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         # are automatically handled by ESC and picked up by the AWS provider
     }
-
-
-def validate_environment() -> bool:
-    """Validate that all required environment variables are present.
-
-    Returns:
-        bool: True if all required variables are present, False otherwise
-    """
-    try:
-        get_configuration()
-        return True
-    except ConfigurationError:
-        return False
