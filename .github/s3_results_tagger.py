@@ -22,6 +22,7 @@ import boto3
 import requests
 import sys
 import argparse
+import os
 from datetime import datetime
 import logging
 
@@ -523,6 +524,35 @@ def main():
         )
 
     logger.info("=" * 80)
+
+    # Output GitHub Actions friendly format to GITHUB_OUTPUT file
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"current_tagged={stats['current_tagged']}\n")
+            f.write(f"orphaned_tagged={stats['orphaned_tagged']}\n")
+            f.write(f"orphaned_deleted={stats['orphaned_deleted']}\n")
+            f.write(f"errors={stats['errors']}\n")
+            f.write(f"total_orphaned_count={len(orphaned_directories)}\n")
+
+            # Output orphaned directories list (limit to first 50 for display)
+            orphaned_paths = [
+                dir_info["path"] for dir_info in orphaned_directories[:50]
+            ]
+            f.write(f"orphaned_paths={','.join(orphaned_paths)}\n")
+
+            # Output pipeline breakdown
+            pipeline_counts = {}
+            for dir_info in orphaned_directories:
+                pipeline = dir_info["pipeline"]
+                pipeline_counts[pipeline] = pipeline_counts.get(pipeline, 0) + 1
+
+            pipeline_breakdown = []
+            for pipeline, count in sorted(pipeline_counts.items()):
+                pipeline_breakdown.append(f"{pipeline}:{count}")
+            f.write(f"pipeline_breakdown={','.join(pipeline_breakdown)}\n")
+
+        logger.info("GitHub Actions outputs written to $GITHUB_OUTPUT")
 
     # Exit with error code if there were significant issues
     if stats["errors"] > len(s3_results_dirs) * 0.1:  # More than 10% errors

@@ -55,6 +55,7 @@ jobs:
         run: uv python install 3.13
 
       - name: Run S3 Results Tagging
+        id: s3_tagging
         run: |
           # Convert GitHub inputs to script arguments
           ARGS="--bucket ${{ env.S3_BUCKET }} --github-token ${{ secrets.GITHUB_TOKEN }}"
@@ -75,23 +76,75 @@ jobs:
             ARGS="$ARGS --enable-deletion"
           fi
 
-          # Run the Python script with uv
+          # Run the Python script with uv 
           echo "🚀 Running S3 results tagger with args: $ARGS"
           uv run .github/s3_results_tagger.py $ARGS
 
       - name: Post job summary
         if: always()
         run: |
-          echo "## S3 Results Tagging Summary" >> $GITHUB_STEP_SUMMARY
-          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bucket**: ${{ env.S3_BUCKET }}" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "- **Mode**: DRY RUN (forced for PR safety)" >> $GITHUB_STEP_SUMMARY
-            echo "- **Deletion enabled**: false (disabled for PRs)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "- **Mode**: ${{ github.event.inputs.dry_run == 'false' && 'LIVE' || 'DRY RUN' }}" >> $GITHUB_STEP_SUMMARY
-            echo "- **Deletion enabled**: ${{ github.event.inputs.enable_deletion || 'false' }}" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "# 🏷️ S3 Results Tagging Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Check the workflow logs for detailed information about tagged directories." >> $GITHUB_STEP_SUMMARY
+
+          # Basic information
+          echo "## 📋 Job Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Bucket** | \`${{ env.S3_BUCKET }}\` |" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "| **Mode** | 🔒 DRY RUN (forced for PR safety) |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Deletion enabled** | ❌ Disabled for PRs |" >> $GITHUB_STEP_SUMMARY
+          else
+            MODE="${{ github.event.inputs.dry_run == 'false' && '🔴 LIVE' || '🟡 DRY RUN' }}"
+            DELETION="${{ github.event.inputs.enable_deletion == 'true' && '⚠️ Enabled' || '✅ Disabled' }}"
+            echo "| **Mode** | $MODE |" >> $GITHUB_STEP_SUMMARY
+            echo "| **Deletion enabled** | $DELETION |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "| **Timestamp** | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Display statistics from step outputs
+          echo "## 📊 Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Current releases tagged**: ${{ steps.s3_tagging.outputs.current_tagged }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🗑️ **Orphaned directories tagged**: ${{ steps.s3_tagging.outputs.orphaned_tagged }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.s3_tagging.outputs.orphaned_deleted }}" != "0" ]; then
+            echo "- 🗑️ **Orphaned directories deleted**: ${{ steps.s3_tagging.outputs.orphaned_deleted }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- ❌ **Errors encountered**: ${{ steps.s3_tagging.outputs.errors }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Display orphaned directories if any
+          if [ "${{ steps.s3_tagging.outputs.orphaned_tagged }}" != "0" ]; then
+            echo "## 🗑️ Orphaned Directories Found" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "The following directories were tagged as orphaned (no longer matching current pipeline releases):" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Display orphaned directories from step output
+            echo "${{ steps.s3_tagging.outputs.orphaned_directories }}" >> $GITHUB_STEP_SUMMARY
+            
+            echo "" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ github.event.inputs.enable_deletion || 'false' }}" = "false" ]; then
+              echo "💡 **Note**: Deletion is disabled. These directories are only tagged with \`deleteme=true\` for future cleanup." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ **Warning**: Deletion is enabled. These directories will be permanently removed." >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Display pipeline breakdown if available  
+            if [ -n "${{ steps.s3_tagging.outputs.pipeline_breakdown }}" ]; then
+              echo "### 📋 Breakdown by Pipeline" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "${{ steps.s3_tagging.outputs.pipeline_breakdown }}" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "## ✨ All Clear!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "No orphaned directories found - all results directories match current pipeline releases." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "📋 **Full details**: Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for complete output." >> $GITHUB_STEP_SUMMARY
