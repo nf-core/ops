@@ -4,6 +4,10 @@ on:
   schedule:
     # Run weekly on Sundays at 02:00 UTC to avoid peak usage
     - cron: "0 2 * * 0"
+  pull_request:
+    paths:
+      - ".github/workflows/s3-results-tagging.yml"
+      - ".github/s3_results_tagger.py"
   workflow_dispatch:
     inputs:
       dry_run:
@@ -60,26 +64,39 @@ jobs:
           # Convert GitHub inputs to script arguments
           ARGS="--bucket ${{ env.S3_BUCKET }} --pipelines-json-url ${{ env.PIPELINES_JSON_URL }}"
 
-          # Handle dry run mode
-          if [ "${{ github.event.inputs.dry_run || 'true' }}" = "false" ]; then
-            ARGS="$ARGS --live"
+          # Force dry-run mode for PR events (safety measure)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "🔒 Pull request detected - forcing dry-run mode for safety"
+            # Don't add --live flag for PRs
+          else
+            # Handle dry run mode for other events
+            if [ "${{ github.event.inputs.dry_run || 'true' }}" = "false" ]; then
+              ARGS="$ARGS --live"
+            fi
           fi
 
-          # Handle deletion enable
-          if [ "${{ github.event.inputs.enable_deletion || 'false' }}" = "true" ]; then
+          # Handle deletion enable (disabled for PRs)
+          if [ "${{ github.event_name }}" != "pull_request" ] && [ "${{ github.event.inputs.enable_deletion || 'false' }}" = "true" ]; then
             ARGS="$ARGS --enable-deletion"
           fi
 
           # Run the Python script
+          echo "🚀 Running S3 results tagger with args: $ARGS"
           python .github/s3_results_tagger.py $ARGS
 
       - name: Post job summary
         if: always()
         run: |
           echo "## S3 Results Tagging Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Bucket**: ${{ env.S3_BUCKET }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Mode**: ${{ env.DRY_RUN == 'true' && 'DRY RUN' || 'LIVE' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deletion enabled**: ${{ env.ENABLE_DELETION }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "- **Mode**: DRY RUN (forced for PR safety)" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deletion enabled**: false (disabled for PRs)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Mode**: ${{ github.event.inputs.dry_run == 'false' && 'LIVE' || 'DRY RUN' }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Deletion enabled**: ${{ github.event.inputs.enable_deletion || 'false' }}" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Check the workflow logs for detailed information about tagged directories." >> $GITHUB_STEP_SUMMARY
