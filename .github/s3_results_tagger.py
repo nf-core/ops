@@ -536,10 +536,21 @@ def main():
             f.write(f"total_orphaned_count={len(orphaned_directories)}\n")
 
             # Output orphaned directories list (limit to first 50 for display)
-            orphaned_paths = [
-                dir_info["path"] for dir_info in orphaned_directories[:50]
-            ]
-            f.write(f"orphaned_paths={','.join(orphaned_paths)}\n")
+            # Format orphaned directories nicely for markdown display
+            orphaned_list = []
+            for dir_info in orphaned_directories[:50]:  # Limit to first 50
+                pipeline = dir_info["pipeline"]
+                sha = dir_info["sha"]
+                path = dir_info["path"]
+                orphaned_list.append(f"- `{path}` (SHA: {sha})")
+
+            orphaned_directories_formatted = "\\n".join(orphaned_list)
+            if len(orphaned_directories) > 50:
+                orphaned_directories_formatted += (
+                    f"\\n- ... and {len(orphaned_directories) - 50} more"
+                )
+
+            f.write(f"orphaned_directories={orphaned_directories_formatted}\n")
 
             # Output pipeline breakdown
             pipeline_counts = {}
@@ -547,10 +558,11 @@ def main():
                 pipeline = dir_info["pipeline"]
                 pipeline_counts[pipeline] = pipeline_counts.get(pipeline, 0) + 1
 
+            # Format pipeline breakdown nicely for markdown display
             pipeline_breakdown = []
             for pipeline, count in sorted(pipeline_counts.items()):
-                pipeline_breakdown.append(f"{pipeline}:{count}")
-            f.write(f"pipeline_breakdown={','.join(pipeline_breakdown)}\n")
+                pipeline_breakdown.append(f"- **{pipeline}**: {count} directories")
+            f.write(f"pipeline_breakdown={'\\n'.join(pipeline_breakdown)}\n")
 
         logger.info("GitHub Actions outputs written to $GITHUB_OUTPUT")
 
