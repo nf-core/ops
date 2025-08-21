@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# /// script
+# dependencies = [
+#   "boto3",
+#   "requests",
+# ]
+# ///
 """
 S3 Results Tagging Script
 
@@ -6,7 +12,7 @@ This script identifies and tags S3 results directories to manage orphaned
 directories that cause "no AWS results found" issues on the website.
 
 The script:
-- Fetches current pipeline releases from pipelines.json
+- Fetches current pipeline releases from GitHub API
 - Scans S3 bucket for all results-* directories
 - Tags current releases with metadata (pipeline, release, sha, status)
 - Tags orphaned directories with deleteme=true for future cleanup
@@ -26,8 +32,123 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def fetch_pipeline_data_from_github(github_token: str | None = None) -> dict:
+    """Fetch current pipeline release data from GitHub API"""
+    try:
+        logger.info("Fetching nf-core pipeline data from GitHub API")
+
+        # Set up headers with optional authentication
+        headers = {
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+        }
+        if github_token:
+            headers["Authorization"] = f"Bearer {github_token}"
+            logger.info("Using GitHub token for authentication")
+
+        # Get all nf-core repositories
+        repos_url = "https://api.github.com/orgs/nf-core/repos"
+        all_repos = []
+        page = 1
+
+        while True:
+            logger.info(f"Fetching nf-core repositories page {page}")
+            response = requests.get(
+                f"{repos_url}?type=public&per_page=100&page={page}",
+                headers=headers,
+                timeout=30,
+            )
+            response.raise_for_status()
+            repos = response.json()
+
+            if not repos:
+                break
+
+            # Filter out archived repos and non-pipeline repos
+            active_repos = [repo for repo in repos if not repo.get("archived", True)]
+            all_repos.extend(active_repos)
+            page += 1
+
+        logger.info(f"Found {len(all_repos)} active nf-core repositories")
+
+        # Build lookup of current release SHAs
+        current_shas = {}
+
+        for repo in all_repos:
+            repo_name = repo["name"]
+
+            # Skip non-pipeline repositories (tools, modules, etc.)
+            ignored_repos = [
+                "tools",
+                "modules",
+                "subworkflows",
+                "website",
+                "test-datasets",
+            ]
+            if repo_name in ignored_repos:
+                continue
+
+            try:
+                # Get releases for this repository
+                releases_url = (
+                    f"https://api.github.com/repos/nf-core/{repo_name}/releases"
+                )
+                releases_response = requests.get(
+                    releases_url, headers=headers, timeout=30
+                )
+                releases_response.raise_for_status()
+                releases = releases_response.json()
+
+                # Process each release (excluding dev and draft releases)
+                for release in releases:
+                    if (
+                        release.get("tag_name") != "dev"
+                        and not release.get("draft", False)
+                        and release.get("tag_name", "").strip() != ""
+                    ):
+                        tag_name = release["tag_name"]
+
+                        # Get the commit SHA for this tag
+                        tag_url = f"https://api.github.com/repos/nf-core/{repo_name}/git/ref/tags/{tag_name}"
+                        tag_response = requests.get(
+                            tag_url, headers=headers, timeout=30
+                        )
+
+                        if tag_response.status_code == 200:
+                            tag_data = tag_response.json()
+                            sha = tag_data.get("object", {}).get("sha")
+
+                            if sha:
+                                current_shas[f"{repo_name}/results-{sha}"] = {
+                                    "pipeline": repo_name,
+                                    "version": tag_name,
+                                    "sha": sha,
+                                }
+                        else:
+                            logger.warning(
+                                f"Could not get SHA for {repo_name} tag {tag_name}"
+                            )
+
+            except Exception as e:
+                logger.warning(f"Failed to fetch releases for {repo_name}: {e}")
+                continue
+
+        logger.info(f"Found {len(current_shas)} current release results directories")
+        return current_shas
+
+    except Exception as e:
+        logger.error(f"Failed to fetch pipeline data from GitHub: {e}")
+        sys.exit(1)
+
+
 def fetch_pipeline_data(pipelines_json_url: str) -> dict:
-    """Fetch current pipeline release data"""
+    """Fetch current pipeline release data (legacy function for compatibility)"""
+    # If it's the old S3 URL, redirect to GitHub API
+    if "nf-core.s3.amazonaws.com" in pipelines_json_url:
+        logger.warning("Detected legacy S3 URL, switching to GitHub API")
+        return fetch_pipeline_data_from_github()
+
+    # Otherwise try the provided URL (for custom endpoints)
     try:
         logger.info(f"Fetching pipeline data from {pipelines_json_url}")
         response = requests.get(pipelines_json_url, timeout=30)
@@ -191,8 +312,12 @@ def main():
     )
     parser.add_argument(
         "--pipelines-json-url",
-        default="https://nf-core.s3.amazonaws.com/pipelines.json",
-        help="URL to pipelines.json",
+        default="https://api.github.com/orgs/nf-core/repos",
+        help="URL to pipelines data source (GitHub API or custom JSON endpoint)",
+    )
+    parser.add_argument(
+        "--github-token",
+        help="GitHub personal access token for higher rate limits (optional)",
     )
     parser.add_argument(
         "--dry-run",
@@ -223,7 +348,13 @@ def main():
     logger.info(f"Deletion enabled: {enable_deletion}")
 
     # Fetch current pipeline data
-    current_releases = fetch_pipeline_data(pipelines_json_url)
+    if (
+        "api.github.com" in pipelines_json_url
+        or "nf-core.s3.amazonaws.com" in pipelines_json_url
+    ):
+        current_releases = fetch_pipeline_data_from_github(args.github_token)
+    else:
+        current_releases = fetch_pipeline_data(pipelines_json_url)
 
     # List all results directories in S3
     s3_results_dirs = list_s3_results_directories(s3_bucket)

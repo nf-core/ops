@@ -30,7 +30,6 @@ on:
 env:
   AWS_REGION: eu-west-1
   S3_BUCKET: nf-core-awsmegatests
-  PIPELINES_JSON_URL: https://nf-core.s3.amazonaws.com/pipelines.json
 
 jobs:
   tag-s3-results:
@@ -62,7 +61,7 @@ jobs:
       - name: Run S3 Results Tagging
         run: |
           # Convert GitHub inputs to script arguments
-          ARGS="--bucket ${{ env.S3_BUCKET }} --pipelines-json-url ${{ env.PIPELINES_JSON_URL }}"
+          ARGS="--bucket ${{ env.S3_BUCKET }} --github-token ${{ secrets.GITHUB_TOKEN }}"
 
           # Force dry-run mode for PR events (safety measure)
           if [ "${{ github.event_name }}" = "pull_request" ]; then
