@@ -1,0 +1,85 @@
+name: S3 Results Tagging
+
+on:
+  schedule:
+    # Run weekly on Sundays at 02:00 UTC to avoid peak usage
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run mode (log actions without applying tags)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      enable_deletion:
+        description: "Enable deletion of orphaned directories (DANGEROUS)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+env:
+  AWS_REGION: eu-west-1
+  S3_BUCKET: nf-core-awsmegatests
+  PIPELINES_JSON_URL: https://nf-core.s3.amazonaws.com/pipelines.json
+
+jobs:
+  tag-s3-results:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required to checkout repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install boto3 requests
+
+      - name: Run S3 Results Tagging
+        run: |
+          # Convert GitHub inputs to script arguments
+          ARGS="--bucket ${{ env.S3_BUCKET }} --pipelines-json-url ${{ env.PIPELINES_JSON_URL }}"
+
+          # Handle dry run mode
+          if [ "${{ github.event.inputs.dry_run || 'true' }}" = "false" ]; then
+            ARGS="$ARGS --live"
+          fi
+
+          # Handle deletion enable
+          if [ "${{ github.event.inputs.enable_deletion || 'false' }}" = "true" ]; then
+            ARGS="$ARGS --enable-deletion"
+          fi
+
+          # Run the Python script
+          python .github/s3_results_tagger.py $ARGS
+
+      - name: Post job summary
+        if: always()
+        run: |
+          echo "## S3 Results Tagging Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bucket**: ${{ env.S3_BUCKET }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: ${{ env.DRY_RUN == 'true' && 'DRY RUN' || 'LIVE' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deletion enabled**: ${{ env.ENABLE_DELETION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Check the workflow logs for detailed information about tagged directories." >> $GITHUB_STEP_SUMMARY
