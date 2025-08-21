@@ -49,9 +49,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@e7b0e7a53c04e76d3c6a3c0dc2b2e0d27e1f51b5 # v4
-        with:
-          version: "0.5.11"
+        uses: astral-sh/setup-uv@v6
 
       - name: Set up Python
         run: uv python install 3.13
