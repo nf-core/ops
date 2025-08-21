@@ -362,13 +362,17 @@ def main():
     # Initialize S3 client
     s3_client = boto3.client("s3")
 
-    # Statistics
+    # Statistics and tracking
     stats = {
         "current_tagged": 0,
         "orphaned_tagged": 0,
         "orphaned_deleted": 0,
         "errors": 0,
     }
+
+    # Track orphaned directories for detailed reporting
+    orphaned_directories = []
+    current_directories = []
 
     logger.info("Starting tagging analysis...")
 
@@ -393,6 +397,14 @@ def main():
                     s3_client, s3_bucket, results_dir, tags, dry_run
                 ):
                     stats["current_tagged"] += 1
+                    current_directories.append(
+                        {
+                            "path": results_dir,
+                            "pipeline": release_info["pipeline"],
+                            "version": release_info["version"],
+                            "sha": release_info["sha"][:12] + "...",
+                        }
+                    )
                     logger.info(f"✅ Tagged current release: {results_dir}")
                 else:
                     stats["errors"] += 1
@@ -412,6 +424,22 @@ def main():
                     s3_client, s3_bucket, results_dir, tags, dry_run
                 ):
                     stats["orphaned_tagged"] += 1
+                    # Extract SHA from directory name for reporting
+                    sha_part = (
+                        results_dir.split("/results-")[-1]
+                        if "/results-" in results_dir
+                        else "unknown"
+                    )
+                    orphaned_directories.append(
+                        {
+                            "path": results_dir,
+                            "pipeline": pipeline_name,
+                            "sha": sha_part[:12] + "..."
+                            if len(sha_part) > 12
+                            else sha_part,
+                            "will_be_deleted": enable_deletion,
+                        }
+                    )
                     logger.warning(f"🗑️  Tagged orphaned directory: {results_dir}")
 
                     # Optionally delete if enabled
@@ -428,16 +456,73 @@ def main():
             stats["errors"] += 1
 
     # Print final summary
-    logger.info("=" * 60)
+    logger.info("=" * 80)
     logger.info("S3 RESULTS TAGGING SUMMARY")
-    logger.info("=" * 60)
-    logger.info(f"Current releases tagged: {stats['current_tagged']}")
-    logger.info(f"Orphaned directories tagged: {stats['orphaned_tagged']}")
+    logger.info("=" * 80)
+    logger.info("📊 STATISTICS:")
+    logger.info(f"   • Current releases tagged: {stats['current_tagged']}")
+    logger.info(f"   • Orphaned directories tagged: {stats['orphaned_tagged']}")
     if enable_deletion:
-        logger.info(f"Orphaned directories deleted: {stats['orphaned_deleted']}")
-    logger.info(f"Errors encountered: {stats['errors']}")
-    logger.info(f"Mode: {'DRY RUN' if dry_run else 'LIVE'}")
-    logger.info("=" * 60)
+        logger.info(f"   • Orphaned directories deleted: {stats['orphaned_deleted']}")
+    logger.info(f"   • Errors encountered: {stats['errors']}")
+    logger.info(f"   • Mode: {'DRY RUN' if dry_run else 'LIVE'}")
+
+    # Print current directories (if not too many)
+    if current_directories:
+        logger.info(f"\n✅ CURRENT RELEASE DIRECTORIES ({len(current_directories)}):")
+        if len(current_directories) <= 10:
+            for dir_info in current_directories[:10]:
+                logger.info(
+                    f"   • {dir_info['pipeline']} v{dir_info['version']} ({dir_info['sha']})"
+                )
+        else:
+            for dir_info in current_directories[:5]:
+                logger.info(
+                    f"   • {dir_info['pipeline']} v{dir_info['version']} ({dir_info['sha']})"
+                )
+            logger.info(
+                f"   ... and {len(current_directories) - 5} more current releases"
+            )
+
+    # Print orphaned directories with details
+    if orphaned_directories:
+        logger.info(
+            f"\n🗑️  ORPHANED DIRECTORIES TO BE TAGGED ({len(orphaned_directories)}):"
+        )
+        logger.info(
+            "   These directories will be tagged with 'deleteme=true' for cleanup:"
+        )
+        for dir_info in orphaned_directories:
+            deletion_status = (
+                "🗑️  WILL BE DELETED"
+                if dir_info["will_be_deleted"]
+                else "🏷️  TAGGED ONLY"
+            )
+            logger.info(
+                f"   • {dir_info['path']} ({dir_info['sha']}) - {deletion_status}"
+            )
+
+        if not enable_deletion:
+            logger.info(
+                "\n💡 NOTE: Deletion is disabled. Use --enable-deletion to actually remove orphaned directories."
+            )
+
+        # Group by pipeline for easier reading
+        pipeline_counts = {}
+        for dir_info in orphaned_directories:
+            pipeline = dir_info["pipeline"]
+            pipeline_counts[pipeline] = pipeline_counts.get(pipeline, 0) + 1
+
+        if len(pipeline_counts) > 1:
+            logger.info("\n📋 ORPHANED DIRECTORIES BY PIPELINE:")
+            for pipeline, count in sorted(pipeline_counts.items()):
+                logger.info(f"   • {pipeline}: {count} orphaned directories")
+    else:
+        logger.info(
+            "\n✨ No orphaned directories found - all results directories are current!"
+        )
+
+    logger.info("=" * 80)
 
     # Exit with error code if there were significant issues
     if stats["errors"] > len(s3_results_dirs) * 0.1:  # More than 10% errors
