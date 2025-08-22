@@ -82,144 +82,95 @@ class CoverageReport:
 def fetch_all_pipeline_releases(
     github_token: Optional[str] = None,
 ) -> Dict[str, List[PipelineRelease]]:
-    """Fetch all releases for all nf-core pipelines from GitHub API"""
+    """Fetch all releases for all nf-core pipelines from official pipelines.json"""
     try:
         logger.info(
-            "Fetching comprehensive nf-core pipeline release data from GitHub API"
+            "Fetching nf-core pipeline release data from official pipelines.json"
         )
 
-        # Set up headers with optional authentication
-        headers = {
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-        }
-        if github_token:
-            headers["Authorization"] = f"Bearer {github_token}"
-            logger.info("Using GitHub token for authentication")
+        # Fetch the official pipelines data from nf-core website
+        pipelines_url = "https://raw.githubusercontent.com/nf-core/website/refs/heads/main/public/pipelines.json"
 
-        # Get all nf-core repositories
-        repos_url = "https://api.github.com/orgs/nf-core/repos"
-        all_repos = []
-        page = 1
+        logger.info(f"Fetching pipelines data from {pipelines_url}")
+        response = requests.get(pipelines_url, timeout=30)
+        response.raise_for_status()
+        pipelines_data = response.json()
 
-        while True:
-            logger.info(f"Fetching nf-core repositories page {page}")
-            response = requests.get(
-                f"{repos_url}?type=public&per_page=100&page={page}",
-                headers=headers,
-                timeout=30,
+        if "remote_workflows" not in pipelines_data:
+            raise ValueError(
+                "Invalid pipelines.json format: missing 'remote_workflows'"
             )
-            response.raise_for_status()
-            repos = response.json()
 
-            if not repos:
-                break
+        pipelines = pipelines_data["remote_workflows"]
+        logger.info(f"Found {len(pipelines)} official nf-core pipelines")
 
-            # Filter out archived repos and non-pipeline repos
-            active_repos = [repo for repo in repos if not repo.get("archived", True)]
-            all_repos.extend(active_repos)
-            page += 1
-
-        logger.info(f"Found {len(all_repos)} active nf-core repositories")
-
-        # Build comprehensive release data
+        # Build comprehensive release data from pipelines.json
         all_pipeline_releases = {}
 
-        for repo in all_repos:
-            repo_name = repo["name"]
-
-            # Skip non-pipeline repositories (tools, modules, etc.)
-            ignored_repos = [
-                "tools",
-                "modules",
-                "subworkflows",
-                "website",
-                "test-datasets",
-            ]
-            if repo_name in ignored_repos:
-                logger.debug(f"Skipping non-pipeline repository: {repo_name}")
+        for pipeline in pipelines:
+            pipeline_name = pipeline.get("name")
+            if not pipeline_name:
+                logger.warning("Pipeline missing name, skipping")
                 continue
 
-            try:
-                logger.info(f"Fetching releases for {repo_name}")
+            releases = pipeline.get("releases", [])
+            if not releases:
+                logger.debug(f"No releases found for pipeline {pipeline_name}")
+                continue
 
-                # Get all releases for this repository
-                releases_url = (
-                    f"https://api.github.com/repos/nf-core/{repo_name}/releases"
-                )
-                releases_response = requests.get(
-                    releases_url, headers=headers, timeout=30
-                )
-                releases_response.raise_for_status()
-                releases = releases_response.json()
+            logger.info(f"Processing {len(releases)} releases for {pipeline_name}")
+            pipeline_releases = []
 
-                pipeline_releases = []
+            # Process each release
+            for release in releases:
+                tag_name = release.get("tag_name", "").strip()
+                tag_sha = release.get("tag_sha", "").strip()
+                published_at = release.get("published_at", "")
 
-                # Process each release
-                for release in releases:
-                    tag_name = release.get("tag_name", "").strip()
-
-                    # Skip dev releases and draft releases, but include prereleases
-                    if (
-                        tag_name == "dev"
-                        or release.get("draft", False)
-                        or tag_name == ""
-                    ):
-                        continue
-
-                    # Get the commit SHA for this tag
-                    sha = None
-                    try:
-                        tag_url = f"https://api.github.com/repos/nf-core/{repo_name}/git/ref/tags/{tag_name}"
-                        tag_response = requests.get(
-                            tag_url, headers=headers, timeout=30
-                        )
-
-                        if tag_response.status_code == 200:
-                            tag_data = tag_response.json()
-                            sha = tag_data.get("object", {}).get("sha")
-                    except Exception as e:
-                        logger.warning(
-                            f"Could not get SHA for {repo_name} tag {tag_name}: {e}"
-                        )
-                        continue
-
-                    if sha:
-                        pipeline_release = PipelineRelease(
-                            pipeline=repo_name,
-                            version=tag_name,
-                            tag_name=tag_name,
-                            sha=sha,
-                            published_at=release.get("published_at", ""),
-                            is_prerelease=release.get("prerelease", False),
-                        )
-                        pipeline_releases.append(pipeline_release)
-
-                if pipeline_releases:
-                    # Sort by publication date (newest first)
-                    pipeline_releases.sort(key=lambda x: x.published_at, reverse=True)
-                    all_pipeline_releases[repo_name] = pipeline_releases
-                    logger.info(
-                        f"Found {len(pipeline_releases)} releases for {repo_name}"
+                # Skip dev releases but include all others (including prereleases)
+                if tag_name == "dev" or not tag_name or not tag_sha:
+                    logger.debug(
+                        f"Skipping dev/invalid release {tag_name} for {pipeline_name}"
                     )
-                else:
-                    logger.warning(f"No valid releases found for {repo_name}")
+                    continue
 
-            except Exception as e:
-                logger.error(f"Failed to fetch releases for {repo_name}: {e}")
-                continue
+                # Determine if this is a prerelease (basic heuristic)
+                is_prerelease = (
+                    "alpha" in tag_name.lower()
+                    or "beta" in tag_name.lower()
+                    or "rc" in tag_name.lower()
+                    or "-" in tag_name  # Common pattern for prereleases
+                )
+
+                pipeline_release = PipelineRelease(
+                    pipeline=pipeline_name,
+                    version=tag_name,
+                    tag_name=tag_name,
+                    sha=tag_sha,
+                    published_at=published_at,
+                    is_prerelease=is_prerelease,
+                )
+                pipeline_releases.append(pipeline_release)
+
+            if pipeline_releases:
+                # Sort by publication date (newest first)
+                pipeline_releases.sort(key=lambda x: x.published_at, reverse=True)
+                all_pipeline_releases[pipeline_name] = pipeline_releases
+                logger.info(
+                    f"Added {len(pipeline_releases)} releases for {pipeline_name}"
+                )
 
         total_releases = sum(
             len(releases) for releases in all_pipeline_releases.values()
         )
         logger.info(
-            f"Found {len(all_pipeline_releases)} pipelines with {total_releases} total releases"
+            f"Successfully loaded {len(all_pipeline_releases)} pipelines with {total_releases} total releases"
         )
 
         return all_pipeline_releases
 
     except Exception as e:
-        logger.error(f"Failed to fetch pipeline release data from GitHub: {e}")
+        logger.error(f"Failed to fetch pipeline release data: {e}")
         sys.exit(1)
 
 
