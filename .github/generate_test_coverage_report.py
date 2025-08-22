@@ -589,6 +589,11 @@ def main():
         choices=["markdown", "csv", "json"],
         help="Output formats to generate",
     )
+    parser.add_argument(
+        "--test-mode",
+        action="store_true",
+        help="Run in test mode with mock S3 data (for testing without AWS credentials)",
+    )
 
     args = parser.parse_args()
 
@@ -603,8 +608,19 @@ def main():
     # Step 1: Fetch all pipeline releases
     all_releases = fetch_all_pipeline_releases(args.github_token)
 
-    # Step 2: Scan S3 for test results
-    s3_results = scan_s3_test_results(args.bucket)
+    # Step 2: Scan S3 for test results (or use mock data in test mode)
+    if args.test_mode:
+        logger.info("Running in test mode - using mock S3 data")
+        # Create some mock S3 results for testing
+        s3_results = set()
+        for pipeline_name, releases in list(all_releases.items())[
+            :3
+        ]:  # Take first 3 pipelines
+            for release in releases[:2]:  # Take first 2 releases per pipeline
+                s3_results.add(f"{pipeline_name}/results-{release.sha}")
+        logger.info(f"Mock S3 results: {len(s3_results)} test result directories")
+    else:
+        s3_results = scan_s3_test_results(args.bucket)
 
     # Step 3: Analyze coverage
     report = analyze_coverage(all_releases, s3_results)
