@@ -117,16 +117,18 @@ def main():
         "seqera_participants": [],
     }
 
-    # Create Seqera participant entries for users with emails
+    # Create Seqera participant entries for ALL users (including those without public emails)
     for member in maintainers_data:
-        if member["email"]:
-            participant = {
-                "name": member["email"],
-                "type": "MEMBER",
-                "role": "MAINTAIN",
-                "github_username": member["username"],
-            }
-            output_data["seqera_participants"].append(participant)
+        participant = {
+            "name": member["email"]
+            if member["email"]
+            else f"github:{member['username']}",  # Use GitHub username if no email
+            "type": "MEMBER",
+            "role": "MAINTAIN",
+            "github_username": member["username"],
+            "has_public_email": bool(member["email"]),
+        }
+        output_data["seqera_participants"].append(participant)
 
     # Save to file
     output_file = "scripts/maintainers_data.json"

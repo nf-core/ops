@@ -40,6 +40,7 @@ def parse_member_statuses(outputs):
     statuses = {
         "ADDED": [],
         "EXISTS": [],
+        "NO_EMAIL": [],
         "USER_NOT_FOUND": [],
         "FAILED": [],
         "UNKNOWN": [],
@@ -98,6 +99,10 @@ def parse_member_statuses(outputs):
                 if status in ["ADDED", "EXISTS"]:
                     print(
                         f"  ✓ {member['username']} ({member['email']}) - {member['role']}"
+                    )
+                elif status == "NO_EMAIL":
+                    print(
+                        f"  📧 {member['username']} - No public email (cannot add to Seqera)"
                     )
                 elif status == "USER_NOT_FOUND":
                     print(

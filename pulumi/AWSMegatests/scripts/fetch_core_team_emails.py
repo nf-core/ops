@@ -97,17 +97,19 @@ def main():
         "seqera_participants": [],
     }
 
-    # Create Seqera participant entries for users with emails
+    # Create Seqera participant entries for ALL users (including those without public emails)
     for member in core_team_data:
-        if member["email"]:
-            participant = {
-                "name": member["email"],
-                "type": "MEMBER",
-                "role": "OWNER",  # Core team gets OWNER role
-                "github_username": member["username"],
-                "team": "core",
-            }
-            output_data["seqera_participants"].append(participant)
+        participant = {
+            "name": member["email"]
+            if member["email"]
+            else f"github:{member['username']}",  # Use GitHub username if no email
+            "type": "MEMBER",
+            "role": "OWNER",  # Core team gets OWNER role
+            "github_username": member["username"],
+            "team": "core",
+            "has_public_email": bool(member["email"]),
+        }
+        output_data["seqera_participants"].append(participant)
 
     # Save to file
     output_file = "scripts/core_team_data.json"
