@@ -20,41 +20,70 @@ def create_individual_member_commands(
     """
     # Note: GitHub team data available via github.get_team(slug="maintainers") if needed
 
-    # Load maintainer emails from our data file
+    # Load unified team data (maintainers + core with role precedence)
     try:
-        with open("scripts/maintainers_data.json", "r") as f:
+        with open("scripts/unified_team_data.json", "r") as f:
             data = json.load(f)
-        maintainers = data.get("seqera_participants", [])
+        team_members = data.get("seqera_participants", [])
     except Exception as e:
-        log_info(f"Could not load maintainers data: {e}")
-        maintainers = []
+        log_info(f"Could not load unified team data: {e}")
+        # Fallback to maintainers-only data
+        try:
+            with open("scripts/maintainers_data.json", "r") as f:
+                fallback_data = json.load(f)
+            team_members = fallback_data.get("seqera_participants", [])
+            log_info("Using fallback maintainers data")
+        except Exception:
+            team_members = []
+            log_info("No team data available")
 
     member_commands = {}
 
-    log_info(f"Creating individual tracking for {len(maintainers)} maintainers")
+    log_info(f"Creating individual tracking for {len(team_members)} team members")
 
-    for maintainer in maintainers:
-        email = maintainer["name"]
-        github_username = maintainer["github_username"]
+    for member in team_members:
+        email = member["name"]
+        github_username = member["github_username"]
+        role = member["role"]  # OWNER for core team, MAINTAIN for maintainers
 
         # Create safe resource name
         safe_name = github_username.replace("-", "_").replace(".", "_")
 
+        # Note: Role precedence handled in bash script (core team checked first)
+
         # Create individual command for this member
         member_cmd = command.local.Command(
-            f"maintainer_sync_{safe_name}",
+            f"team_sync_{safe_name}",
             create=f'''
 #!/bin/bash
-# Sync GitHub maintainer '{github_username}' to Seqera workspace
-echo "=== Syncing {github_username} ({email}) ==="
+# Sync GitHub team member '{github_username}' to Seqera workspace with {role} role
+echo "=== Syncing {github_username} ({email}) as {role} ==="
 
-# Verify user is still in GitHub team
+# Verify user is still in appropriate GitHub teams
 echo "Checking GitHub team membership..."
-if gh api orgs/nf-core/teams/maintainers/members --jq '.[].login' | grep -q "^{github_username}$"; then
-    echo "✓ {github_username} confirmed in nf-core/maintainers team"
-else
-    echo "⚠️  {github_username} not found in maintainers team, skipping"
+found_in_team=false
+
+# Check core team first (higher precedence)
+if gh api orgs/nf-core/teams/core/members --jq '.[].login' | grep -q "^{github_username}$"; then
+    echo "✓ {github_username} confirmed in nf-core/core team (OWNER role)"
+    current_role="OWNER"
+    found_in_team=true
+elif gh api orgs/nf-core/teams/maintainers/members --jq '.[].login' | grep -q "^{github_username}$"; then
+    echo "✓ {github_username} confirmed in nf-core/maintainers team (MAINTAIN role)"
+    current_role="MAINTAIN"
+    found_in_team=true
+fi
+
+if [ "$found_in_team" = false ]; then
+    echo "⚠️  {github_username} not found in any relevant team, skipping"
     exit 0
+fi
+
+# Ensure we're using the correct role (core team precedence)
+target_role="{role}"
+if [ "$current_role" != "$target_role" ]; then
+    echo "🔄 Role precedence: Using $current_role (detected) instead of $target_role"
+    target_role="$current_role"
 fi
 
 # Check current email (in case it changed)
@@ -81,12 +110,12 @@ response_body="${{response%???}}"
 
 case $http_code in
     200|201|204)
-        echo "✓ Successfully added {github_username} with MAINTAIN role"
-        echo "STATUS:ADDED:$current_email:MAINTAIN"
+        echo "✓ Successfully added {github_username} with $target_role role"
+        echo "STATUS:ADDED:$current_email:$target_role"
         ;;
     409)
         echo "~ {github_username} already exists in workspace"
-        echo "STATUS:EXISTS:$current_email:MAINTAIN"
+        echo "STATUS:EXISTS:$current_email:$target_role"
         ;;
     404)
         echo "✗ User not found in Seqera Platform: $current_email"

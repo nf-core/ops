@@ -1,0 +1,115 @@
+{
+  "teams_processed": ["nf-core/maintainers", "nf-core/core"],
+  "role_precedence": "core (OWNER) > maintainers (MAINTAIN)",
+  "total_participants": 13,
+  "role_breakdown": {
+    "OWNER": 6,
+    "MAINTAIN": 7
+  },
+  "seqera_participants": [
+    {
+      "name": "pontus_github@soua.net",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "pontus",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "maxime.garcia@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "maxulysse",
+      "teams": ["maintainers", "core"],
+      "source": "core (upgraded from maintainers)"
+    },
+    {
+      "name": "lorena.pantano@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "lpantano",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "mirp.julia@gmail.com",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "mirpedrol",
+      "teams": ["maintainers", "core"],
+      "source": "core (upgraded from maintainers)"
+    },
+    {
+      "name": "usman.rashid@plantandfood.co.nz",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "GallVp",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "flowuenne@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "FloWuenne",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "jfy133@gmail.com",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "jfy133",
+      "teams": ["maintainers", "core"],
+      "source": "core (upgraded from maintainers)"
+    },
+    {
+      "name": "luisa.santus95@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "luisas",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "nictru32@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "nictru",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "felix.kummer@hu-berlin.de",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "Felix-Kummer",
+      "teams": ["maintainers"],
+      "source": "maintainers"
+    },
+    {
+      "name": "phil.ewels@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "ewels",
+      "teams": ["core"],
+      "source": "core"
+    },
+    {
+      "name": "mribeirodantas@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "mribeirodantas",
+      "teams": ["core"],
+      "source": "core"
+    },
+    {
+      "name": "chris.hakkaart@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "christopher-hakkaart",
+      "teams": ["core"],
+      "source": "core"
+    }
+  ]
+}

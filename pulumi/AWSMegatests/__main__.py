@@ -77,8 +77,9 @@ def main():
         tower_access_token=config["tower_access_token"],
     )
 
-    # Step 9: Add nf-core maintainers as workspace participants with MAINTAIN role
-    # Individual member tracking provides granular status per maintainer
+    # Step 9: Add nf-core team members as workspace participants with role precedence
+    # Core team → OWNER role, Maintainers → MAINTAIN role
+    # Individual member tracking provides granular status per team member
 
     member_commands = create_individual_member_commands(
         workspace_id=int(config["tower_workspace_id"]),
@@ -173,7 +174,7 @@ def main():
             },
             "total_tracked_members": len(member_commands),
             "workspace_id": config["tower_workspace_id"],
-            "note": "Individual maintainer sync commands with GitHub team verification",
+            "note": "Individual team member sync commands with GitHub verification and role precedence (core=OWNER, maintainers=MAINTAIN)",
             "todo": "Replace with seqera_workspace_participant resources when available",
         },
     )

@@ -29,11 +29,12 @@ def parse_member_statuses(outputs):
     workspace_participants = outputs.get("workspace_participants", {})
     member_commands = workspace_participants.get("individual_member_commands", {})
 
-    print("=== Individual Member Sync Status ===")
+    print("=== Individual Team Member Sync Status ===")
     print(
         f"Total tracked members: {workspace_participants.get('total_tracked_members', 0)}"
     )
     print(f"Workspace ID: {workspace_participants.get('workspace_id', 'N/A')}")
+    print("Role precedence: core team (OWNER) > maintainers (MAINTAIN)")
     print()
 
     statuses = {
@@ -112,12 +113,22 @@ def parse_member_statuses(outputs):
                     )
             print()
 
-    # Summary
+    # Summary with role breakdown
     total_successful = len(statuses["ADDED"]) + len(statuses["EXISTS"])
     total_members = sum(len(members) for members in statuses.values())
 
+    # Count by role
+    role_counts = {"OWNER": 0, "MAINTAIN": 0}
+    for status in ["ADDED", "EXISTS"]:
+        for member in statuses[status]:
+            role = member.get("role", "UNKNOWN")
+            if role in role_counts:
+                role_counts[role] += 1
+
     print("=== Summary ===")
     print(f"Successfully synced: {total_successful}/{total_members}")
+    print(f"  - OWNER role: {role_counts['OWNER']} (core team)")
+    print(f"  - MAINTAIN role: {role_counts['MAINTAIN']} (maintainers)")
     print(f"New additions: {len(statuses['ADDED'])}")
     print(f"Already existed: {len(statuses['EXISTS'])}")
     print(f"Failed: {len(statuses['FAILED']) + len(statuses['USER_NOT_FOUND'])}")
