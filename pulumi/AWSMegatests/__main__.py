@@ -17,7 +17,7 @@ from src.infrastructure import (
 )
 from src.integrations import create_github_resources
 from src.integrations.workspace_participants_command import (
-    create_workspace_participants_via_command,
+    create_individual_member_commands,
 )
 
 
@@ -78,12 +78,11 @@ def main():
     )
 
     # Step 9: Add nf-core maintainers as workspace participants with MAINTAIN role
+    # Individual member tracking provides granular status per maintainer
 
-    # Option A: Command provider (runs Python script as Pulumi resource)
-    add_participants_cmd = create_workspace_participants_via_command(
+    member_commands = create_individual_member_commands(
         workspace_id=int(config["tower_workspace_id"]),
         token=config["tower_access_token"],
-        participants_data=[],  # Data loaded by script internally
         opts=pulumi.ResourceOptions(
             depends_on=[seqera_credential_resource]  # Ensure credentials exist first
         ),
@@ -160,14 +159,21 @@ def main():
     }
     pulumi.export("towerforge_iam", towerforge_resources)
 
-    # Export workspace participants management information
+    # Export workspace participants management information with individual member tracking
     pulumi.export(
         "workspace_participants",
         {
-            "command_id": add_participants_cmd.id,
-            "script": "scripts/add_maintainers_to_workspace.py",
+            "individual_member_commands": {
+                username: {
+                    "command_id": cmd.id,
+                    "status": cmd.stdout,  # Contains STATUS lines from script
+                    "github_username": username,
+                }
+                for username, cmd in member_commands.items()
+            },
+            "total_tracked_members": len(member_commands),
             "workspace_id": config["tower_workspace_id"],
-            "note": "Workspace participants managed via Pulumi Command provider",
+            "note": "Individual maintainer sync commands with GitHub team verification",
             "todo": "Replace with seqera_workspace_participant resources when available",
         },
     )
