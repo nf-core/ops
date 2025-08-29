@@ -16,6 +16,9 @@ from src.infrastructure import (
     get_compute_environment_ids_terraform,
 )
 from src.integrations import create_github_resources
+from src.integrations.workspace_participants_command import (
+    create_workspace_participants_via_command,
+)
 
 
 def main():
@@ -74,14 +77,26 @@ def main():
         tower_access_token=config["tower_access_token"],
     )
 
-    # TODO: Add nf-core maintainers as workspace participants with MAINTAIN role
-    #
-    # Missing Terraform resources in seqera provider:
-    # - seqera_workspace_participant
-    # - seqera_workspace_participant_role
-    #
-    # GitHub issue: https://github.com/seqeralabs/terraform-provider-seqera/issues/[TO_BE_CREATED]
-    # Workaround: python scripts/add_maintainers_to_workspace.py --yes
+    # Step 9: Add nf-core maintainers as workspace participants with MAINTAIN role
+
+    # Option A: Command provider (runs Python script as Pulumi resource)
+    add_participants_cmd = create_workspace_participants_via_command(
+        workspace_id=int(config["tower_workspace_id"]),
+        token=config["tower_access_token"],
+        participants_data=[],  # Data loaded by script internally
+        opts=pulumi.ResourceOptions(
+            depends_on=[seqera_credential_resource]  # Ensure credentials exist first
+        ),
+    )
+
+    # Option B: Native Pulumi with HTTP calls (more integrated)
+    # Uncomment to use this approach instead:
+    # maintainer_emails = load_maintainer_emails_static()
+    # participants_results = create_workspace_participants_simple(
+    #     workspace_id=pulumi.Output.from_input(config["tower_workspace_id"]),
+    #     token=pulumi.Output.from_input(config["tower_access_token"]),
+    #     maintainer_emails=maintainer_emails
+    # )
 
     # Exports - All within proper Pulumi program context
     pulumi.export(
@@ -145,8 +160,17 @@ def main():
     }
     pulumi.export("towerforge_iam", towerforge_resources)
 
-    # TODO: Export workspace participants information once Terraform resources are available
-    # For now, participants are managed via scripts/add_maintainers_to_workspace.py
+    # Export workspace participants management information
+    pulumi.export(
+        "workspace_participants",
+        {
+            "command_id": add_participants_cmd.id,
+            "script": "scripts/add_maintainers_to_workspace.py",
+            "workspace_id": config["tower_workspace_id"],
+            "note": "Workspace participants managed via Pulumi Command provider",
+            "todo": "Replace with seqera_workspace_participant resources when available",
+        },
+    )
 
 
 # Proper Pulumi program entry point
