@@ -28,23 +28,16 @@ direnv allow
 pulumi login
 ```
 
-### Workspace Participants Setup
+### Workspace Participants
 
-Before deploying, generate team member data locally:
+The infrastructure automatically manages nf-core team members in the Seqera Platform workspace:
 
-```bash
-# Generate team member data with email mapping
-uv run python scripts/setup_team_data.py
-```
+- **Automatic team data generation**: Fetches GitHub teams and maps emails during deployment
+- **Role precedence**: Core team members get OWNER role, maintainers get MAINTAIN role
+- **Individual tracking**: Creates separate Pulumi Command for each of 35+ team members
+- **Privacy protection**: Email data generated at runtime, never committed to git
 
-This will:
-
-- Fetch nf-core/maintainers and nf-core/core team members from GitHub
-- Map emails from existing Seqera Platform workspace participants
-- Create unified team data with proper role precedence (core team → OWNER, maintainers → MAINTAIN)
-- Generate 35+ individual tracking commands
-
-**Privacy Note**: Team member email addresses are generated locally and excluded from git to protect privacy. Only public GitHub emails and workspace admin-accessible Seqera participant data are used for email mapping.
+**Privacy Note**: Team member email addresses are generated locally during deployment and excluded from git to protect privacy. Only public GitHub emails and workspace admin-accessible Seqera participant data are used for email mapping.
 
 ### Deployment
 

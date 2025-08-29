@@ -81,9 +81,11 @@ def main():
     # Core team → OWNER role, Maintainers → MAINTAIN role
     # Individual member tracking provides granular status per team member
 
-    member_commands = create_individual_member_commands(
+    # Create team data setup and individual member tracking commands
+    setup_cmd, member_commands = create_individual_member_commands(
         workspace_id=int(config["tower_workspace_id"]),
         token=config["tower_access_token"],
+        github_token=config["github_token"],
         opts=pulumi.ResourceOptions(
             depends_on=[seqera_credential_resource]  # Ensure credentials exist first
         ),
@@ -164,6 +166,8 @@ def main():
     pulumi.export(
         "workspace_participants",
         {
+            "setup_command_id": setup_cmd.id,
+            "setup_status": setup_cmd.stdout,
             "individual_member_commands": {
                 username: {
                     "command_id": cmd.id,
@@ -174,7 +178,8 @@ def main():
             },
             "total_tracked_members": len(member_commands),
             "workspace_id": config["tower_workspace_id"],
-            "note": "Individual team member sync commands with GitHub verification and role precedence (core=OWNER, maintainers=MAINTAIN)",
+            "note": "Automated team data setup with individual member sync commands and privacy protection",
+            "privacy": "Email data generated at runtime, never committed to git",
             "todo": "Replace with seqera_workspace_participant resources when available",
         },
     )
