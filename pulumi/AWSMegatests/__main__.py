@@ -74,6 +74,15 @@ def main():
         tower_access_token=config["tower_access_token"],
     )
 
+    # TODO: Add nf-core maintainers as workspace participants with MAINTAIN role
+    #
+    # Missing Terraform resources in seqera provider:
+    # - seqera_workspace_participant
+    # - seqera_workspace_participant_role
+    #
+    # GitHub issue: https://github.com/seqeralabs/terraform-provider-seqera/issues/[TO_BE_CREATED]
+    # Workaround: python scripts/add_maintainers_to_workspace.py --yes
+
     # Exports - All within proper Pulumi program context
     pulumi.export(
         "megatests_bucket",
@@ -135,6 +144,9 @@ def main():
         },
     }
     pulumi.export("towerforge_iam", towerforge_resources)
+
+    # TODO: Export workspace participants information once Terraform resources are available
+    # For now, participants are managed via scripts/add_maintainers_to_workspace.py
 
 
 # Proper Pulumi program entry point

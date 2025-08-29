@@ -29,13 +29,13 @@ dependencies = [
     { name = "pulumi-command" },
     { name = "pulumi-github" },
     { name = "pulumi-seqera" },
+    { name = "requests" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "mypy" },
     { name = "pytest" },
-    { name = "requests" },
 ]
 
 [package.metadata]
@@ -45,13 +45,13 @@ requires-dist = [
     { name = "pulumi-command", specifier = ">=1.0.1,<2.0.0" },
     { name = "pulumi-github", specifier = ">=6.4.0,<7.0.0" },
     { name = "pulumi-seqera", directory = "sdks/seqera" },
+    { name = "requests", specifier = ">=2.28.0" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "mypy", specifier = ">=1.17.1" },
     { name = "pytest", specifier = ">=7.0.0" },
-    { name = "requests", specifier = ">=2.28.0" },
 ]
 
 [[package]]
