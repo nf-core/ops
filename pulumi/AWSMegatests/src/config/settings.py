@@ -20,12 +20,14 @@ class InfrastructureConfig:
     Attributes:
         tower_access_token: Seqera Platform access token
         tower_workspace_id: Seqera Platform workspace ID
-        github_token: GitHub personal access token
+        github_token: GitHub personal access token (classic)
+        platform_github_org_token: GitHub fine-grained token to avoid rate limits when pulling pipelines
     """
 
     tower_access_token: Optional[str]
     tower_workspace_id: str
     github_token: Optional[str]
+    platform_github_org_token: Optional[str]
 
     def validate(self) -> None:
         """Validate configuration values.
@@ -98,6 +100,7 @@ def get_configuration() -> Dict[str, Any]:
         tower_access_token=os.environ.get("TOWER_ACCESS_TOKEN"),
         tower_workspace_id=workspace_id or "",
         github_token=os.environ.get("GITHUB_TOKEN"),
+        platform_github_org_token=os.environ.get("PLATFORM_GITHUB_ORG_TOKEN"),
     )
 
     # Validate configuration
@@ -108,6 +111,7 @@ def get_configuration() -> Dict[str, Any]:
         "tower_access_token": config.tower_access_token,
         "tower_workspace_id": config.tower_workspace_id,
         "github_token": config.github_token,
+        "platform_github_org_token": config.platform_github_org_token,
         # AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN)
         # are automatically handled by ESC and picked up by the AWS provider
     }
