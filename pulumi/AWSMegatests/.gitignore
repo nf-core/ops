@@ -3,3 +3,18 @@ venv/
 
 # Auto-generated Seqera SDK
 sdks/
+
+# Team data files - contain email addresses (private data)
+scripts/maintainers_data.json
+scripts/core_team_data.json
+scripts/unified_team_data.json
+scripts/all_participants_official.json
+scripts/all_seqera_participants.json
+scripts/best_participants_result.json
+
+# Debug and test scripts - not needed in git
+scripts/debug_*.py
+scripts/discover_*.py  
+scripts/test_*.py
+scripts/get_all_*.py
+scripts/fetch_all_*.py

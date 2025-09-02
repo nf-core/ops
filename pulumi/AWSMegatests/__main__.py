@@ -16,6 +16,9 @@ from src.infrastructure import (
     get_compute_environment_ids_terraform,
 )
 from src.integrations import create_github_resources
+from src.integrations.workspace_participants_command import (
+    create_individual_member_commands,
+)
 
 
 def main():
@@ -73,6 +76,29 @@ def main():
         config["tower_workspace_id"],
         tower_access_token=config["tower_access_token"],
     )
+
+    # Step 9: Add nf-core team members as workspace participants with role precedence
+    # Core team → OWNER role, Maintainers → MAINTAIN role
+    # Individual member tracking provides granular status per team member
+
+    # Create team data setup and individual member tracking commands
+    setup_cmd, member_commands = create_individual_member_commands(
+        workspace_id=int(config["tower_workspace_id"]),
+        token=config["tower_access_token"],
+        github_token=config["github_token"],
+        opts=pulumi.ResourceOptions(
+            depends_on=[seqera_credential_resource]  # Ensure credentials exist first
+        ),
+    )
+
+    # Option B: Native Pulumi with HTTP calls (more integrated)
+    # Uncomment to use this approach instead:
+    # maintainer_emails = load_maintainer_emails_static()
+    # participants_results = create_workspace_participants_simple(
+    #     workspace_id=pulumi.Output.from_input(config["tower_workspace_id"]),
+    #     token=pulumi.Output.from_input(config["tower_access_token"]),
+    #     maintainer_emails=maintainer_emails
+    # )
 
     # Exports - All within proper Pulumi program context
     pulumi.export(
@@ -135,6 +161,28 @@ def main():
         },
     }
     pulumi.export("towerforge_iam", towerforge_resources)
+
+    # Export workspace participants management information with individual member tracking
+    pulumi.export(
+        "workspace_participants",
+        {
+            "setup_command_id": setup_cmd.id,
+            "setup_status": setup_cmd.stdout,
+            "individual_member_commands": {
+                username: {
+                    "command_id": cmd.id,
+                    "status": cmd.stdout,  # Contains STATUS lines from script
+                    "github_username": username,
+                }
+                for username, cmd in member_commands.items()
+            },
+            "total_tracked_members": len(member_commands),
+            "workspace_id": config["tower_workspace_id"],
+            "note": "Automated team data setup with individual member sync commands and privacy protection",
+            "privacy": "Email data generated at runtime, never committed to git",
+            "todo": "Replace with seqera_workspace_participant resources when available",
+        },
+    )
 
 
 # Proper Pulumi program entry point

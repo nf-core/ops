@@ -1,0 +1,250 @@
+{
+  "team": "nf-core/maintainers",
+  "total_members": 30,
+  "members_with_emails": 10,
+  "members_without_emails": 20,
+  "maintainers": [
+    {
+      "username": "pontus",
+      "github_id": 518,
+      "email": "pontus_github@soua.net",
+      "profile_url": "https://github.com/pontus"
+    },
+    {
+      "username": "maxulysse",
+      "github_id": 1019628,
+      "email": "maxime.garcia@seqera.io",
+      "profile_url": "https://github.com/maxulysse"
+    },
+    {
+      "username": "lpantano",
+      "github_id": 1621788,
+      "email": "lorena.pantano@gmail.com",
+      "profile_url": "https://github.com/lpantano"
+    },
+    {
+      "username": "pinin4fjords",
+      "github_id": 5775915,
+      "email": null,
+      "profile_url": "https://github.com/pinin4fjords"
+    },
+    {
+      "username": "mashehu",
+      "github_id": 6169021,
+      "email": null,
+      "profile_url": "https://github.com/mashehu"
+    },
+    {
+      "username": "JoseEspinosa",
+      "github_id": 6224346,
+      "email": null,
+      "profile_url": "https://github.com/JoseEspinosa"
+    },
+    {
+      "username": "mirpedrol",
+      "github_id": 8224255,
+      "email": "mirp.julia@gmail.com",
+      "profile_url": "https://github.com/mirpedrol"
+    },
+    {
+      "username": "GallVp",
+      "github_id": 8924367,
+      "email": "usman.rashid@plantandfood.co.nz",
+      "profile_url": "https://github.com/GallVp"
+    },
+    {
+      "username": "FloWuenne",
+      "github_id": 11639154,
+      "email": "flowuenne@gmail.com",
+      "profile_url": "https://github.com/FloWuenne"
+    },
+    {
+      "username": "matthdsm",
+      "github_id": 11850640,
+      "email": null,
+      "profile_url": "https://github.com/matthdsm"
+    },
+    {
+      "username": "FriederikeHanssen",
+      "github_id": 12273093,
+      "email": null,
+      "profile_url": "https://github.com/FriederikeHanssen"
+    },
+    {
+      "username": "adamrtalbot",
+      "github_id": 12817534,
+      "email": null,
+      "profile_url": "https://github.com/adamrtalbot"
+    },
+    {
+      "username": "mahesh-panchal",
+      "github_id": 15652539,
+      "email": null,
+      "profile_url": "https://github.com/mahesh-panchal"
+    },
+    {
+      "username": "jfy133",
+      "github_id": 17950287,
+      "email": "jfy133@gmail.com",
+      "profile_url": "https://github.com/jfy133"
+    },
+    {
+      "username": "atrigila",
+      "github_id": 18577080,
+      "email": null,
+      "profile_url": "https://github.com/atrigila"
+    },
+    {
+      "username": "ramprasadn",
+      "github_id": 20065894,
+      "email": null,
+      "profile_url": "https://github.com/ramprasadn"
+    },
+    {
+      "username": "edmundmiller",
+      "github_id": 20095261,
+      "email": null,
+      "profile_url": "https://github.com/edmundmiller"
+    },
+    {
+      "username": "luisas",
+      "github_id": 23131457,
+      "email": "luisa.santus95@gmail.com",
+      "profile_url": "https://github.com/luisas"
+    },
+    {
+      "username": "SPPearce",
+      "github_id": 24893913,
+      "email": null,
+      "profile_url": "https://github.com/SPPearce"
+    },
+    {
+      "username": "sateeshperi",
+      "github_id": 33637490,
+      "email": null,
+      "profile_url": "https://github.com/sateeshperi"
+    },
+    {
+      "username": "jonasscheid",
+      "github_id": 43858870,
+      "email": null,
+      "profile_url": "https://github.com/jonasscheid"
+    },
+    {
+      "username": "famosab",
+      "github_id": 45968370,
+      "email": null,
+      "profile_url": "https://github.com/famosab"
+    },
+    {
+      "username": "nictru",
+      "github_id": 52698566,
+      "email": "nictru32@gmail.com",
+      "profile_url": "https://github.com/nictru"
+    },
+    {
+      "username": "itrujnara",
+      "github_id": 53370556,
+      "email": null,
+      "profile_url": "https://github.com/itrujnara"
+    },
+    {
+      "username": "LouisLeNezet",
+      "github_id": 58640615,
+      "email": null,
+      "profile_url": "https://github.com/LouisLeNezet"
+    },
+    {
+      "username": "Joon-Klaps",
+      "github_id": 61584065,
+      "email": null,
+      "profile_url": "https://github.com/Joon-Klaps"
+    },
+    {
+      "username": "jasmezz",
+      "github_id": 73216762,
+      "email": null,
+      "profile_url": "https://github.com/jasmezz"
+    },
+    {
+      "username": "Felix-Kummer",
+      "github_id": 77002738,
+      "email": "felix.kummer@hu-berlin.de",
+      "profile_url": "https://github.com/Felix-Kummer"
+    },
+    {
+      "username": "sofstam",
+      "github_id": 91951607,
+      "email": null,
+      "profile_url": "https://github.com/sofstam"
+    },
+    {
+      "username": "nvnieuwk",
+      "github_id": 101190534,
+      "email": null,
+      "profile_url": "https://github.com/nvnieuwk"
+    }
+  ],
+  "seqera_participants": [
+    {
+      "name": "pontus_github@soua.net",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "pontus"
+    },
+    {
+      "name": "maxime.garcia@seqera.io",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "maxulysse"
+    },
+    {
+      "name": "lorena.pantano@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "lpantano"
+    },
+    {
+      "name": "mirp.julia@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "mirpedrol"
+    },
+    {
+      "name": "usman.rashid@plantandfood.co.nz",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "GallVp"
+    },
+    {
+      "name": "flowuenne@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "FloWuenne"
+    },
+    {
+      "name": "jfy133@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "jfy133"
+    },
+    {
+      "name": "luisa.santus95@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "luisas"
+    },
+    {
+      "name": "nictru32@gmail.com",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "nictru"
+    },
+    {
+      "name": "felix.kummer@hu-berlin.de",
+      "type": "MEMBER",
+      "role": "MAINTAIN",
+      "github_username": "Felix-Kummer"
+    }
+  ]
+}

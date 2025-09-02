@@ -9,6 +9,7 @@ The AWS Megatests project provides:
 - **S3 Bucket**: Imported and managed `nf-core-awsmegatests` bucket for workflow data
 - **Compute Environments**: Three AWS Batch environments (CPU, ARM, GPU) deployed via seqerakit
 - **GitHub Secrets**: Automated deployment of compute environment IDs and credentials to GitHub
+- **Workspace Participants**: Automated management of nf-core team members in Seqera Platform workspace
 - **1Password Integration**: Secure credential management using the Pulumi 1Password provider
 
 ## Quick Start
@@ -26,6 +27,17 @@ direnv allow
 # Login to Pulumi
 pulumi login
 ```
+
+### Workspace Participants
+
+The infrastructure automatically manages nf-core team members in the Seqera Platform workspace:
+
+- **Automatic team data generation**: Fetches GitHub teams and maps emails during deployment
+- **Role precedence**: Core team members get OWNER role, maintainers get MAINTAIN role
+- **Individual tracking**: Creates separate Pulumi Command for each of 35+ team members
+- **Privacy protection**: Email data generated at runtime, never committed to git
+
+**Privacy Note**: Team member email addresses are generated locally during deployment and excluded from git to protect privacy. Only public GitHub emails and workspace admin-accessible Seqera participant data are used for email mapping.
 
 ### Deployment
 

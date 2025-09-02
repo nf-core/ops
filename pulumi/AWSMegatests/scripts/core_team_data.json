@@ -1,0 +1,136 @@
+{
+  "team": "nf-core/core",
+  "total_members": 14,
+  "members_with_emails": 6,
+  "members_without_emails": 8,
+  "core_team": [
+    {
+      "username": "ewels",
+      "github_id": 465550,
+      "email": "phil.ewels@seqera.io",
+      "profile_url": "https://github.com/ewels"
+    },
+    {
+      "username": "maxulysse",
+      "github_id": 1019628,
+      "email": "maxime.garcia@seqera.io",
+      "profile_url": "https://github.com/maxulysse"
+    },
+    {
+      "username": "mribeirodantas",
+      "github_id": 1023197,
+      "email": "mribeirodantas@seqera.io",
+      "profile_url": "https://github.com/mribeirodantas"
+    },
+    {
+      "username": "mashehu",
+      "github_id": 6169021,
+      "email": null,
+      "profile_url": "https://github.com/mashehu"
+    },
+    {
+      "username": "JoseEspinosa",
+      "github_id": 6224346,
+      "email": null,
+      "profile_url": "https://github.com/JoseEspinosa"
+    },
+    {
+      "username": "mirpedrol",
+      "github_id": 8224255,
+      "email": "mirp.julia@gmail.com",
+      "profile_url": "https://github.com/mirpedrol"
+    },
+    {
+      "username": "FriederikeHanssen",
+      "github_id": 12273093,
+      "email": null,
+      "profile_url": "https://github.com/FriederikeHanssen"
+    },
+    {
+      "username": "kenibrewer",
+      "github_id": 17461269,
+      "email": null,
+      "profile_url": "https://github.com/kenibrewer"
+    },
+    {
+      "username": "jfy133",
+      "github_id": 17950287,
+      "email": "jfy133@gmail.com",
+      "profile_url": "https://github.com/jfy133"
+    },
+    {
+      "username": "edmundmiller",
+      "github_id": 20095261,
+      "email": null,
+      "profile_url": "https://github.com/edmundmiller"
+    },
+    {
+      "username": "sateeshperi",
+      "github_id": 33637490,
+      "email": null,
+      "profile_url": "https://github.com/sateeshperi"
+    },
+    {
+      "username": "FranBonath",
+      "github_id": 41994400,
+      "email": null,
+      "profile_url": "https://github.com/FranBonath"
+    },
+    {
+      "username": "christopher-hakkaart",
+      "github_id": 76951771,
+      "email": "chris.hakkaart@seqera.io",
+      "profile_url": "https://github.com/christopher-hakkaart"
+    },
+    {
+      "username": "nvnieuwk",
+      "github_id": 101190534,
+      "email": null,
+      "profile_url": "https://github.com/nvnieuwk"
+    }
+  ],
+  "seqera_participants": [
+    {
+      "name": "phil.ewels@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "ewels",
+      "team": "core"
+    },
+    {
+      "name": "maxime.garcia@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "maxulysse",
+      "team": "core"
+    },
+    {
+      "name": "mribeirodantas@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "mribeirodantas",
+      "team": "core"
+    },
+    {
+      "name": "mirp.julia@gmail.com",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "mirpedrol",
+      "team": "core"
+    },
+    {
+      "name": "jfy133@gmail.com",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "jfy133",
+      "team": "core"
+    },
+    {
+      "name": "chris.hakkaart@seqera.io",
+      "type": "MEMBER",
+      "role": "OWNER",
+      "github_username": "christopher-hakkaart",
+      "team": "core"
+    }
+  ]
+}
