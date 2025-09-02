@@ -152,6 +152,7 @@ def main():
             "credential_name": "nf-core-github-finegrained",
             "description": "Fine-grained GitHub token to avoid rate limits when Platform pulls pipeline repositories",
             "provider_type": "github",
+            "base_url": "https://github.com/nf-core/",
             "workspace_id": config["tower_workspace_id"],
             "purpose": "Prevents GitHub API rate limiting during pipeline repository access",
         },
