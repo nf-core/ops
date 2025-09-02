@@ -15,7 +15,7 @@ from src.infrastructure import (
     deploy_seqera_environments_terraform,
     get_compute_environment_ids_terraform,
 )
-from src.integrations import create_github_resources
+from src.integrations import create_github_resources, create_github_credential
 from src.integrations.workspace_participants_command import (
     create_individual_member_commands,
 )
@@ -34,6 +34,14 @@ def main():
 
     # Create Seqera provider early for credential upload
     seqera_provider = create_seqera_provider(config)
+
+    # Step 3.5: Create GitHub fine-grained credential in Seqera Platform
+    # This allows Platform to pull pipeline repositories without hitting GitHub rate limits
+    github_credential, github_credential_id = create_github_credential(
+        seqera_provider=seqera_provider,
+        workspace_id=int(config["tower_workspace_id"]),
+        github_token=config.get("platform_github_org_token", ""),
+    )
 
     # Step 4: Set up S3 infrastructure
     s3_resources = create_s3_infrastructure(aws_provider)
@@ -135,6 +143,19 @@ def main():
     pulumi.export("compute_env_ids", compute_env_ids)
     pulumi.export("workspace_id", config["tower_workspace_id"])
     pulumi.export("deployment_method", deployment_method)
+
+    # Export GitHub credential information
+    pulumi.export(
+        "github_credential",
+        {
+            "credential_id": github_credential_id,
+            "credential_name": "nf-core-github-finegrained",
+            "description": "Fine-grained GitHub token to avoid rate limits when Platform pulls pipeline repositories",
+            "provider_type": "github",
+            "workspace_id": config["tower_workspace_id"],
+            "purpose": "Prevents GitHub API rate limiting during pipeline repository access",
+        },
+    )
 
     # Export Terraform provider resources
     pulumi.export(
