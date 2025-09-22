@@ -1,0 +1,4 @@
+encryptionsalt: v1:Dd5GnLRGGJQ=:v1:HWX/n0HL3VxDJrWR:ouykGXCccBLXFd6kAKWW0uHByWK/qw==
+config:
+  aws:region: eu-north-1
+  github:owner: nf-core

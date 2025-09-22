@@ -1,0 +1,11 @@
+name: co2-reports
+runtime:
+  name: python
+  options:
+    toolchain: uv
+    virtualenv: .venv
+description: For hosting nf-core CO2 footprint reports
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: aws-python

@@ -1,0 +1,12 @@
+[project]
+name = "co2-reports"
+version = "0.1.0"
+description = "Pulumi infrastructure for nf-core CO2 reports"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.205.0",
+    "pulumi-aws>=7.10.0",
+    "pulumi-github>=6.8.0",
+    "pulumi-onepassword>=1.1.3",
+]
