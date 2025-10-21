@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.pulumi/
+Pulumi.*.yaml
+!Pulumi.yaml
