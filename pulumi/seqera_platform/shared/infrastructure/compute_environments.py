@@ -295,6 +295,7 @@ def deploy_seqera_environments_terraform(
     seqera_provider: Optional[seqera.Provider] = None,
     seqera_credential_resource: Optional[seqera.Credential] = None,
     iam_policy_hash: Optional[str] = None,
+    workspace_config: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Deploy Seqera Platform compute environments using Terraform provider.
 
@@ -304,6 +305,7 @@ def deploy_seqera_environments_terraform(
         seqera_provider: Optional existing Seqera provider instance
         seqera_credential_resource: Optional Seqera credential resource for dependency
         iam_policy_hash: Optional IAM policy hash to force recreation on policy changes
+        workspace_config: Optional workspace configuration to control which environments are deployed
 
     Returns:
         Dict[str, Any]: Dictionary containing created compute environments and provider
@@ -335,7 +337,7 @@ def deploy_seqera_environments_terraform(
     # Validate workspace ID
     workspace_id = float(config["tower_workspace_id"])
 
-    # Create all three compute environments
+    # Create compute environments based on workspace configuration
     environments = {}
 
     # Set up dependencies - compute environments depend on Seqera credential resource
@@ -343,11 +345,26 @@ def deploy_seqera_environments_terraform(
     if seqera_credential_resource:
         depends_on_resources.append(seqera_credential_resource)
 
-    for env_type, config_data in [
+    # Determine which environments to deploy
+    # If workspace_config is not provided, deploy all environments (backward compatibility)
+    env_configs = [
         ("cpu", cpu_config),
         ("gpu", gpu_config),
         ("arm", arm_config),
-    ]:
+    ]
+
+    for env_type, config_data in env_configs:
+        # Check if this environment should be deployed based on workspace config
+        should_deploy = True
+        if workspace_config:
+            compute_envs = workspace_config.get("compute_environments", {})
+            env_config = compute_envs.get(env_type, {})
+            should_deploy = env_config.get("enabled", True)
+
+        if not should_deploy:
+            pulumi.log.info(f"Skipping {env_type} environment (disabled in workspace config)")
+            continue
+
         env_name = COMPUTE_ENV_NAMES[env_type]
         description = COMPUTE_ENV_DESCRIPTIONS[env_type]
 
@@ -379,9 +396,16 @@ def get_compute_environment_ids_terraform(
 
     Returns:
         Dict[str, Any]: Dictionary mapping environment types to their IDs
+                       Only includes environments that were actually deployed
     """
-    return {
-        "cpu": terraform_resources["cpu_env"].compute_env_id,
-        "gpu": terraform_resources["gpu_env"].compute_env_id,
-        "arm": terraform_resources["arm_env"].compute_env_id,
-    }
+    compute_env_ids = {}
+
+    # Only include environments that exist in terraform_resources
+    if "cpu_env" in terraform_resources:
+        compute_env_ids["cpu"] = terraform_resources["cpu_env"].compute_env_id
+    if "gpu_env" in terraform_resources:
+        compute_env_ids["gpu"] = terraform_resources["gpu_env"].compute_env_id
+    if "arm_env" in terraform_resources:
+        compute_env_ids["arm"] = terraform_resources["arm_env"].compute_env_id
+
+    return compute_env_ids

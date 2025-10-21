@@ -276,21 +276,22 @@ def create_seqera_credentials(
 
 
 def _create_iam_policies(
-    aws_provider: aws.Provider, s3_bucket
+    aws_provider: aws.Provider, s3_bucket, workspace_suffix: str = ""
 ) -> Tuple[aws.iam.Policy, aws.iam.Policy, aws.iam.Policy]:
     """Create IAM policies for TowerForge operations.
 
     Args:
         aws_provider: Configured AWS provider instance
         s3_bucket: S3 bucket resource for policy attachment
+        workspace_suffix: Optional suffix for workspace-specific policy names
 
     Returns:
         Tuple of (forge_policy, launch_policy, s3_policy)
     """
     # TowerForge Forge Policy - Comprehensive permissions for resource creation
     forge_policy = aws.iam.Policy(
-        "towerforge-forge-policy",
-        name=TOWERFORGE_POLICY_NAMES["forge"],
+        f"towerforge-forge-policy{workspace_suffix}",
+        name=f"{TOWERFORGE_POLICY_NAMES['forge']}{workspace_suffix}",
         description="IAM policy for TowerForge to create and manage AWS Batch resources",
         policy=json.dumps(_create_forge_policy_document()),
         opts=pulumi.ResourceOptions(provider=aws_provider),
@@ -298,8 +299,8 @@ def _create_iam_policies(
 
     # TowerForge Launch Policy - Limited permissions for pipeline execution
     launch_policy = aws.iam.Policy(
-        "towerforge-launch-policy",
-        name=TOWERFORGE_POLICY_NAMES["launch"],
+        f"towerforge-launch-policy{workspace_suffix}",
+        name=f"{TOWERFORGE_POLICY_NAMES['launch']}{workspace_suffix}",
         description="IAM policy for TowerForge to launch and monitor pipeline executions",
         policy=json.dumps(_create_launch_policy_document()),
         opts=pulumi.ResourceOptions(provider=aws_provider),
@@ -307,8 +308,8 @@ def _create_iam_policies(
 
     # TowerForge S3 Bucket Access Policy - Access to specified S3 bucket
     s3_policy = aws.iam.Policy(
-        "towerforge-s3-policy",
-        name=TOWERFORGE_POLICY_NAMES["s3"],
+        f"towerforge-s3-policy{workspace_suffix}",
+        name=f"{TOWERFORGE_POLICY_NAMES['s3']}{workspace_suffix}",
         description=s3_bucket.bucket.apply(
             lambda bucket_name: f"IAM policy for TowerForge to access {bucket_name} S3 bucket"
         ),
@@ -360,6 +361,7 @@ def create_towerforge_credentials(
     s3_bucket,
     seqera_provider: seqera.Provider,
     workspace_id: float,
+    workspace_name: str = None,
 ) -> Tuple[
     pulumi.Output[str], pulumi.Output[str], pulumi.Output[str], seqera.Credential, str
 ]:
@@ -374,13 +376,18 @@ def create_towerforge_credentials(
         s3_bucket: S3 bucket resource for policy attachment
         seqera_provider: Configured Seqera provider instance
         workspace_id: Seqera Platform workspace ID
+        workspace_name: Optional workspace name for unique resource naming
 
     Returns:
         Tuple: (access_key_id, access_key_secret, seqera_credentials_id, seqera_credential_resource, iam_policy_hash)
     """
+    # Create workspace-specific resource names
+    workspace_suffix = f"-{workspace_name}" if workspace_name else ""
+    user_name = f"{TOWERFORGE_USER_NAME}{workspace_suffix}"
+
     # Create IAM policies
     forge_policy, launch_policy, s3_policy = _create_iam_policies(
-        aws_provider, s3_bucket
+        aws_provider, s3_bucket, workspace_suffix=workspace_suffix
     )
 
     # Generate policy version hash for compute environment recreation on policy changes
@@ -388,8 +395,8 @@ def create_towerforge_credentials(
 
     # Create TowerForge IAM User
     towerforge_user = aws.iam.User(
-        "towerforge-user",
-        name=TOWERFORGE_USER_NAME,
+        f"towerforge-user{workspace_suffix}",
+        name=user_name,
         opts=pulumi.ResourceOptions(provider=aws_provider),
     )
 

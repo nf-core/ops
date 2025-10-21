@@ -7,6 +7,10 @@ from pathlib import Path
 shared_path = Path(__file__).parent.parent / "shared"
 sys.path.insert(0, str(shared_path))
 
+# Add sdks directory to Python path for pulumi_seqera
+sdks_path = Path(__file__).parent / "sdks" / "seqera"
+sys.path.insert(0, str(sdks_path))
+
 import pulumi
 
 # Import shared modules
@@ -57,13 +61,16 @@ def main():
         )
 
     # Set up S3 infrastructure with workspace-specific bucket name
+    # Create new bucket (don't import existing) for this workspace
     s3_resources = create_s3_infrastructure(
         aws_provider,
-        bucket_name=workspace_config["s3_bucket_name"]
+        bucket_name=workspace_config["s3_bucket_name"],
+        import_existing=False
     )
     resource_opt_bucket = s3_resources["bucket"]
 
     # Create TowerForge IAM credentials and upload to Seqera Platform
+    # Use workspace name to create unique IAM resource names
     (
         towerforge_access_key_id,
         towerforge_access_key_secret,
@@ -75,17 +82,18 @@ def main():
         resource_opt_bucket,
         seqera_provider,
         float(config["tower_workspace_id"]),
+        workspace_name=workspace_config["workspace_name"],
     )
 
     # Deploy Seqera Platform compute environments (CPU only for this workspace)
-    # Note: The compute environment deployment will need to be adapted to handle
-    # the workspace config that disables GPU and ARM
+    # workspace_config controls which environments are deployed
     terraform_resources = deploy_seqera_environments_terraform(
         config,
         seqera_credentials_id,
         seqera_provider,
         seqera_credential_resource,
         iam_policy_hash,
+        workspace_config=workspace_config,
     )
 
     # Get compute environment IDs

@@ -8,29 +8,44 @@ from pulumi_aws import s3
 from utils.constants import S3_BUCKET_NAME
 
 
-def create_s3_infrastructure(aws_provider) -> Dict[str, Any]:
-    """Create S3 bucket and lifecycle configuration.
+def create_s3_infrastructure(aws_provider, bucket_name: str = None, import_existing: bool = True) -> Dict[str, Any]:
+    """Create or import S3 bucket and lifecycle configuration.
 
     Args:
         aws_provider: Configured AWS provider instance
+        bucket_name: Optional bucket name override. If not provided, uses S3_BUCKET_NAME from constants
+        import_existing: If True, import existing bucket. If False, create new bucket.
 
     Returns:
         Dict[str, Any]: Dictionary containing bucket and lifecycle configuration
     """
-    # Import existing AWS resources used by nf-core megatests
-    # S3 bucket for Nextflow work directory (already exists)
-    nf_core_awsmegatests_bucket = s3.Bucket(
-        "nf-core-awsmegatests",
-        bucket=S3_BUCKET_NAME,
-        opts=pulumi.ResourceOptions(
-            import_=S3_BUCKET_NAME,  # Import existing bucket
+    # Use provided bucket name or fall back to constant
+    actual_bucket_name = bucket_name or S3_BUCKET_NAME
+
+    # Create resource options based on whether we're importing or creating
+    if import_existing:
+        # Import existing AWS resources (for legacy workspaces)
+        resource_opts = pulumi.ResourceOptions(
+            import_=actual_bucket_name,  # Import existing bucket
             protect=True,  # Protect from accidental deletion
             provider=aws_provider,  # Use configured AWS provider
             ignore_changes=[
                 "lifecycle_rules",
                 "versioning",
             ],  # Don't modify existing configurations - managed manually due to permission constraints
-        ),
+        )
+    else:
+        # Create new bucket
+        resource_opts = pulumi.ResourceOptions(
+            protect=True,  # Protect from accidental deletion
+            provider=aws_provider,  # Use configured AWS provider
+        )
+
+    # S3 bucket for Nextflow work directory
+    nf_core_awsmegatests_bucket = s3.Bucket(
+        actual_bucket_name,
+        bucket=actual_bucket_name,
+        opts=resource_opts,
     )
 
     # S3 bucket lifecycle configuration

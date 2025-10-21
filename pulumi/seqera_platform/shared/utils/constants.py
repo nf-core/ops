@@ -1,5 +1,11 @@
 """Constants and configuration values for AWS Megatests infrastructure."""
 
+import os
+from pathlib import Path
+
+# Get the shared directory path (parent of utils)
+SHARED_DIR = Path(__file__).parent.parent
+
 # AWS Configuration
 AWS_REGION = "eu-west-1"
 S3_BUCKET_NAME = "nf-core-awsmegatests"
@@ -22,18 +28,18 @@ COMPUTE_ENV_DESCRIPTIONS = {
     "arm": "ARM CPU compute environment with Fusion v2 and NVMe storage",
 }
 
-# Configuration File Paths
+# Configuration File Paths (absolute paths from shared directory)
 CONFIG_FILES = {
-    "cpu": "seqerakit/current-env-cpu.json",
-    "gpu": "seqerakit/current-env-gpu.json",
-    "arm": "seqerakit/current-env-cpu-arm.json",
+    "cpu": str(SHARED_DIR / "seqerakit" / "current-env-cpu.json"),
+    "gpu": str(SHARED_DIR / "seqerakit" / "current-env-gpu.json"),
+    "arm": str(SHARED_DIR / "seqerakit" / "current-env-cpu-arm.json"),
 }
 
-# Nextflow configuration files for compute environments
+# Nextflow configuration files for compute environments (absolute paths)
 NEXTFLOW_CONFIG_FILES = {
-    "cpu": "seqerakit/configs/nextflow-cpu.config",
-    "gpu": "seqerakit/configs/nextflow-gpu.config",
-    "arm": "seqerakit/configs/nextflow-arm.config",
+    "cpu": str(SHARED_DIR / "seqerakit" / "configs" / "nextflow-cpu.config"),
+    "gpu": str(SHARED_DIR / "seqerakit" / "configs" / "nextflow-gpu.config"),
+    "arm": str(SHARED_DIR / "seqerakit" / "configs" / "nextflow-arm.config"),
 }
 
 # TowerForge Configuration

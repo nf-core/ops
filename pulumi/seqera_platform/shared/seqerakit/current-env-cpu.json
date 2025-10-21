@@ -1,0 +1,30 @@
+{
+  "discriminator": "aws-batch",
+  "region": "eu-west-1",
+  "workDir": "s3://nf-core-awsmegatests",
+  "environment": [],
+  "waveEnabled": true,
+  "fusion2Enabled": true,
+  "nvnmeStorageEnabled": true,
+  "fusionSnapshots": true,
+  "forge": {
+    "type": "SPOT",
+    "minCpus": 0,
+    "maxCpus": 1000,
+    "gpuEnabled": false,
+    "instanceTypes": ["c6id", "m6id", "r6id"],
+    "subnets": [],
+    "securityGroups": [],
+    "disposeOnDeletion": true,
+    "allowBuckets": [
+      "s3://ngi-igenomes",
+      "s3://nf-core-awsmegatests",
+      "s3://annotation-cache/"
+    ],
+    "efsCreate": false,
+    "ebsBootSize": 50,
+    "fargateHeadEnabled": true,
+    "arm64Enabled": false
+  },
+  "labels": []
+}

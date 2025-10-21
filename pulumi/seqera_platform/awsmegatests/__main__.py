@@ -80,6 +80,7 @@ def main():
         seqera_provider,
         seqera_credential_resource,
         iam_policy_hash,
+        workspace_config=workspace_config,
     )
 
     # Get compute environment IDs
