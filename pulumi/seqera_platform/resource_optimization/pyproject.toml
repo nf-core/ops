@@ -1,0 +1,12 @@
+[project]
+name = "seqera-resource-optimization"
+version = "0.1.0"
+description = "Pulumi project for Seqera Platform - Resource Optimization workspace"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.173.0,<4.0.0",
+    "pulumi-aws>=6.81.0,<7.0.0",
+    "pulumi-github>=6.4.0,<7.0.0",
+    "pulumi-command>=1.0.1,<2.0.0",
+]

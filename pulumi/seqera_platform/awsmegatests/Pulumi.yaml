@@ -1,0 +1,11 @@
+name: seqera-awsmegatests
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: Seqera Platform workspace for nf-core AWS megatests
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: seqera-platform-workspace
+      workspace: awsmegatests
