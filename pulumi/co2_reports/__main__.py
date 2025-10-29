@@ -97,7 +97,7 @@ ci_user_access_key = aws.iam.AccessKey(
 bucket_access_policy = aws.iam.Policy(
     "co2-reports-bucket-access-policy",
     name="nf-core-co2-reports-bucket-access",
-    description="Write access to nf-core-co2-reports S3 bucket for CI/CD",
+    description="Write access to modules/ prefix in nf-core-co2-reports S3 bucket for CI/CD",
     policy=co2_reports_bucket.arn.apply(
         lambda bucket_arn: f"""{{
       "Version": "2012-10-17",
@@ -105,16 +105,23 @@ bucket_access_policy = aws.iam.Policy(
         {{
           "Effect": "Allow",
           "Action": [
-            "s3:PutObject",
-            "s3:PutObjectAcl",
-            "s3:GetObject",
             "s3:ListBucket",
             "s3:GetBucketLocation"
           ],
-          "Resource": [
-            "{bucket_arn}",
-            "{bucket_arn}/*"
-          ]
+          "Resource": "{bucket_arn}",
+          "Condition": {{
+            "StringLike": {{
+              "s3:prefix": ["modules/*"]
+            }}
+          }}
+        }},
+        {{
+          "Effect": "Allow",
+          "Action": [
+            "s3:PutObject",
+            "s3:GetObject"
+          ],
+          "Resource": "{bucket_arn}/modules/*"
         }}
       ]
     }}"""
