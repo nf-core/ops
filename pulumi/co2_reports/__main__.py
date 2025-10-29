@@ -16,6 +16,7 @@ onepassword_config = pulumi.Config("pulumi-onepassword")
 onepassword_provider = onepassword.Provider(
     "onepassword-provider",
     service_account_token=onepassword_config.require_secret("service_account_token"),
+    account="",  # Explicitly disable CLI account detection to avoid conflicts
 )
 
 # Get GitHub token from 1Password
@@ -39,15 +40,29 @@ github_provider = github.Provider(
 co2_reports_bucket = aws.s3.Bucket(
     "co2-reports-bucket",
     bucket="nf-core-co2-reports",
-    server_side_encryption_configuration=aws.s3.BucketServerSideEncryptionConfigurationArgs(
-        rule=aws.s3.BucketServerSideEncryptionConfigurationRuleArgs(
-            apply_server_side_encryption_by_default=aws.s3.BucketServerSideEncryptionConfigurationRuleApplyServerSideEncryptionByDefaultArgs(
+    opts=pulumi.ResourceOptions(provider=aws_provider),
+)
+
+# Configure server-side encryption for the bucket
+co2_reports_bucket_encryption = aws.s3.BucketServerSideEncryptionConfigurationV2(
+    "co2-reports-bucket-encryption",
+    bucket=co2_reports_bucket.id,
+    rules=[
+        aws.s3.BucketServerSideEncryptionConfigurationV2RuleArgs(
+            apply_server_side_encryption_by_default=aws.s3.BucketServerSideEncryptionConfigurationV2RuleApplyServerSideEncryptionByDefaultArgs(
                 sse_algorithm="AES256",
             ),
         ),
-    ),
-    versioning=aws.s3.BucketVersioningArgs(
-        enabled=True,
+    ],
+    opts=pulumi.ResourceOptions(provider=aws_provider),
+)
+
+# Enable versioning for the bucket
+co2_reports_bucket_versioning = aws.s3.BucketVersioningV2(
+    "co2-reports-bucket-versioning",
+    bucket=co2_reports_bucket.id,
+    versioning_configuration=aws.s3.BucketVersioningV2VersioningConfigurationArgs(
+        status="Enabled",
     ),
     opts=pulumi.ResourceOptions(provider=aws_provider),
 )
