@@ -1,0 +1,13 @@
+name: pulumi-state
+runtime:
+  name: python
+  options:
+    virtualenv: .venv
+description: Bootstrap project to create S3 bucket for Pulumi state storage
+config:
+  aws:region:
+    value: eu-north-1
+  pulumi:tags:
+    value:
+      pulumi:template: bootstrap
+      project: pulumi-state

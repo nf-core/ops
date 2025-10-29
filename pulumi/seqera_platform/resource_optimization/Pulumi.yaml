@@ -1,0 +1,11 @@
+name: seqera-resource-optimization
+runtime:
+  name: python
+  options:
+    virtualenv: .venv
+description: Seqera Platform workspace for resource optimization testing
+config:
+  pulumi:tags:
+    value:
+      pulumi:template: seqera-platform-workspace
+      workspace: resource-optimization
