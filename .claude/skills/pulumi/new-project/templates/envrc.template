@@ -1,0 +1,19 @@
+# Environment configuration for {{PROJECT_NAME}}
+# This file loads AWS credentials from 1Password
+
+export OP_ACCOUNT=nf-core
+
+# Load 1Password integration for direnv
+source_url "https://github.com/tmatilai/direnv-1password/raw/v1.0.1/1password.sh" \
+	"sha256-4dmKkmlPBNXimznxeehplDfiV+CvJiIzg7H1Pik4oqY="
+
+# Load AWS credentials from 1Password
+from_op AWS_ACCESS_KEY_ID="op://Dev/Pulumi-AWS-key/access key id"
+from_op AWS_SECRET_ACCESS_KEY="op://Dev/Pulumi-AWS-key/secret access key"
+
+# AWS Configuration
+export AWS_REGION="{{AWS_REGION}}"
+export AWS_DEFAULT_REGION="{{AWS_REGION}}"
+
+# Load Pulumi passphrase from 1Password
+from_op PULUMI_CONFIG_PASSPHRASE="op://Employee/Pulumi Passphrase/password"
