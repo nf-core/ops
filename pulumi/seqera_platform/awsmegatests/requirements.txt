@@ -1,0 +1,4 @@
+pulumi>=3.173.0,<4.0.0
+pulumi-aws>=6.81.0,<7.0.0
+pulumi-github>=6.4.0,<7.0.0
+pulumi-command>=1.0.1,<2.0.0
