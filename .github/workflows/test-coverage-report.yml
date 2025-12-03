@@ -1,0 +1,147 @@
+name: nf-core Test Coverage Report
+
+on:
+  schedule:
+    # Run weekly on Mondays at 06:00 UTC (after S3 tagging runs on Sunday)
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths:
+      - ".github/workflows/test-coverage-report.yml"
+      - ".github/generate_test_coverage_report.py"
+  workflow_dispatch:
+    inputs:
+      output_formats:
+        description: "Output formats to generate"
+        required: false
+        default: "markdown csv json"
+        type: string
+
+env:
+  AWS_REGION: eu-west-1
+  S3_BUCKET: nf-core-awsmegatests
+
+jobs:
+  generate-coverage-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required to checkout repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install 3.13
+
+      - name: Generate test coverage report
+        id: coverage_report
+        run: |
+          # Set output formats (default to all formats)
+          OUTPUT_FORMATS="${{ github.event.inputs.output_formats || 'markdown csv json' }}"
+
+          # Create reports directory
+          mkdir -p reports
+
+          # Run the coverage report generator
+          echo "🚀 Generating nf-core test coverage report..."
+          uv run .github/generate_test_coverage_report.py \
+            --bucket ${{ env.S3_BUCKET }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --output-dir reports \
+            --formats $OUTPUT_FORMATS
+
+      - name: Upload report artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-coverage-reports
+          path: reports/
+          retention-days: 90
+
+      - name: Post job summary
+        if: always()
+        run: |
+          echo "# 🧪 nf-core Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Basic information
+          echo "## 📋 Report Information" >> $GITHUB_STEP_SUMMARY
+          echo "| Setting | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Trigger** | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **S3 Bucket** | \`${{ env.S3_BUCKET }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Timestamp** | $(date -u) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Overall statistics from step outputs
+          echo "## 📊 Overall Coverage Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧬 **Total Pipelines:** ${{ steps.coverage_report.outputs.total_pipelines }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 **Total Releases:** ${{ steps.coverage_report.outputs.total_releases }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Tested Releases:** ${{ steps.coverage_report.outputs.total_tested_releases }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📈 **Overall Coverage:** ${{ steps.coverage_report.outputs.overall_coverage_percentage }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Key insights
+          echo "## 🔍 Key Insights" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚨 **Pipelines below 50% coverage:** ${{ steps.coverage_report.outputs.pipelines_below_50_percent }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🆕 **Latest releases needing tests:** ${{ steps.coverage_report.outputs.latest_releases_untested }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Worst performers
+          if [ -n "${{ steps.coverage_report.outputs.worst_performers }}" ]; then
+            echo "## 🚨 Pipelines Needing Attention (Lowest Coverage)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.coverage_report.outputs.worst_performers }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Latest releases needing tests
+          if [ -n "${{ steps.coverage_report.outputs.latest_untested }}" ]; then
+            echo "## 🆕 Latest Releases Needing Tests" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "${{ steps.coverage_report.outputs.latest_untested }}" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "## 📋 Report Files" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The following report files have been generated and are available as artifacts:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # List generated files
+          if ls reports/*.md >/dev/null 2>&1; then
+            echo "- 📝 **Markdown Report:** Human-readable summary with insights" >> $GITHUB_STEP_SUMMARY
+          fi
+          if ls reports/*.csv >/dev/null 2>&1; then
+            echo "- 📊 **CSV Report:** Machine-readable data for analysis" >> $GITHUB_STEP_SUMMARY
+          fi
+          if ls reports/*.json >/dev/null 2>&1; then
+            echo "- 📋 **JSON Report:** Structured data for programmatic access" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 💡 Recommended Actions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Based on this analysis, consider:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Priority Testing:** Focus on pipelines with low coverage percentages" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Latest Releases:** Test the most recent releases that are currently untested" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Resource Allocation:** Consider additional compute resources for comprehensive testing" >> $GITHUB_STEP_SUMMARY
+          echo "4. **Cleanup:** Review orphaned test results for potential cleanup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "📋 **Download Reports:** Use the 'test-coverage-reports' artifact above for detailed analysis" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Workflow Logs:** [View detailed execution logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
