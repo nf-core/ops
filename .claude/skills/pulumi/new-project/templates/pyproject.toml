@@ -1,0 +1,33 @@
+[project]
+name = "{{PROJECT_NAME}}"
+version = "0.1.0"
+description = "{{DESCRIPTION}}"
+readme = "README.md"
+requires-python = ">=3.11"
+
+dependencies = [
+    "pulumi>=3.0.0,<4.0.0",
+    # Add provider dependencies as needed:
+    # "pulumi-aws>=6.0.0,<7.0.0",
+    # "pulumi-github>=6.0.0,<7.0.0",
+    # "pulumi-onepassword>=0.7.0,<1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = []
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
