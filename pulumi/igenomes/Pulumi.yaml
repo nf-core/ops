@@ -1,0 +1,7 @@
+name: igenomes
+description: iGenomes S3 Infrastructure Management
+runtime:
+  name: python
+  options:
+    toolchain: uv
+    virtualenv: .venv
