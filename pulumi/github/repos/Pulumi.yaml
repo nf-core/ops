@@ -1,0 +1,7 @@
+name: github-repos
+runtime:
+  name: python
+  options:
+    toolchain: uv
+    virtualenv: .venv
+description: Managing nf-core GitHub repos
