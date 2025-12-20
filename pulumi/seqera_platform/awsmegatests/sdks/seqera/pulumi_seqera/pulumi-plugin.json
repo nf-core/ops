@@ -1,0 +1,10 @@
+{
+  "resource": true,
+  "name": "terraform-provider",
+  "version": "0.13.0",
+  "parameterization": {
+    "name": "seqera",
+    "version": "0.25.2",
+    "value": "eyJyZW1vdGUiOnsidXJsIjoicmVnaXN0cnkudGVycmFmb3JtLmlvL3NlcWVyYWxhYnMvc2VxZXJhIiwidmVyc2lvbiI6IjAuMjUuMiJ9fQ=="
+  }
+}
