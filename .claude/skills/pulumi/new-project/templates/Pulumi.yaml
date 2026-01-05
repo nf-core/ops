@@ -1,0 +1,6 @@
+name: { { PROJECT_NAME } }
+description: { { DESCRIPTION } }
+runtime: python
+
+backend:
+  url: s3://nf-core-ops-pulumi-state?region=us-east-1&awssdk=v2
