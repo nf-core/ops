@@ -1,0 +1,17 @@
+{
+  "name": "nfcore-hackathon-map",
+  "version": "1.0.0",
+  "description": "nf-core hackathon WorkAdventure map scripts",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.5",
+    "@workadventure/iframe-api-typings": "^1.18.3",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12"
+  }
+}

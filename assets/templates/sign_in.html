@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en" charset="utf-8">
+<head>
+    <title>nf-core Hackathon - Virtual Event Space</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+    <!-- Open Graph / Social sharing meta tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="nf-core Hackathon - Virtual Event Space">
+    <meta property="og:description" content="Join the nf-core community hackathon! Collaborate on bioinformatics pipelines in our virtual workspace.">
+    <meta property="og:image" content="https://nf-co.re/images/events/2026/hackathon-march/hackathon-march-2026.png">
+    <meta property="og:url" content="{{.ProxyPrefix}}">
+    <meta property="og:site_name" content="nf-core Hackathon">
+    
+    <!-- Twitter Card meta tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="nf-core Hackathon - Virtual Event Space">
+    <meta name="twitter:description" content="Join the nf-core community hackathon! Collaborate on bioinformatics pipelines in our virtual workspace.">
+    <meta name="twitter:image" content="https://nf-co.re/images/events/2026/hackathon-march/hackathon-march-2026.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://nf-co.re/favicon.ico">
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container { text-align: center; padding: 2rem; max-width: 500px; }
+        .logo { width: 200px; margin-bottom: 1.5rem; }
+        h1 { color: #24b064; margin-bottom: 0.5rem; font-size: 1.8rem; }
+        .subtitle { color: #888; margin-bottom: 2rem; font-size: 1rem; }
+        p { line-height: 1.6; margin: 1rem 0; color: #ccc; }
+        .button {
+            display: inline-block;
+            background: #24b064;
+            color: #fff;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .button:hover { background: #1d8f52; text-decoration: none; }
+        .github-icon { vertical-align: middle; margin-right: 0.5rem; }
+        .note { margin-top: 2rem; font-size: 0.85rem; color: #666; }
+        .note a { color: #24b064; text-decoration: none; }
+        .note a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="__S3_BUCKET_URL__/assets/logos/nf-core-logo-darkbg.png" alt="nf-core" class="logo">
+        <h1>Welcome to the Hackathon!</h1>
+        <p class="subtitle">Virtual Event Space</p>
+        <p>Sign in with your GitHub account to join the nf-core community hackathon.</p>
+        <a href="{{.ProxyPrefix}}/start?rd={{.Redirect}}" class="button">
+            <svg class="github-icon" width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+            </svg>
+            Sign in with GitHub
+        </a>
+        <p class="note">
+            You must be a member of the <a href="https://github.com/nf-core" target="_blank">nf-core GitHub organization</a> to access this event.<br>
+            Not a member? <a href="https://nf-co.re/join" target="_blank">Join nf-core</a>
+        </p>
+    </div>
+</body>
+</html>
