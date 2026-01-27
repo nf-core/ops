@@ -11,10 +11,9 @@ Quick lookup for common problems. For detailed procedures, see the main SKILL.md
 | Service not responding | Startup not complete | Wait 5-15 min after deploy |
 | OAuth redirect loop | Cookie issues | Clear cookies for `*.hackathon.nf-co.re` |
 | Access Denied (403) | Org membership private | Make nf-core membership public |
-| "Access Denied" XML on sign-in | OAuth templates not synced | `./scripts/sync-maps.sh` |
+| "Access Denied" XML on sign-in | OAuth templates issue | Redeploy WorkAdventure instance |
 | WebSocket errors | Traefik routing issue | `docker logs reverse-proxy` |
-| Map not loading | S3 sync issue | `./scripts/sync-maps.sh` |
-| CORS errors | S3 bucket policy | Check bucket is public |
+| Map not loading | Git not pulled on server | `./scripts/sync-maps.sh` |
 | Let's Encrypt failed | EIP not ready at boot | Re-run cert script on instance |
 | No relay candidates (TURN) | Cert permissions | `chmod 644 /etc/coturn/certs/*` |
 | Jitsi "service-unavailable" | Prosody/Jicofo issue | Restart services in order |
@@ -132,9 +131,9 @@ dig +short turn.hackathon.nf-co.re
 ### WorkAdventure
 | Issue | Fix |
 |-------|-----|
-| OAuth "Access Denied" XML | `./scripts/sync-maps.sh` then restart containers |
+| OAuth "Access Denied" XML | Redeploy WorkAdventure instance |
 | ALB 502/503 | Wait 5-10 min, check `docker ps` |
-| Map not loading | Check S3: `aws s3 ls s3://nfcore-hackathon-maps/default/` |
+| Map not loading | `./scripts/sync-maps.sh` to pull latest from git |
 
 ### LiveKit
 | Issue | Fix |
@@ -167,8 +166,8 @@ docker compose restart
 
 ### Full Stack Redeploy
 ```bash
+cd terraform/environments/hackathon
 terraform destroy
-./scripts/sync-maps.sh  # IMPORTANT: sync first
 terraform apply
 # Wait 10-15 minutes
 ./scripts/status.sh

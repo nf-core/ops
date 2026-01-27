@@ -43,6 +43,12 @@ Start here for any issue:
 
 ---
 
+## Important
+
+All terraform commands must be run from `terraform/environments/hackathon/`.
+
+---
+
 ## General Debugging
 
 Once SSH'd in:
@@ -84,12 +90,12 @@ free -h  # Memory (problem if very low)
 
 ### WorkAdventure
 
-**OAuth shows "Access Denied" XML:**
+**OAuth shows template errors:**
+OAuth templates are copied from the cloned hackathon-infra repo during deployment.
+If templates are missing, redeploy the WorkAdventure instance:
 ```bash
-# Sync templates then restart
-./scripts/sync-maps.sh
-./scripts/ssh.sh wa
-cd /opt/workadventure && docker compose restart
+cd terraform/environments/hackathon
+terraform apply -replace="module.workadventure.aws_instance.workadventure"
 ```
 
 **Containers keep restarting:**
@@ -100,10 +106,14 @@ docker compose logs --tail 100 back
 ```
 
 **Map not loading:**
+Maps are served from the cloned hackathon-infra repo on the EC2 instance.
 ```bash
-aws s3 ls s3://nfcore-hackathon-maps/default/ --profile nf-core
-# If empty: ./scripts/sync-maps.sh
+./scripts/ssh.sh wa
+ls /opt/workadventure/hackathon-infra/maps/default/
+# If missing or outdated, sync from git:
+cd /opt/workadventure/hackathon-infra && git pull
 ```
+Or use `./scripts/sync-maps.sh` from your local machine.
 
 ### LiveKit
 
@@ -223,14 +233,14 @@ docker compose restart
 
 ### Full Redeploy
 ```bash
+cd terraform/environments/hackathon
 terraform destroy
-./scripts/sync-maps.sh  # CRITICAL: sync BEFORE apply
 terraform apply
 # Wait 10-15 minutes
 ./scripts/status.sh
 ```
 
-**Why sync first?** WorkAdventure downloads OAuth templates from S3 during boot. Without syncing first, the sign-in page shows "Access Denied" XML instead of the login form.
+Maps and assets are automatically cloned from the hackathon-infra repo during deployment.
 
 ---
 
@@ -246,6 +256,5 @@ terraform apply
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | WebSocket failed | Back service not reachable | Check `docker compose logs back` |
-| CORS errors | S3 bucket policy | Check bucket is public |
-| Access Denied for maps | Maps not synced | Run `./scripts/sync-maps.sh` |
+| Map not loading | Maps not synced or git not pulled | Run `./scripts/sync-maps.sh` |
 | Audio/video denied | HTTPS or permissions | Ensure HTTPS, grant permissions |

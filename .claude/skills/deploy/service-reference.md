@@ -19,7 +19,7 @@ Technical details for each service. For architecture rationale, see `docs/archit
 | Variable | Purpose |
 |----------|---------|
 | `WORKADVENTURE_SECRET_KEY` | Internal API authentication |
-| `START_ROOM_URL` | Initial map (S3 URL) |
+| `START_ROOM_URL` | Initial map (local URL via nginx) |
 | `JITSI_URL` | Jitsi server URL |
 | `LIVEKIT_URL` | LiveKit server URL |
 

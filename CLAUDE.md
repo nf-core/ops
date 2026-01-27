@@ -85,7 +85,7 @@ WorkAdventure ──depends_on──▶ LiveKit, Coturn, Jitsi
 Changes to dependencies can trigger WorkAdventure recreation.
 
 ### Maps Are Git-Tracked
-The `maps/` folder is the source of truth. S3 is ephemeral. Always ensure maps are committed before teardown.
+The `maps/` folder is the source of truth. Maps are served locally from a cloned copy of this repo on the EC2 instance. Always ensure maps are committed before teardown.
 
 ### Service Startup Time
 Services need **5-15 minutes** after deployment to fully initialize. Don't panic if health checks fail immediately.

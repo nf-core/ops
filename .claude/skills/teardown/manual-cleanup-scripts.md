@@ -14,8 +14,7 @@ AWS resources have dependencies. Delete in this exact order to avoid errors:
 6. Internet Gateway
 7. VPC
 8. Route53 A Records
-9. S3 Buckets
-10. DynamoDB Table
+9. DynamoDB Table
 
 ---
 
@@ -264,53 +263,21 @@ aws route53 list-resource-record-sets --profile nf-core \
 
 **Note:** It's often easier to delete Route53 records via the AWS Console.
 
-### 9. Empty and Delete S3 Buckets
-
-S3 buckets with versioning require deleting all versions:
-
-```bash
-BUCKET="nfcore-hackathon-maps"
-
-# Delete all object versions
-echo "Deleting object versions..."
-aws s3api list-object-versions --profile nf-core --bucket "$BUCKET" \
-  --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' --output json > /tmp/versions.json
-
-if [ -s /tmp/versions.json ] && [ "$(cat /tmp/versions.json)" != '{"Objects": null}' ]; then
-  aws s3api delete-objects --profile nf-core --bucket "$BUCKET" \
-    --delete file:///tmp/versions.json
-fi
-
-# Delete all delete markers
-echo "Deleting delete markers..."
-aws s3api list-object-versions --profile nf-core --bucket "$BUCKET" \
-  --query '{Objects: DeleteMarkers[].{Key:Key,VersionId:VersionId}}' --output json > /tmp/markers.json
-
-if [ -s /tmp/markers.json ] && [ "$(cat /tmp/markers.json)" != '{"Objects": null}' ]; then
-  aws s3api delete-objects --profile nf-core --bucket "$BUCKET" \
-    --delete file:///tmp/markers.json
-fi
-
-# Delete bucket
-echo "Deleting bucket..."
-aws s3 rb "s3://$BUCKET" --profile nf-core
-```
-
-### 10. Delete DynamoDB Lock Table
+### 9. Delete DynamoDB Lock Table
 
 ```bash
 aws dynamodb delete-table --profile nf-core --region eu-west-1 \
   --table-name nfcore-hackathon-terraform-lock
 ```
 
-### 11. (Optional) Delete Terraform State Bucket
+### 10. (Optional) Delete Terraform State Bucket
 
 Only if doing a complete reset:
 
 ```bash
 BUCKET="nfcore-hackathon-terraform-state"
 
-# Same versioning cleanup as maps bucket
+# Same versioning cleanup process
 aws s3api list-object-versions --profile nf-core --bucket "$BUCKET" \
   --query '{Objects: Versions[].{Key:Key,VersionId:VersionId}}' --output json > /tmp/versions.json
 
@@ -369,9 +336,6 @@ echo "IAM Roles:"
 aws iam list-roles --profile nf-core \
   --query "Roles[?contains(RoleName, 'nfcore-hackathon')].RoleName" \
   --output text
-
-echo "S3 Buckets:"
-aws s3 ls --profile nf-core 2>/dev/null | grep nfcore-hackathon || echo "(none)"
 
 echo "=== Cleanup complete ==="
 ```

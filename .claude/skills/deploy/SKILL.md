@@ -64,25 +64,13 @@ Creates S3 bucket and DynamoDB table. Safe to re-run.
 
 ### Step 2: Initialize Terraform
 ```bash
+cd terraform/environments/hackathon
 terraform init
 ```
 
-### Step 3: Sync Maps to S3
+**Important:** All terraform commands must be run from `terraform/environments/hackathon/`, not the root directory.
 
-**CRITICAL: Must run BEFORE `terraform apply`.**
-
-WorkAdventure downloads OAuth templates from S3 on first boot. Without this, sign-in page shows "Access Denied" XML.
-
-```bash
-./scripts/sync-maps.sh
-```
-
-Verify:
-```bash
-aws s3 ls s3://nfcore-hackathon-maps/default/ --profile nf-core
-```
-
-### Step 4: Review Plan
+### Step 3: Review Plan
 ```bash
 terraform plan
 ```
@@ -91,7 +79,7 @@ For fresh deployment, expect ~50-60 resources created, 0 destroyed.
 
 **Stop if plan shows unexpected destroys** - particularly anything with `vpc-multi-runner`.
 
-### Step 5: Apply Infrastructure
+### Step 4: Apply Infrastructure
 
 **Only proceed after reviewing plan and confirming it looks correct.**
 
@@ -101,7 +89,7 @@ terraform apply
 
 Type `yes` when prompted. Takes 3-5 minutes.
 
-### Step 6: Wait for Services (5-15 minutes)
+### Step 5: Wait for Services (5-15 minutes)
 
 Services need time to initialize:
 1. EC2 boot + cloud-init (2-3 min)
@@ -166,12 +154,11 @@ docker ps
 docker compose logs -f
 ```
 
-### OAuth shows "Access Denied" XML
-OAuth templates not synced. Fix:
+### OAuth shows template errors
+OAuth templates are copied from the cloned hackathon-infra repo during deployment.
+If templates are missing, redeploy the WorkAdventure instance:
 ```bash
-./scripts/sync-maps.sh
-./scripts/ssh.sh wa
-cd /opt/workadventure && docker compose restart
+terraform apply -replace="module.workadventure.aws_instance.workadventure"
 ```
 
 ### Let's Encrypt certificate errors
@@ -190,3 +177,49 @@ docker restart caddy
 1. Wait 15 minutes (locks auto-expire)
 2. Check no other terraform process running
 3. **NEVER force-unlock** without explicit user approval
+
+### user_data changes not detected
+The EC2 instances use `lifecycle { ignore_changes = [ami, user_data] }` to prevent cascading destroys. If you need to apply user_data changes, there are two approaches:
+
+#### Choosing between Terraform and SSH
+
+| Scenario | Preferred Approach |
+|----------|-------------------|
+| **Development** (no event, single dev) | Terraform force-replace. Downtime acceptable, reproducibility matters. |
+| **Live event** (users online, urgent fix) | SSH if possible. Minimize disruption. Terraform only if SSH cannot achieve the fix cleanly. |
+
+**Default to Terraform** unless the user indicates there's an active event with users online.
+
+**Always ask the user before proceeding if downtime is involved:**
+> "This change requires redeploying the WorkAdventure instance, which will cause ~2-3 minutes of downtime. Is that acceptable, or would you prefer I attempt an SSH fix?"
+
+#### Option A: Force replace via Terraform (preferred for development)
+```bash
+terraform apply -replace="module.workadventure.aws_instance.workadventure"
+```
+- Causes 2-3 minutes downtime
+- Clean, reproducible state
+- Changes persisted in git
+
+#### Option B: SSH manual update (only during live events)
+SSH to the instance and modify the running configuration directly.
+- No downtime (or minimal during service restart)
+- Changes NOT persisted - will be lost on next Terraform apply
+- Higher risk of configuration drift
+- Only use for urgent fixes during active events
+
+---
+
+## SSH Notes
+
+The `./scripts/ssh.sh` script opens an interactive SSH session but **does not accept commands as arguments**. To execute commands:
+
+```bash
+# Get the IP first
+./scripts/ssh.sh wa  # Note the IP shown
+
+# Then run commands directly
+ssh ec2-user@<IP> "your command here"
+```
+
+Or SSH interactively and run commands manually.

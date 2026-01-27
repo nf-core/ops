@@ -21,7 +21,7 @@ Estimated AWS costs for running the hackathon infrastructure.
 | Jitsi (t3.medium) | ~$1.00 | |
 | Elastic IPs (3) | ~$0.30 | When attached to instances |
 | Application Load Balancer | ~$0.70 | Plus LCU charges |
-| S3/Route53/misc | ~$0.50 | Minimal storage |
+| Route53/misc | ~$0.20 | DNS records |
 | **Total** | **~$11.50/day** | |
 
 ## Event Duration Estimates
@@ -55,3 +55,42 @@ Elastic IPs are free when attached to running instances. Costs only accrue if:
 - Infrastructure is partially torn down
 
 Always do a complete teardown to avoid orphaned EIP charges.
+
+## Cost Tracking
+
+All resources are automatically tagged for cost tracking:
+
+| Tag | Value |
+|-----|-------|
+| `Project` | `nfcore-hackathon` |
+| `Environment` | `hackathon` |
+| `ManagedBy` | `terraform` |
+| `pipeline` | `hackathon-infra` |
+
+These tags are applied via the AWS provider's `default_tags` in `providers.tf`.
+
+The `pipeline` tag is an existing cost allocation tag in the nf-core AWS organization, allowing costs to be tracked alongside other nf-core infrastructure.
+
+### Using AWS Cost Explorer
+
+1. Go to **AWS Cost Management** > **Cost Explorer**
+2. Click **Group by** > **Tag** > **pipeline**
+3. Filter to `hackathon-infra`
+4. View costs by day, week, or custom range
+
+Alternatively, filter by `Project` = `nfcore-hackathon` if you prefer.
+
+### Setting Up Budget Alerts
+
+To receive email alerts when costs exceed a threshold:
+
+1. Go to **AWS Budgets** > **Create budget**
+2. Select **Cost budget**
+3. Set your budget amount (e.g., $50/month)
+4. Under **Filters**, select **Tag** > **Project** > `nfcore-hackathon`
+5. Configure alert thresholds (e.g., 80%, 100%)
+6. Add email recipients
+
+### Note on Tag Activation
+
+Cost allocation tags must be activated before they appear in Cost Explorer and Budgets. Go to **Billing** > **Cost allocation tags**, select the `Project` tag, and activate it. Tags may take 24 hours to appear after activation.

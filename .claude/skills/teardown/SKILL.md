@@ -21,12 +21,11 @@ Safely destroy all hackathon infrastructure.
 
 **This permanently destroys all infrastructure.** Verify:
 - User intends to tear down the entire stack
-- Any uploaded S3 content during the event will be lost
 - No active users in the virtual world
 
 ### 2. Verify Maps Are Committed
 
-Maps in S3 are ephemeral. The `maps/` folder is the source of truth.
+The `maps/` folder is the source of truth and tracked in git.
 
 ```bash
 git status maps/
@@ -48,9 +47,12 @@ Use when Terraform state is healthy and matches AWS.
 
 ### Step 1: Check State Health
 ```bash
+cd terraform/environments/hackathon
 terraform state list | head -20
 ```
 Should list resources. If errors or empty, use Method 2.
+
+**Important:** All terraform commands must be run from `terraform/environments/hackathon/`.
 
 ### Step 2: Disable Prevent Destroy (If Needed)
 ```bash
@@ -114,8 +116,7 @@ AWS resources have dependencies. Delete in this exact order:
 6. Internet Gateway (detach first, then delete)
 7. VPC
 8. Route53 A Records (NOT the hosted zone!)
-9. S3 Buckets (empty all versions first)
-10. DynamoDB Lock Table
+9. DynamoDB Lock Table
 
 **WARNING:** Do NOT release `vpc-multi-runner-*` EIPs - those are CI infrastructure.
 
@@ -149,8 +150,6 @@ aws ec2 describe-security-groups --profile nf-core --region eu-west-1 \
   --filters "Name=tag:Name,Values=nfcore-hackathon-*" \
   --query 'SecurityGroups[].GroupId' --output text
 
-echo "S3 Buckets:"
-aws s3 ls --profile nf-core 2>/dev/null | grep nfcore-hackathon || echo "(none)"
 ```
 
 ---
