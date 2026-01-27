@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html lang="en" charset="utf-8">
 <head>
-    <title>nf-core Hackathon - Virtual Event Space</title>
+    <title>nf-core/hackathon - Virtual Event Space</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    
+
     <!-- Open Graph / Social sharing meta tags -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="nf-core Hackathon - Virtual Event Space">
+    <meta property="og:title" content="nf-core/hackathon - Virtual Event Space">
     <meta property="og:description" content="Join the nf-core community hackathon! Collaborate on bioinformatics pipelines in our virtual workspace.">
-    <meta property="og:image" content="https://nf-co.re/images/events/2026/hackathon-march/hackathon-march-2026.png">
+    <meta property="og:image" content="__S3_BUCKET_URL__/assets/social/hackathon-social-share.png">
     <meta property="og:url" content="{{.ProxyPrefix}}">
-    <meta property="og:site_name" content="nf-core Hackathon">
-    
+    <meta property="og:site_name" content="nf-core/hackathon">
+
     <!-- Twitter Card meta tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="nf-core Hackathon - Virtual Event Space">
     <meta name="twitter:description" content="Join the nf-core community hackathon! Collaborate on bioinformatics pipelines in our virtual workspace.">
-    <meta name="twitter:image" content="https://nf-co.re/images/events/2026/hackathon-march/hackathon-march-2026.png">
-    
+    <meta name="twitter:image" content="__S3_BUCKET_URL__/assets/social/hackathon-social-share.png">
+
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="https://nf-co.re/favicon.ico">
-    
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -52,15 +52,15 @@
         .button:hover { background: #1d8f52; text-decoration: none; }
         .github-icon { vertical-align: middle; margin-right: 0.5rem; }
         .note { margin-top: 2rem; font-size: 0.85rem; color: #666; }
-        .note a { color: #24b064; text-decoration: none; }
-        .note a:hover { text-decoration: underline; }
+        a { color: #24b064; text-decoration: none; }
+        a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
         <img src="__S3_BUCKET_URL__/assets/logos/nf-core-logo-darkbg.png" alt="nf-core" class="logo">
-        <h1>Welcome to the Hackathon!</h1>
-        <p class="subtitle">Virtual Event Space</p>
+        <h1>Welcome to the nf-core hackathon!</h1>
+        <p class="subtitle">This is the <a href="https://nf-co.re/events/2026/hackathon-march-2026" target="_blank">March 2026 hackathon</a> online space</p>
         <p>Sign in with your GitHub account to join the nf-core community hackathon.</p>
         <a href="{{.ProxyPrefix}}/start?rd={{.Redirect}}" class="button">
             <svg class="github-icon" width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
@@ -70,7 +70,7 @@
         </a>
         <p class="note">
             You must be a member of the <a href="https://github.com/nf-core" target="_blank">nf-core GitHub organization</a> to access this event.<br>
-            Not a member? <a href="https://nf-co.re/join" target="_blank">Join nf-core</a>
+            Not a member? <a href="https://nf-co.re/join" target="_blank">Join the nf-core Slack</a> and request an invite in the <br><a href="https://nfcore.slack.com/archives/CEB982K2T" target="_blank"><code>#github-invitations</code></a> channel</p>
         </p>
     </div>
 </body>

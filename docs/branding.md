@@ -15,7 +15,7 @@ assets/
     └── error.html                 # Access denied error page
 ```
 
-Assets are synced to S3 by `./scripts/sync-maps.sh`.
+Assets are served locally via nginx on the WorkAdventure instance from the cloned hackathon-infra repo.
 
 ## Server Branding
 
@@ -25,7 +25,7 @@ Configured in `terraform/modules/workadventure/templates/user_data.sh`:
 |---------|-------|---------|
 | `SERVER_NAME` | `nf-core Hackathon` | Displayed in UI |
 | `SERVER_MOTD` | Welcome message | Message of the day |
-| `SERVER_ICON` | S3 URL to square logo | Server icon in listings |
+| `SERVER_ICON` | Local URL to square logo | Server icon in listings |
 | `CONTACT_URL` | nf-core Slack URL | Help/contact link |
 
 ## Custom Sign-In Page
@@ -39,7 +39,7 @@ When the WorkAdventure URL is shared on Slack, Twitter, LinkedIn, etc., it shows
 <!-- Open Graph -->
 <meta property="og:title" content="nf-core Hackathon">
 <meta property="og:description" content="Join the nf-core hackathon virtual workspace">
-<meta property="og:image" content="https://nfcore-hackathon-maps.s3.eu-west-1.amazonaws.com/assets/logos/nf-core-logo.png">
+<meta property="og:image" content="https://app.hackathon.nf-co.re/assets/logos/nf-core-logo.png">
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
@@ -76,7 +76,7 @@ It includes clear explanation of access requirements and a link to make org memb
    - Change branding
    - Update organization name
 
-4. Sync assets: `./scripts/sync-maps.sh`
+4. Commit changes and sync: `git push && ./scripts/sync-maps.sh`
 
 ### Change Server Name
 
@@ -97,11 +97,10 @@ CONTACT_URL="https://your-help-url.com"
 
 ## Asset URLs
 
-After syncing, assets are available at:
+After deployment, assets are available at:
 ```
-https://nfcore-hackathon-maps.s3.eu-west-1.amazonaws.com/assets/logos/nf-core-logo.png
-https://nfcore-hackathon-maps.s3.eu-west-1.amazonaws.com/assets/logos/nf-core-logo-square.png
-https://nfcore-hackathon-maps.s3.eu-west-1.amazonaws.com/assets/templates/sign_in.html
+https://app.hackathon.nf-co.re/assets/logos/nf-core-logo.png
+https://app.hackathon.nf-co.re/assets/logos/nf-core-logo-square.png
 ```
 
 ## Testing Social Sharing
@@ -114,6 +113,5 @@ After deploying, test social sharing previews:
 4. **LinkedIn**: Use [Post Inspector](https://www.linkedin.com/post-inspector/)
 
 If previews don't show correctly:
-- Check S3 bucket is public
 - Verify asset URLs are accessible
 - Clear cache on the respective platform's debugger
