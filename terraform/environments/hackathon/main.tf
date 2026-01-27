@@ -128,6 +128,7 @@ locals {
     Project     = var.PROJECT_NAME
     Environment = "hackathon"
     ManagedBy   = "terraform"
+    pipeline    = "hackathon-infra"
   }
 }
 

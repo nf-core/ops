@@ -28,16 +28,6 @@ output "instance_private_ip" {
   value       = aws_instance.workadventure.private_ip
 }
 
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket for maps"
-  value       = aws_s3_bucket.maps.bucket
-}
-
-output "s3_bucket_arn" {
-  description = "ARN of the S3 bucket for maps"
-  value       = aws_s3_bucket.maps.arn
-}
-
 output "app_url" {
   description = "URL for WorkAdventure"
   value       = "https://app.${var.domain}"

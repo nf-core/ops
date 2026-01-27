@@ -45,7 +45,8 @@ else
     WA_IP="N/A"
 fi
 
-S3_BUCKET=$(terraform output -raw workadventure_s3_bucket 2>/dev/null || echo "N/A")
+# Maps are now served locally via nginx on the WorkAdventure instance
+MAPS_URL="https://app.${DOMAIN}/maps/default/map.json"
 
 echo ""
 echo "Service URLs:"
@@ -55,7 +56,7 @@ echo "  Jitsi:         $JITSI_URL"
 echo "  TURN:          $TURN_URL"
 echo "  TURNS:         $TURNS_URL"
 echo ""
-echo "S3 Maps Bucket:  $S3_BUCKET"
+echo "Maps URL:        $MAPS_URL"
 echo ""
 echo "Instance IPs (for SSH via 1Password agent):"
 echo "  WorkAdventure: ssh ec2-user@$WA_IP"
@@ -163,18 +164,16 @@ else
     echo "  Jitsi:         NOT DEPLOYED"
 fi
 
-# Check S3 maps access
-if [[ "$S3_BUCKET" != "N/A" ]]; then
-    S3_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://${S3_BUCKET}.s3.${TF_VAR_AWS_REGION:-eu-west-1}.amazonaws.com/maps/default/map.json" 2>/dev/null || echo "failed")
-    if [[ "$S3_STATUS" == "200" ]]; then
-        echo "  S3 Maps:       OK (HTTP $S3_STATUS)"
-    elif [[ "$S3_STATUS" == "403" ]] || [[ "$S3_STATUS" == "404" ]]; then
-        echo "  S3 Maps:       NOT SYNCED (run ./scripts/sync-maps.sh)"
-    else
-        echo "  S3 Maps:       FAILED (HTTP $S3_STATUS)"
-    fi
+# Check maps access (served locally via nginx)
+MAPS_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$MAPS_URL" 2>/dev/null || echo "failed")
+if [[ "$MAPS_STATUS" == "200" ]]; then
+    echo "  Maps:          OK (HTTP $MAPS_STATUS)"
+elif [[ "$MAPS_STATUS" == "404" ]]; then
+    echo "  Maps:          NOT FOUND (check nginx container and git repo on server)"
+elif [[ "$MAPS_STATUS" == "502" ]] || [[ "$MAPS_STATUS" == "503" ]]; then
+    echo "  Maps:          STARTING (nginx container still booting)"
 else
-    echo "  S3 Maps:       NOT DEPLOYED"
+    echo "  Maps:          FAILED (HTTP $MAPS_STATUS)"
 fi
 
 echo ""

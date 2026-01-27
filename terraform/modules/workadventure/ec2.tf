@@ -36,8 +36,6 @@ resource "aws_instance" "workadventure" {
     turn_server              = var.turn_server
     turn_secret              = var.turn_secret
     jitsi_url                = var.jitsi_url
-    s3_bucket                = aws_s3_bucket.maps.bucket
-    aws_region               = data.aws_region.current.name
     admin_email              = var.admin_email
     # GitHub OAuth (Milestone 8)
     github_oauth_client_id     = var.github_oauth_client_id

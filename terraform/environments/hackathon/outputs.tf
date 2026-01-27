@@ -81,10 +81,7 @@ output "workadventure_instance_id" {
   value       = module.workadventure.instance_id
 }
 
-output "workadventure_s3_bucket" {
-  description = "WorkAdventure maps S3 bucket"
-  value       = module.workadventure.s3_bucket_name
-}
+
 
 #------------------------------------------------------------------------------
 # LiveKit Outputs (Milestone 3)
