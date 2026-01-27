@@ -4,21 +4,20 @@ Custom maps for the nf-core hackathon, based on the [WorkAdventure hackathon tem
 
 ## Important: Source of Truth
 
-The `maps/` folder in this repository is the **source of truth** for all map assets. The S3 bucket is ephemeral and destroyed when infrastructure is torn down.
+The `maps/` folder in this repository is the **source of truth** for all map assets. Maps are served directly from the cloned repository on the EC2 instance.
 
 **Always commit map changes to git** before tearing down infrastructure.
 
 ## Workflow
 
 - **Humans:** Edit maps using Tiled Map Editor (this guide)
-- **AI Agents:** Validate maps and sync to S3 (see `.claude/skills/maps/SKILL.md`)
+- **AI Agents:** Validate maps and sync to server (see `.claude/skills/maps/SKILL.md`)
 
 ## Quick Start
 
 ### Prerequisites
 
 - [Tiled Map Editor](https://www.mapeditor.org/) (free, cross-platform)
-- For syncing: AWS CLI configured with nf-core profile
 
 ### Edit and Deploy
 
@@ -29,7 +28,15 @@ open maps/default/map.json   # macOS
 
 # 2. Make your changes in Tiled and save
 
-# 3. Validate and sync to S3
+# 3. If you modified TypeScript scripts, rebuild locally
+cd maps/default && npm run build && cd ../..
+
+# 4. Commit and push your changes
+git add maps/
+git commit -m "Update maps"
+git push
+
+# 5. Sync to the server
 ./scripts/sync-maps.sh
 ```
 
@@ -43,7 +50,7 @@ maps/
     ├── src/               # TypeScript source for scripting
     │   ├── main.ts        # Main script source
     │   └── index.html     # HTML wrapper for WorkAdventure API
-    ├── dist/              # Built script output (gitignored)
+    ├── dist/              # Pre-built scripts (committed to git)
     │   ├── index.html     # Built HTML with iframe API
     │   └── main.js        # Compiled JavaScript
     ├── package.json       # NPM dependencies
@@ -70,20 +77,13 @@ The script provides:
 The script is built using TypeScript and Vite:
 - **Source**: `src/main.ts` - TypeScript with WorkAdventure API types
 - **Wrapper**: `src/index.html` - Loads WorkAdventure iframe API before script
-- **Output**: `dist/` - Built HTML and JS files synced to S3 as `script/`
+- **Output**: `dist/` - Pre-built HTML and JS files (committed to git, served as `script/`)
 
 The HTML wrapper is required because WorkAdventure scripts run in an iframe and need the [iframe_api.js](https://play.workadventu.re/iframe_api.js) to communicate with the main WorkAdventure window.
 
 ### Building the Script
 
-The `sync-maps.sh` script automatically builds TypeScript before deploying:
-
-```bash
-# Automatic build and deploy
-./scripts/sync-maps.sh
-```
-
-For manual builds during development:
+The `dist/` folder is **committed to git** and contains pre-built scripts. Only rebuild if you modify TypeScript:
 
 ```bash
 cd maps/default
@@ -94,7 +94,13 @@ npm install
 # Build to dist/
 npm run build
 
-# For development with hot reload
+# Commit the built files
+git add dist/
+git commit -m "Rebuild map scripts"
+```
+
+For development with hot reload:
+```bash
 npm run dev
 ```
 
@@ -105,7 +111,7 @@ To add interactive zones to the map:
 2. Draw a rectangle where you want the interaction
 3. Set the object's `name` property to match the zone name in your script (e.g., `needHelp`)
 4. Add the zone handler in `src/main.ts` using `WA.room.area.onEnter()`
-5. Save and sync the map
+5. Rebuild scripts if needed, commit, and sync
 
 ### How It Works
 
@@ -274,24 +280,22 @@ python3 -m http.server 8080
 # In browser, construct URL:
 # https://app.hackathon.nf-co.re/_/global/localhost:8080/default/map.json
 #
-# Note: Local testing requires HTTPS. For quick checks, just sync to S3.
+# Note: Local testing requires HTTPS. For quick checks, just sync to server.
 ```
 
 ## Deploying
 
 ```bash
-# Validate, build scripts, and sync to S3
+# Commit and push your changes first
+git add maps/
+git commit -m "Update maps"
+git push
+
+# Sync to the server (does git pull on EC2)
 ./scripts/sync-maps.sh
 ```
 
-The script will:
-1. Validate all map files (JSON syntax, tileset paths, spawn layer)
-2. Build TypeScript scripts (npm install + npm run build for each map with package.json)
-3. Sync map assets to S3 bucket (excluding source files)
-4. Sync built scripts from `dist/` to `script/` subdirectory on S3
-5. Display the map URL
-
-Changes are live immediately after sync (with 1-hour cache).
+Changes are live immediately after sync. Users may need to hard refresh (Ctrl+Shift+R).
 
 ## Validation
 
@@ -312,18 +316,11 @@ Checks performed:
 ### Map not loading / Blue screen
 
 ```bash
-# Check if map exists in S3
-aws s3 ls s3://BUCKET_NAME/maps/default/map.json --profile nf-core
+# Check the map URL is accessible
+curl -I https://app.hackathon.nf-co.re/maps/default/map.json
 
-# Re-sync
+# Sync the latest changes
 ./scripts/sync-maps.sh
-```
-
-### CORS errors
-
-The S3 bucket has CORS configured via Terraform. If issues persist:
-```bash
-aws s3api get-bucket-cors --bucket BUCKET_NAME --profile nf-core
 ```
 
 ### Tiles not rendering

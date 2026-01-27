@@ -30,19 +30,6 @@ resource "aws_iam_role_policy" "workadventure" {
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket",
-          "s3:DeleteObject"
-        ]
-        Resource = [
-          aws_s3_bucket.maps.arn,
-          "${aws_s3_bucket.maps.arn}/*"
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"

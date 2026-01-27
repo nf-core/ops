@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# Validate WorkAdventure maps before syncing to S3
+# Validate WorkAdventure maps before syncing to server
 # Usage: ./scripts/validate-maps.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
