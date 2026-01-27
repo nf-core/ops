@@ -39766,7 +39766,7 @@
         {
           "name": "playAudio",
           "type": "string",
-          "value": "src/assets/bensound-thelounge.mp3"
+          "value": "assets/bensound-thelounge.mp3"
         }
       ],
       "type": "tilelayer",
