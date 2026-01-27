@@ -24,18 +24,22 @@ This document explains the architectural decisions and design rationale for the 
     │ EC2 (t3.xlarge) │◄─────────►│ EC2 (c5.xlarge) │           │ EC2 (t3.medium) │
     │ Docker Compose  │           │ Caddy + LK      │           │ Docker Compose  │
     └────────┬────────┘           └─────────────────┘           └─────────────────┘
-             │                             ▲
-             │                             │
-             ▼                    ┌────────┴────────┐
-    ┌─────────────────┐           │  EIP (Coturn)   │
-    │ S3 Maps Bucket  │           │  turn.*         │
-    │ (map assets)    │           └────────┬────────┘
-    └─────────────────┘                    │
-                                           ▼
-                                  ┌─────────────────┐
-                                  │ Coturn TURN     │
-                                  │ EC2 (t3.medium) │
-                                  └─────────────────┘
+              │                             ▲
+              │                             │
+              │                    ┌────────┴────────┐
+              │                    │  EIP (Coturn)   │
+              │                    │  turn.*         │
+              │                    └────────┬────────┘
+              │                             │
+              │                             ▼
+              │                    ┌─────────────────┐
+              │                    │ Coturn TURN     │
+              │                    │ EC2 (t3.medium) │
+              │                    └─────────────────┘
+              │
+              │  Maps served locally via nginx
+              │  (cloned from git repo)
+              ▼
 ```
 
 ## Service Roles

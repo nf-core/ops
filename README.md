@@ -70,7 +70,7 @@ The AI reads `CLAUDE.md` for safety rules and loads task-specific skills automat
 
 </details>
 
-> **Note:** Maps in the `maps/` folder are the source of truth. Always commit changes to git. The S3 bucket is ephemeral and destroyed with the infrastructure.
+> **Note:** Maps in the `maps/` folder are the source of truth. Always commit changes to git before tearing down infrastructure.
 
 ## Manual Usage
 
@@ -82,7 +82,7 @@ Everything can also be done manually without AI assistance.
 |--------|-------------|
 | `./scripts/validate-env.sh` | Check environment is configured |
 | `./scripts/bootstrap.sh` | Create Terraform backend (S3 + DynamoDB) |
-| `./scripts/sync-maps.sh` | Sync maps to S3 |
+| `./scripts/sync-maps.sh` | Sync maps to server |
 | `./scripts/status.sh` | Check health of all services |
 | `./scripts/ssh.sh <service>` | SSH to instance (wa\|lk\|turn\|jitsi) |
 
@@ -119,14 +119,10 @@ flowchart TB
     end
 
     subgraph Compute["EC2 Instances"]
-        WA["WorkAdventure<br/>t3.xlarge"]
+        WA["WorkAdventure<br/>t3.xlarge<br/>(includes maps via nginx)"]
         LK["LiveKit Server<br/>c5.xlarge"]
         TURN["Coturn TURN<br/>t3.medium"]
         JITSI["Jitsi Meet<br/>t3.medium"]
-    end
-
-    subgraph Storage["Storage"]
-        S3["S3 Maps Bucket"]
     end
 
     R53 --> ALB
@@ -139,7 +135,6 @@ flowchart TB
     EIP_TURN --> TURN
     EIP_JITSI --> JITSI
 
-    WA --> S3
     WA <--> LK
     LK <--> TURN
 ```
@@ -149,7 +144,7 @@ flowchart TB
 | Document | Description |
 |----------|-------------|
 | [docs/architecture.md](docs/architecture.md) | VPC layout, service roles, design rationale |
-| [docs/costs.md](docs/costs.md) | Instance sizing, daily costs, optimization options |
+| [docs/costs.md](docs/costs.md) | Instance sizing, daily costs, tracking via AWS Cost Explorer |
 | [docs/branding.md](docs/branding.md) | Customizing logos, sign-in page, social sharing |
 | [maps/README.md](maps/README.md) | Map editing guide for Tiled |
 
