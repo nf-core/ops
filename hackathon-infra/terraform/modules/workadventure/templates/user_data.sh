@@ -171,7 +171,7 @@ cat >> docker-compose.override.yaml << EOF
       - "traefik.http.services.play-static.loadbalancer.server.port=3000"
 EOF
 
-docker-compose -f docker-compose.prod.yaml -f docker-compose.override.yaml up -d
+docker compose -f docker-compose.prod.yaml -f docker-compose.override.yaml up -d
 sleep 30
 docker exec docker-play-1 ln -sf /usr/src/play/dist/public/resources/objects/webrtc-in-ding.mp3 /usr/src/play/dist/public/resources/objects/webrtc-in.mp3 2>/dev/null || true
 docker exec docker-play-1 sed -i 's|{{ title }}|nf-core/hackathon|g' /usr/src/play/dist/public/index.html 2>/dev/null || true
@@ -182,5 +182,5 @@ if [ -d "/opt/workadventure/hackathon-infra/overrides" ]; then
   docker cp /opt/workadventure/hackathon-infra/overrides/. docker-play-1:/usr/src/play/dist/public/
 fi
 
-docker-compose -f docker-compose.prod.yaml -f docker-compose.override.yaml ps
+docker compose -f docker-compose.prod.yaml -f docker-compose.override.yaml ps
 echo "WorkAdventure installation complete! Access: https://app.${domain}"
