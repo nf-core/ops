@@ -1,1 +1,6 @@
 node_modules/
+
+# NOTE: dist/ is intentionally tracked (not ignored).
+# Pre-built scripts are committed so the EC2 instance can serve them
+# directly from the git clone without requiring a build step on deploy.
+# Rebuild with `npm run build` only when modifying src/main.ts.
