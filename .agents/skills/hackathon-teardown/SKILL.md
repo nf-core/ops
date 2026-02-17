@@ -11,7 +11,7 @@ description: >
 
 Safely destroy all hackathon infrastructure.
 
-**Reference:** [manual-cleanup-scripts.md](manual-cleanup-scripts.md) - Full scripts for manual AWS cleanup
+**Reference:** [manual-cleanup-scripts.md](references/manual-cleanup-scripts.md) - Full scripts for manual AWS cleanup
 
 ---
 
@@ -20,6 +20,7 @@ Safely destroy all hackathon infrastructure.
 ### 1. Confirm Intent
 
 **This permanently destroys all infrastructure.** Verify:
+
 - User intends to tear down the entire stack
 - No active users in the virtual world
 
@@ -28,14 +29,15 @@ Safely destroy all hackathon infrastructure.
 The `maps/` folder is the source of truth and tracked in git.
 
 ```bash
-git status maps/
+git status hackathon-infra/maps/
 ```
 
 If uncommitted changes exist, commit them or confirm they should be discarded.
 
 ### 3. Verify Credentials
+
 ```bash
-./scripts/validate-env.sh
+hackathon-infra/scripts/validate-env.sh
 aws sts get-caller-identity --profile nf-core
 ```
 
@@ -46,26 +48,32 @@ aws sts get-caller-identity --profile nf-core
 Use when Terraform state is healthy and matches AWS.
 
 ### Step 1: Check State Health
+
 ```bash
-cd terraform/environments/hackathon
+cd hackathon-infra/terraform/environments/hackathon
 terraform state list | head -20
 ```
+
 Should list resources. If errors or empty, use Method 2.
 
 **Important:** All terraform commands must be run from `terraform/environments/hackathon/`.
 
 ### Step 2: Disable Prevent Destroy (If Needed)
+
 ```bash
-grep -r "prevent_destroy" terraform/
+grep -r "prevent_destroy" hackathon-infra/terraform/
 ```
+
 If found, temporarily set to `false`. Re-enable after teardown.
 
 ### Step 3: Review Destruction Plan
+
 ```bash
 terraform plan -destroy
 ```
 
 Verify:
+
 - All hackathon resources listed (~50-60 resources)
 - No `vpc-multi-runner` resources (CI infrastructure - DO NOT TOUCH)
 - DNS records but NOT the hosted zone
@@ -73,6 +81,7 @@ Verify:
 ### Step 4: Execute Destruction
 
 **Only with explicit user confirmation:**
+
 ```bash
 terraform destroy
 ```
@@ -80,6 +89,7 @@ terraform destroy
 Type `yes` when prompted. Takes 5-10 minutes.
 
 ### Step 5: Verify
+
 ```bash
 terraform state list
 # Should be empty
@@ -91,6 +101,7 @@ aws ec2 describe-instances --profile nf-core --region eu-west-1 \
 ```
 
 ### Step 6: Re-enable Prevent Destroy
+
 If disabled in Step 2, re-enable for safety.
 
 ---
@@ -98,11 +109,12 @@ If disabled in Step 2, re-enable for safety.
 ## Method 2: Manual AWS Cleanup
 
 Use when:
+
 - Terraform state is corrupted
 - `terraform destroy` fails with errors
 - Resources exist in AWS but not in state
 
-**See [manual-cleanup-scripts.md](manual-cleanup-scripts.md) for complete step-by-step scripts.**
+**See [manual-cleanup-scripts.md](references/manual-cleanup-scripts.md) for complete step-by-step scripts.**
 
 ### Critical: Deletion Order
 
@@ -156,28 +168,32 @@ aws ec2 describe-security-groups --profile nf-core --region eu-west-1 \
 
 ## What to PRESERVE (Never Delete)
 
-| Resource | Reason |
-|----------|--------|
-| Route53 Hosted Zone | Contains NS records that Netlify points to |
-| Netlify DNS Config | External to AWS, manages nf-co.re domain |
-| 1Password Secrets | Reusable for next deployment |
-| `vpc-multi-runner-*` EIPs | CI runner infrastructure |
-| `runs-on--*` instances | CI runner infrastructure |
+| Resource                  | Reason                                     |
+| ------------------------- | ------------------------------------------ |
+| Route53 Hosted Zone       | Contains NS records that Netlify points to |
+| Netlify DNS Config        | External to AWS, manages nf-co.re domain   |
+| 1Password Secrets         | Reusable for next deployment               |
+| `vpc-multi-runner-*` EIPs | CI runner infrastructure                   |
+| `runs-on--*` instances    | CI runner infrastructure                   |
 
 ---
 
 ## Troubleshooting
 
 ### "Resource has dependencies" errors
+
 Delete in correct order (see above). Dependencies must be removed first.
 
 ### Terraform state lock during destroy
+
 1. Wait 15 minutes for auto-expiry
 2. Check no other Terraform processes running
 3. **Only with explicit user approval:** `terraform force-unlock <lock-id>`
 
 ### Resources exist but not in Terraform state
+
 Use Method 2 (Manual Cleanup) for those specific resources, or import them first:
+
 ```bash
 terraform import <resource_address> <resource_id>
 terraform destroy

@@ -22,6 +22,7 @@ op --version       # 1Password CLI
 ### Profile Setup
 
 Create `~/.aws/credentials`:
+
 ```ini
 [nf-core]
 aws_access_key_id = AKIA...
@@ -30,6 +31,7 @@ region = eu-west-1
 ```
 
 ### Verify Access
+
 ```bash
 aws sts get-caller-identity --profile nf-core
 ```
@@ -42,34 +44,34 @@ All variables are managed via 1Password Environments and direnv.
 
 ### Required Variables
 
-| Variable | Example | Description |
-|----------|---------|-------------|
-| `AWS_PROFILE` | `nf-core` | AWS CLI profile name |
-| `AWS_REGION` | `eu-west-1` | AWS region |
-| `DOMAIN` | `hackathon.nf-co.re` | Base domain for services |
-| `ROUTE53_ZONE_ID` | `Z093837218...` | Route53 hosted zone ID |
-| `PROJECT_NAME` | `nfcore-hackathon` | Prefix for AWS resources |
-| `SSH_KEY_NAME` | `nfcore-hackathon` | SSH key name in 1Password and AWS |
-| `ADMIN_EMAIL` | `admin@nf-co.re` | Email for Let's Encrypt |
+| Variable          | Example              | Description                       |
+| ----------------- | -------------------- | --------------------------------- |
+| `AWS_PROFILE`     | `nf-core`            | AWS CLI profile name              |
+| `AWS_REGION`      | `eu-west-1`          | AWS region                        |
+| `DOMAIN`          | `hackathon.nf-co.re` | Base domain for services          |
+| `ROUTE53_ZONE_ID` | `Z093837218...`      | Route53 hosted zone ID            |
+| `PROJECT_NAME`    | `nfcore-hackathon`   | Prefix for AWS resources          |
+| `SSH_KEY_NAME`    | `nfcore-hackathon`   | SSH key name in 1Password and AWS |
+| `ADMIN_EMAIL`     | `admin@nf-co.re`     | Email for Let's Encrypt           |
 
 ### Secret Variables
 
 Generate with `openssl rand -hex 32` (or `-hex 16` for cookie secret):
 
-| Variable | Length | Description |
-|----------|--------|-------------|
-| `WORKADVENTURE_SECRET_KEY` | 64 hex | Session signing |
-| `LIVEKIT_API_KEY` | 32 hex | LiveKit API key |
-| `LIVEKIT_API_SECRET` | 64 hex | LiveKit API secret |
-| `COTURN_SECRET` | 64 hex | TURN shared secret |
-| `JITSI_SECRET` | 64 hex | Jitsi auth secret |
+| Variable                   | Length | Description        |
+| -------------------------- | ------ | ------------------ |
+| `WORKADVENTURE_SECRET_KEY` | 64 hex | Session signing    |
+| `LIVEKIT_API_KEY`          | 32 hex | LiveKit API key    |
+| `LIVEKIT_API_SECRET`       | 64 hex | LiveKit API secret |
+| `COTURN_SECRET`            | 64 hex | TURN shared secret |
+| `JITSI_SECRET`             | 64 hex | Jitsi auth secret  |
 
 ### OAuth Variables
 
-| Variable | Source | Description |
-|----------|--------|-------------|
-| `GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth App | Client ID (~20 chars) |
-| `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth App | Client secret (~40 chars) |
+| Variable                     | Source                 | Description                      |
+| ---------------------------- | ---------------------- | -------------------------------- |
+| `GITHUB_OAUTH_CLIENT_ID`     | GitHub OAuth App       | Client ID (~20 chars)            |
+| `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth App       | Client secret (~40 chars)        |
 | `OAUTH2_PROXY_COOKIE_SECRET` | `openssl rand -hex 16` | **Must be exactly 32 hex chars** |
 
 **CRITICAL:** Cookie secret must be exactly 32 hex characters (16 bytes). Do NOT use base64 encoding.
@@ -119,12 +121,14 @@ aws ec2 import-key-pair \
 3. Enable **"Integrate with 1Password CLI"**
 
 4. Add to `~/.ssh/config`:
+
    ```
    Host *
        IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
    ```
 
 5. Create `~/.config/1password/ssh/agent.toml`:
+
    ```toml
    [[ssh-keys]]
    vault = "Dev"
@@ -143,17 +147,20 @@ aws ec2 import-key-pair \
 ## Route53 Setup
 
 ### Check If Zone Exists
+
 ```bash
 aws route53 list-hosted-zones-by-name --dns-name "hackathon.nf-co.re" --profile nf-core
 ```
 
 ### Create Zone (If Needed)
+
 ```bash
 aws route53 create-hosted-zone \
   --name "hackathon.nf-co.re" \
   --caller-reference "$(date +%s)" \
   --profile nf-core
 ```
+
 Note the nameservers from output.
 
 ### Configure Netlify NS Delegation
@@ -164,6 +171,7 @@ The parent domain `nf-co.re` is managed by Netlify:
 2. Add NS records for `hackathon` subdomain pointing to AWS nameservers
 
 ### Verify Delegation
+
 ```bash
 dig NS hackathon.nf-co.re +short
 # Should return AWS nameservers
@@ -180,6 +188,7 @@ dig NS hackathon.nf-co.re +short
 5. The `.env` file should appear (git-ignored)
 
 ### Verify Environment
+
 ```bash
 ./scripts/validate-env.sh
 ```

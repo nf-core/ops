@@ -62,18 +62,18 @@ fi
 for service in livekit coturn jitsi workadventure; do
   PROFILE="nfcore-hackathon-${service}-profile"
   ROLE="nfcore-hackathon-${service}-role"
-  
+
   echo "=== Cleaning up $service ==="
-  
+
   # Remove role from instance profile
   aws iam remove-role-from-instance-profile --profile nf-core \
     --instance-profile-name "$PROFILE" \
     --role-name "$ROLE" 2>/dev/null && echo "Removed role from profile" || echo "Profile/role link not found"
-  
+
   # Delete instance profile
   aws iam delete-instance-profile --profile nf-core \
     --instance-profile-name "$PROFILE" 2>/dev/null && echo "Deleted instance profile" || echo "Instance profile not found"
-  
+
   # Detach managed policies from role
   for policy_arn in $(aws iam list-attached-role-policies --profile nf-core \
     --role-name "$ROLE" --query 'AttachedPolicies[].PolicyArn' --output text 2>/dev/null); do
@@ -81,7 +81,7 @@ for service in livekit coturn jitsi workadventure; do
       --role-name "$ROLE" --policy-arn "$policy_arn"
     echo "Detached policy: $policy_arn"
   done
-  
+
   # Delete inline policies from role
   for policy_name in $(aws iam list-role-policies --profile nf-core \
     --role-name "$ROLE" --query 'PolicyNames[]' --output text 2>/dev/null); do
@@ -89,11 +89,11 @@ for service in livekit coturn jitsi workadventure; do
       --role-name "$ROLE" --policy-name "$policy_name"
     echo "Deleted inline policy: $policy_name"
   done
-  
+
   # Delete role
   aws iam delete-role --profile nf-core \
     --role-name "$ROLE" 2>/dev/null && echo "Deleted role" || echo "Role not found"
-  
+
   echo ""
 done
 ```
@@ -138,6 +138,7 @@ done
 ```
 
 If deletion fails with dependency errors, first delete rules referencing other security groups:
+
 ```bash
 # Example: Remove all ingress rules from a security group
 aws ec2 revoke-security-group-ingress --profile nf-core --region eu-west-1 \
@@ -209,6 +210,7 @@ fi
 ```
 
 If VPC deletion fails, there may be remaining dependencies (route tables, network ACLs). Check:
+
 ```bash
 aws ec2 describe-route-tables --profile nf-core --region eu-west-1 \
   --filters "Name=vpc-id,Values=$VPC_ID" --output table

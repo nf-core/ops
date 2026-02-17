@@ -9,11 +9,11 @@ description: >
 
 # Maps: Validate and Sync
 
-This skill covers validating and syncing WorkAdventure maps. 
+This skill covers validating and syncing WorkAdventure maps.
 
 **Important workflow note:** Map editing is done by humans using the Tiled Map Editor. AI agents assist with validation, building TypeScript scripts, and syncing to the server.
 
-For map editing instructions, see `maps/README.md`.
+For map editing instructions, see `hackathon-infra/maps/README.md`.
 
 ## Map Architecture Overview
 
@@ -34,6 +34,7 @@ EC2: /opt/workadventure/hackathon-infra/  # Cloned repo on server
 ```
 
 **Key points:**
+
 - Maps are served **locally from the EC2 instance** via nginx (same origin as app)
 - The `hackathon-infra` repo is cloned during deployment
 - `sync-maps.sh` SSHs into the server and runs `git pull`
@@ -46,14 +47,14 @@ EC2: /opt/workadventure/hackathon-infra/  # Cloned repo on server
 ### 1. Verify Environment
 
 ```bash
-./scripts/validate-env.sh
+hackathon-infra/scripts/validate-env.sh
 ```
 
 ### 2. Ensure Changes Are Committed and Pushed
 
 ```bash
 git status
-git add maps/
+git add hackathon-infra/maps/
 git commit -m "Update maps"
 git push
 ```
@@ -65,15 +66,17 @@ git push
 ## Sync Maps to Server
 
 ```bash
-./scripts/sync-maps.sh
+hackathon-infra/scripts/sync-maps.sh
 ```
 
 **What this does:**
+
 1. SSHs into the WorkAdventure EC2 instance
 2. Runs `git pull` to get latest changes
 3. Maps are immediately available (no container restart needed)
 
 **Success looks like:**
+
 - "Pulling latest changes..."
 - "Maps updated successfully!"
 
@@ -88,7 +91,7 @@ Before syncing, validate the map files:
 ### Check JSON Syntax
 
 ```bash
-python3 -m json.tool maps/default/map.json > /dev/null && echo "Valid JSON" || echo "Invalid JSON"
+python3 -m json.tool hackathon-infra/maps/default/map.json > /dev/null && echo "Valid JSON" || echo "Invalid JSON"
 ```
 
 ### Check for Common Errors
@@ -98,7 +101,7 @@ python3 -m json.tool maps/default/map.json > /dev/null && echo "Valid JSON" || e
 The Phaser game engine crashes on empty `data` arrays in tile layers:
 
 ```bash
-grep -n '"data": \[\]' maps/default/map.json
+grep -n '"data": \[\]' hackathon-infra/maps/default/map.json
 ```
 
 **Success:** No output (no empty arrays).
@@ -108,17 +111,17 @@ grep -n '"data": \[\]' maps/default/map.json
 Tileset paths in the map must be relative paths that exist:
 
 ```bash
-grep -o '"image": "[^"]*"' maps/default/map.json
+grep -o '"image": "[^"]*"' hackathon-infra/maps/default/map.json
 ```
 
 ---
 
 ## Building TypeScript Scripts
 
-The `dist/` folder is **committed to git** and contains pre-built scripts. You only need to rebuild locally if you modify `maps/default/src/main.ts`:
+The `dist/` folder is **committed to git** and contains pre-built scripts. You only need to rebuild locally if you modify `hackathon-infra/maps/default/src/main.ts`:
 
 ```bash
-cd maps/default
+cd hackathon-infra/maps/default
 npm install    # First time only
 npm run build
 git add dist/
@@ -133,19 +136,20 @@ git commit -m "Rebuild map scripts"
 
 These properties create interactive behaviors when added to tile layers or objects in Tiled:
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `jitsiRoom` | string | Opens Jitsi video call with this room name |
-| `silent` | boolean | Disables proximity audio in this zone |
-| `openWebsite` | string | Opens URL when player enters |
-| `playAudio` | string | Plays audio file from URL |
-| `collides` | boolean | Blocks player movement |
-| `startLayer` | boolean | Player spawn point |
-| `focusable` | boolean | Makes area appear in Explorer and auto-zooms camera |
+| Property      | Type    | Description                                         |
+| ------------- | ------- | --------------------------------------------------- |
+| `jitsiRoom`   | string  | Opens Jitsi video call with this room name          |
+| `silent`      | boolean | Disables proximity audio in this zone               |
+| `openWebsite` | string  | Opens URL when player enters                        |
+| `playAudio`   | string  | Plays audio file from URL                           |
+| `collides`    | boolean | Blocks player movement                              |
+| `startLayer`  | boolean | Player spawn point                                  |
+| `focusable`   | boolean | Makes area appear in Explorer and auto-zooms camera |
 
 ### Example: Creating a Jitsi Meeting Room
 
 In Tiled:
+
 1. Create a tile layer or object
 2. Add custom property: `jitsiRoom` = `meeting-room-1`
 3. Save and sync
@@ -153,6 +157,7 @@ In Tiled:
 ### Example: Creating a Focusable Area
 
 In Tiled (must be a **rectangle object**, not a tile layer):
+
 1. Select floorLayer in the Objects panel
 2. Use Rectangle tool (R) to draw over the area
 3. Name it descriptively (e.g., "Meeting Room - Alpha")
@@ -170,17 +175,19 @@ In Tiled (must be a **rectangle object**, not a tile layer):
 **Common causes:**
 
 1. **Changes not pushed to git:**
+
    ```bash
    git status
    ```
-   Fix: Commit and push, then run `./scripts/sync-maps.sh`
+
+   Fix: Commit and push, then run `hackathon-infra/scripts/sync-maps.sh`
 
 2. **Tileset not found (404):**
    Tileset paths in map.json must be relative and files must exist.
 
 3. **Empty data array:**
    ```bash
-   grep '"data": \[\]' maps/default/map.json
+   grep '"data": \[\]' hackathon-infra/maps/default/map.json
    ```
    Fix: Remove empty layers or add tile data in Tiled.
 
@@ -188,7 +195,7 @@ In Tiled (must be a **rectangle object**, not a tile layer):
 
 1. **Verify property name is exactly `jitsiRoom`** (case-sensitive)
 2. **Verify property type is string** (not boolean or number)
-3. **Check Jitsi service is healthy:** `./scripts/status.sh`
+3. **Check Jitsi service is healthy:** `hackathon-infra/scripts/status.sh`
 
 ### Sync Fails
 
@@ -197,10 +204,10 @@ In Tiled (must be a **rectangle object**, not a tile layer):
 
 ### TypeScript Build Fails (local)
 
-If you modify `maps/default/src/main.ts`, rebuild locally before committing:
+If you modify `hackathon-infra/maps/default/src/main.ts`, rebuild locally before committing:
 
 ```bash
-cd maps/default
+cd hackathon-infra/maps/default
 npm install    # First time only
 npm run build
 ```
@@ -212,19 +219,22 @@ Then commit the updated `dist/` folder along with your changes.
 ## Workflow Summary
 
 ### Human (in Tiled):
-1. Edit `maps/default/map.json`
+
+1. Edit `hackathon-infra/maps/default/map.json`
 2. Add/modify tilesets, layers, properties
 3. Save the file
 
 ### AI Agent (validation & sync):
+
 1. Validate JSON syntax
 2. Check for empty data arrays
 3. If TypeScript changed: build locally, commit `dist/`
 4. Commit and push to git
-5. Run `./scripts/sync-maps.sh`
+5. Run `hackathon-infra/scripts/sync-maps.sh`
 6. Verify in browser
 
 ### After Sync:
+
 1. Hard refresh WorkAdventure in browser (Ctrl+Shift+R)
 2. Test interactive zones work as expected
 
