@@ -5,18 +5,21 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting WorkAdventure installation..."
 
 dnf update -y
-dnf install -y docker git jq
+dnf install -y docker docker-compose-plugin git jq
 
 systemctl start docker
 systemctl enable docker
 
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-
 mkdir -p /opt/workadventure
 cd /opt/workadventure
 
-git clone --depth 1 https://github.com/nf-core/hackathon-infra.git
+# Sparse checkout: clone only hackathon-infra/ from nf-core/ops monorepo
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nf-core/ops.git ops-repo
+cd ops-repo
+git sparse-checkout set hackathon-infra
+cd /opt/workadventure
+# Symlink so all existing paths (/opt/workadventure/hackathon-infra/) keep working
+ln -s /opt/workadventure/ops-repo/hackathon-infra /opt/workadventure/hackathon-infra
 git clone --depth 1 https://github.com/workadventure/workadventure.git
 cd workadventure/contrib/docker
 
@@ -168,7 +171,7 @@ cat >> docker-compose.override.yaml << EOF
       - "traefik.http.services.play-static.loadbalancer.server.port=3000"
 EOF
 
-docker-compose -f docker-compose.prod.yaml -f docker-compose.override.yaml up -d
+docker compose -f docker-compose.prod.yaml -f docker-compose.override.yaml up -d
 sleep 30
 docker exec docker-play-1 ln -sf /usr/src/play/dist/public/resources/objects/webrtc-in-ding.mp3 /usr/src/play/dist/public/resources/objects/webrtc-in.mp3 2>/dev/null || true
 docker exec docker-play-1 sed -i 's|{{ title }}|nf-core/hackathon|g' /usr/src/play/dist/public/index.html 2>/dev/null || true
@@ -179,5 +182,5 @@ if [ -d "/opt/workadventure/hackathon-infra/overrides" ]; then
   docker cp /opt/workadventure/hackathon-infra/overrides/. docker-play-1:/usr/src/play/dist/public/
 fi
 
-docker-compose -f docker-compose.prod.yaml -f docker-compose.override.yaml ps
+docker compose -f docker-compose.prod.yaml -f docker-compose.override.yaml ps
 echo "WorkAdventure installation complete! Access: https://app.${domain}"

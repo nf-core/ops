@@ -11,7 +11,7 @@ The `maps/` folder in this repository is the **source of truth** for all map ass
 ## Workflow
 
 - **Humans:** Edit maps using Tiled Map Editor (this guide)
-- **AI Agents:** Validate maps and sync to server (see `.claude/skills/maps/SKILL.md`)
+- **AI Agents:** Validate maps and sync to server (see `.agents/skills/hackathon-maps/SKILL.md`)
 
 ## Quick Start
 
@@ -67,6 +67,7 @@ maps/
 Interactive features are implemented using the [WorkAdventure Scripting API](https://docs.workadventu.re/developer/map-scripting/).
 
 The script provides:
+
 - **Welcome message** - Displays when users enter the map
 - **Help zone popup** - Links to Slack, Documentation, GitHub (triggered by `needHelp` zone)
 - **Social links popup** - Links to Mastodon, Bluesky, YouTube, LinkedIn (triggered by `followUs` zone)
@@ -75,6 +76,7 @@ The script provides:
 ### Script Architecture
 
 The script is built using TypeScript and Vite:
+
 - **Source**: `src/main.ts` - TypeScript with WorkAdventure API types
 - **Wrapper**: `src/index.html` - Loads WorkAdventure iframe API before script
 - **Output**: `dist/` - Pre-built HTML and JS files (committed to git, served as `script/`)
@@ -100,6 +102,7 @@ git commit -m "Rebuild map scripts"
 ```
 
 For development with hot reload:
+
 ```bash
 npm run dev
 ```
@@ -107,6 +110,7 @@ npm run dev
 ### Adding Interactive Zones
 
 To add interactive zones to the map:
+
 1. In Tiled, create an Object Layer
 2. Draw a rectangle where you want the interaction
 3. Set the object's `name` property to match the zone name in your script (e.g., `needHelp`)
@@ -116,6 +120,7 @@ To add interactive zones to the map:
 ### How It Works
 
 When the map loads:
+
 1. WorkAdventure reads the `script` property from `map.json` (points to `script/index.html`)
 2. WorkAdventure loads the HTML in a sandboxed iframe
 3. The HTML loads `iframe_api.js` which provides the global `WA` object
@@ -158,6 +163,7 @@ Layers panel (top = rendered last):
 4. **Paint** using the Stamp Brush tool (B) or fill with Bucket Fill (F)
 
 **Tips:**
+
 - Furniture that should appear above players goes in `abovePlayer/` group
 - Furniture below players goes in `furniture` layer
 - Add `collides: true` to tiles that block movement
@@ -167,12 +173,14 @@ Layers panel (top = rendered last):
 To make tiles solid (players can't walk through):
 
 **Method 1: Per-tile (recommended)**
+
 1. Select a tileset in the Tilesets panel
 2. Click "Edit Tileset" (wrench icon)
 3. Select the tile(s) to make solid
 4. In Properties panel, add: `collides` (bool) = `true`
 
 **Method 2: Per-layer**
+
 1. Create a new tile layer named `collisions`
 2. Add property: `collides` = `true`
 3. Paint blocking tiles on this layer (they'll be invisible in-game)
@@ -191,42 +199,43 @@ Add these as custom properties on tiles, objects, or layers:
 
 ### Movement & Collision
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `collides` | bool | Blocks player movement |
-| `start` | bool | Legacy spawn point (use `startLayer` instead) |
-| `startLayer` | bool | Marks layer as spawn area |
+| Property     | Type | Description                                   |
+| ------------ | ---- | --------------------------------------------- |
+| `collides`   | bool | Blocks player movement                        |
+| `start`      | bool | Legacy spawn point (use `startLayer` instead) |
+| `startLayer` | bool | Marks layer as spawn area                     |
 
 ### Audio & Video
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `playAudio` | string | URL/path to background audio |
-| `playAudioLoop` | bool | Loop the audio (default: true) |
-| `silent` | bool | Mutes proximity video/audio in zone |
-| `jitsiRoom` | string | Jitsi meeting room name |
-| `jitsiTrigger` | string | `onaction` = click to join, else auto-join |
-| `jitsiWidth` | int | Jitsi iframe width (%) |
+| Property        | Type   | Description                                |
+| --------------- | ------ | ------------------------------------------ |
+| `playAudio`     | string | URL/path to background audio               |
+| `playAudioLoop` | bool   | Loop the audio (default: true)             |
+| `silent`        | bool   | Mutes proximity video/audio in zone        |
+| `jitsiRoom`     | string | Jitsi meeting room name                    |
+| `jitsiTrigger`  | string | `onaction` = click to join, else auto-join |
+| `jitsiWidth`    | int    | Jitsi iframe width (%)                     |
 
 ### Web Integration
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `openWebsite` | string | URL to open in iframe |
-| `openWebsiteTrigger` | string | `onaction` = click to open |
-| `openWebsiteAllowApi` | bool | Allow WorkAdventure scripting API |
-| `openTab` | string | URL to open in new browser tab |
+| Property              | Type   | Description                       |
+| --------------------- | ------ | --------------------------------- |
+| `openWebsite`         | string | URL to open in iframe             |
+| `openWebsiteTrigger`  | string | `onaction` = click to open        |
+| `openWebsiteAllowApi` | bool   | Allow WorkAdventure scripting API |
+| `openTab`             | string | URL to open in new browser tab    |
 
 ### Navigation
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `exitUrl` | string | Teleport to another map (full URL) |
+| Property       | Type   | Description                                    |
+| -------------- | ------ | ---------------------------------------------- |
+| `exitUrl`      | string | Teleport to another map (full URL)             |
 | `exitSceneUrl` | string | Teleport to map on same server (relative path) |
 
 ### Examples
 
 **Meeting room zone:**
+
 ```
 Object properties:
   jitsiRoom: "standup-room"
@@ -234,6 +243,7 @@ Object properties:
 ```
 
 **Website kiosk:**
+
 ```
 Object properties:
   openWebsite: "https://nf-co.re"
@@ -241,12 +251,14 @@ Object properties:
 ```
 
 **Quiet zone (no proximity chat):**
+
 ```
 Layer or object property:
   silent: true
 ```
 
 **Background music area:**
+
 ```
 Object properties:
   playAudio: "assets/bensound-thelounge.mp3"
@@ -306,6 +318,7 @@ Maps are validated before syncing. To validate without syncing:
 ```
 
 Checks performed:
+
 - JSON syntax is valid
 - All tileset images exist
 - Start/spawn layer is present
@@ -332,6 +345,7 @@ curl -I https://app.hackathon.nf-co.re/maps/default/map.json
 ### Tilesets not loading in Tiled
 
 If Tiled shows red X for tilesets:
+
 1. Ensure you opened `map.json` from the `maps/default/` directory
 2. Check that `assets/` folder contains all PNG files
 3. Verify tileset paths in map.json match actual filenames
@@ -358,6 +372,7 @@ The hackathon map includes LimeZu modern interior tilesets. For additional asset
 - [Kenney Assets](https://kenney.nl/assets) - Free game assets
 
 **Requirements for new tilesets:**
+
 - PNG format
 - 32x32 pixel tiles
 - Place in `maps/default/assets/`

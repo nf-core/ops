@@ -7,15 +7,13 @@ echo "Starting LiveKit installation..."
 
 # Update system
 dnf update -y
-dnf install -y docker jq
+dnf install -y docker docker-compose-plugin jq
 
 # Start Docker
 systemctl start docker
 systemctl enable docker
 
-# Install docker-compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+# docker compose v2 is included as a docker plugin via dnf
 
 # Get metadata
 TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
@@ -76,7 +74,7 @@ volumes:
 EOF
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
 echo "LiveKit installation complete!"
 echo "LiveKit domain: $LIVEKIT_DOMAIN"
