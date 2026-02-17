@@ -5,18 +5,21 @@ exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "Starting WorkAdventure installation..."
 
 dnf update -y
-dnf install -y docker git jq
+dnf install -y docker docker-compose-plugin git jq
 
 systemctl start docker
 systemctl enable docker
 
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-
 mkdir -p /opt/workadventure
 cd /opt/workadventure
 
-git clone --depth 1 https://github.com/nf-core/hackathon-infra.git
+# Sparse checkout: clone only hackathon-infra/ from nf-core/ops monorepo
+git clone --depth 1 --filter=blob:none --sparse https://github.com/nf-core/ops.git ops-repo
+cd ops-repo
+git sparse-checkout set hackathon-infra
+cd /opt/workadventure
+# Symlink so all existing paths (/opt/workadventure/hackathon-infra/) keep working
+ln -s /opt/workadventure/ops-repo/hackathon-infra /opt/workadventure/hackathon-infra
 git clone --depth 1 https://github.com/workadventure/workadventure.git
 cd workadventure/contrib/docker
 
