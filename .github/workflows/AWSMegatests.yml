@@ -2,14 +2,14 @@ name: Preview or update Pulumi app nf-core/test-datasets/AWSMegatests
 on:
   push:
     branches:
-      - master
+      - main
     paths:
-      - "pulumi/test_datasets/**/*"
+      - "pulumi/AWSMegatests/**/*"
   pull_request:
     branches:
-      - master
+      - main
     paths:
-      - "pulumi/test_datasets/**/*"
+      - "pulumi/AWSMegatests/**/*"
 
 # These are the environment variables that jobs in the workflow have access to.
 # By defining them here, all jobs/steps will have access to these variables.
