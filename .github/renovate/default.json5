@@ -20,6 +20,10 @@
   reviewers: ["edmundmiller"],
   assigneesFromCodeOwners: true,
   gitAuthor: "nf-core-bot <renovate@nf-co.re>",
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 5am on the first day of the month"],
+  },
   "pre-commit": {
     enabled: true,
   },
