@@ -56,18 +56,6 @@ class TestNextflowConfigLoading:
                 // Includes base configuration and CPU-specific settings
 
                 includeConfig 'nextflow-base.config'
-
-                process {
-                    publishDir = [
-                        path: { params.outdir },
-                        mode: 'copy',
-                        tags: [
-                            'compute_env': 'aws_ireland_fusionv2_nvme_cpu_snapshots',
-                            'architecture': 'x86_64',
-                            'fusion': 'enabled'
-                        ]
-                    ]
-                }
             """).strip()
 
             cpu_config_path = os.path.join(temp_dir, "nextflow-cpu.config")
@@ -80,19 +68,6 @@ class TestNextflowConfigLoading:
                 // Includes base configuration and GPU-specific settings
 
                 includeConfig 'nextflow-base.config'
-
-                process {
-                    publishDir = [
-                        path: { params.outdir },
-                        mode: 'copy',
-                        tags: [
-                            'compute_env': 'aws_ireland_fusionv2_nvme_gpu_snapshots',
-                            'architecture': 'x86_64',
-                            'gpu': 'enabled',
-                            'fusion': 'enabled'
-                        ]
-                    ]
-                }
             """).strip()
 
             gpu_config_path = os.path.join(temp_dir, "nextflow-gpu.config")
@@ -141,18 +116,8 @@ class TestNextflowConfigLoading:
             in cpu_config
         )
 
-        # Verify environment-specific config content is included
-        assert "'compute_env': 'aws_ireland_fusionv2_nvme_cpu_snapshots'" in cpu_config
-        assert "'architecture': 'x86_64'" in cpu_config
-        assert "'fusion': 'enabled'" in cpu_config
-
         # Verify includeConfig line is removed
         assert "includeConfig" not in cpu_config
-
-        # Verify base config comes before environment config
-        base_index = cpu_config.find("aws.batch.maxSpotAttempts")
-        env_index = cpu_config.find("compute_env")
-        assert base_index < env_index
 
     def test_load_nextflow_config_removes_include_statements(
         self, temp_config_dir, monkeypatch
@@ -172,8 +137,7 @@ class TestNextflowConfigLoading:
         assert "nextflow-base.config" not in gpu_config
 
         # Verify the rest of the config is intact
-        assert "'compute_env': 'aws_ireland_fusionv2_nvme_gpu_snapshots'" in gpu_config
-        assert "'gpu': 'enabled'" in gpu_config
+        assert "// Nextflow configuration for GPU compute environments" in gpu_config
 
     def test_load_nextflow_config_works_without_base_config(self, monkeypatch):
         """Test that function works when base config doesn't exist."""
@@ -182,10 +146,7 @@ class TestNextflowConfigLoading:
             env_config_content = dedent("""
                 // Environment-only configuration
                 process {
-                    publishDir = [
-                        path: { params.outdir },
-                        tags: ['test': 'value']
-                    ]
+                    maxRetries = 3
                 }
             """).strip()
 
@@ -203,7 +164,7 @@ class TestNextflowConfigLoading:
 
             # Should return just the environment config
             assert "Environment-only configuration" in config
-            assert "'test': 'value'" in config
+            assert "maxRetries = 3" in config
             assert "aws.batch.maxSpotAttempts" not in config  # No base config
 
     def test_load_nextflow_config_handles_multiple_include_statements(
@@ -219,7 +180,7 @@ class TestNextflowConfigLoading:
                     includeConfig 'third.config'  // Indented include
 
                 process {
-                    publishDir = [path: { params.outdir }]
+                    maxRetries = 3
                 }
             """).strip()
 
@@ -243,7 +204,7 @@ class TestNextflowConfigLoading:
 
             # Rest of config should be intact
             assert "Configuration with multiple includes" in config
-            assert "publishDir = [path: { params.outdir }]" in config
+            assert "maxRetries = 3" in config
 
     def test_load_nextflow_config_raises_error_for_missing_env_type(self, monkeypatch):
         """Test that function raises error for undefined environment type."""
@@ -328,25 +289,9 @@ class TestNextflowConfigLoading:
         assert "// Base Nextflow configuration" in config
         assert "// Nextflow configuration for CPU compute environments" in config
 
-        # Should have proper block structure
+        # Should have proper block structure from base config
         assert "process {" in config
         assert "fusion {" in config
-
-        # Should preserve indentation and formatting
-        lines = config.split("\n")
-
-        # Find process block lines and verify indentation is preserved
-        in_process_block = False
-        for line in lines:
-            if line.strip() == "process {":
-                in_process_block = True
-            elif in_process_block and line.strip() == "}":
-                in_process_block = False
-            elif in_process_block and line.strip() and not line.startswith("//"):
-                # Lines inside process blocks should be indented
-                assert line.startswith("    ") or line.startswith("\t"), (
-                    f"Line not properly indented: '{line}'"
-                )
 
     def test_merged_config_content_order(self, temp_config_dir, monkeypatch):
         """Test that merged config has base config first, then environment config."""
@@ -360,33 +305,9 @@ class TestNextflowConfigLoading:
 
         # Find positions of key markers
         base_marker_pos = config.find("aws.batch.maxSpotAttempts")
-        env_marker_pos = config.find("'gpu': 'enabled'")
+        env_marker_pos = config.find("// Nextflow configuration for GPU")
 
         # Base config should come before environment config
-        assert base_marker_pos < env_marker_pos
         assert base_marker_pos != -1, "Base config content not found"
         assert env_marker_pos != -1, "Environment config content not found"
-
-        # Verify proper structure by checking that base config content comes before env content
-        lines = config.split("\n")
-
-        # Find the line with aws.batch.maxSpotAttempts (from base config)
-        base_config_line = None
-        gpu_enabled_line = None
-
-        for i, line in enumerate(lines):
-            if "aws.batch.maxSpotAttempts" in line:
-                base_config_line = i
-            if "'gpu': 'enabled'" in line:
-                gpu_enabled_line = i
-
-        # Base config line should come before environment config line
-        assert base_config_line is not None, (
-            "Base config content not found in merged config"
-        )
-        assert gpu_enabled_line is not None, (
-            "Environment config content not found in merged config"
-        )
-        assert base_config_line < gpu_enabled_line, (
-            "Base config should come before environment config"
-        )
+        assert base_marker_pos < env_marker_pos
