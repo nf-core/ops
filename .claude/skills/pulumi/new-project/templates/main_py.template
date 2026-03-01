@@ -1,0 +1,60 @@
+"""Pulumi program for {{PROJECT_NAME}}.
+
+{{DESCRIPTION}}
+"""
+
+import pulumi
+import pulumi_aws as aws
+
+# Get configuration
+config = pulumi.Config()
+aws_config = pulumi.Config("aws")
+region = aws_config.require("region")
+stack = pulumi.get_stack()
+project = pulumi.get_project()
+
+# Common tags for all resources
+common_tags = {
+    "Project": project,
+    "Environment": stack,
+    "ManagedBy": "Pulumi",
+}
+
+# Example infrastructure - replace with your actual resources
+# ============================================================
+
+# Example: S3 Bucket
+bucket = aws.s3.Bucket(
+    "main-bucket",
+    bucket=f"{project}-{stack}",
+    acl="private",
+    versioning=aws.s3.BucketVersioningArgs(
+        enabled=True,
+    ),
+    server_side_encryption_configuration=aws.s3.BucketServerSideEncryptionConfigurationArgs(
+        rule=aws.s3.BucketServerSideEncryptionConfigurationRuleArgs(
+            apply_server_side_encryption_by_default=aws.s3.BucketServerSideEncryptionConfigurationRuleApplyServerSideEncryptionByDefaultArgs(
+                sse_algorithm="AES256",
+            ),
+        ),
+    ),
+    tags=common_tags,
+)
+
+# Block public access to bucket
+bucket_public_access_block = aws.s3.BucketPublicAccessBlock(
+    "bucket-public-access-block",
+    bucket=bucket.id,
+    block_public_acls=True,
+    block_public_policy=True,
+    ignore_public_acls=True,
+    restrict_public_buckets=True,
+)
+
+# Export useful outputs
+# ======================
+
+pulumi.export("bucket_name", bucket.id)
+pulumi.export("bucket_arn", bucket.arn)
+pulumi.export("region", region)
+pulumi.export("stack", stack)
