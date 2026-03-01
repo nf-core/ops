@@ -64,6 +64,12 @@ jobs:
       max-parallel: 5 # Limit parallel jobs to avoid overwhelming S3
 
     steps:
+      - name: Checkout test-datasets repository
+        uses: actions/checkout@v4
+        with:
+          repository: nf-core/test-datasets
+          ref: ${{ matrix.branch }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4
         with:
@@ -71,28 +77,36 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-west-1
 
+      - name: Cache s5cmd
+        uses: actions/cache@v4
+        id: cache-s5cmd
+        with:
+          path: ~/.local/bin/s5cmd
+          key: s5cmd-${{ runner.os }}-v2.2.2
+
+      - name: Install s5cmd
+        if: steps.cache-s5cmd.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -L https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz | tar -xz -C ~/.local/bin s5cmd
+          chmod +x ~/.local/bin/s5cmd
+
       - name: Sync branch ${{ matrix.branch }} to S3
         run: |
           echo "Syncing branch: ${{ matrix.branch }}"
-
-          # Clone only the specific branch
-          git clone --single-branch --branch "${{ matrix.branch }}" \
-            https://github.com/nf-core/test-datasets.git test-datasets-branch
-
-          cd test-datasets-branch
-
-          # Sync to S3 with branch prefix
-          aws s3 sync ./ "s3://nf-core-test-datasets/${{ matrix.branch }}/" \
-            --delete \
+          
+          # Add s5cmd to PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          
+          # Sync to S3 with branch prefix using s5cmd
+          s5cmd sync \
             --exclude ".git/*" \
             --exclude ".github/*" \
-            --storage-class STANDARD_IA
+            --storage-class STANDARD_IA \
+            --delete \
+            ./ "s3://nf-core-test-datasets/${{ matrix.branch }}/"
 
           echo "Completed sync for branch: ${{ matrix.branch }}"
-
-          # Clean up
-          cd ..
-          rm -rf test-datasets-branch
 
   update-metadata:
     needs: [discover-branches, sync-branches]
@@ -107,11 +121,28 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-north-1
 
+      - name: Cache s5cmd
+        uses: actions/cache@v4
+        id: cache-s5cmd
+        with:
+          path: ~/.local/bin/s5cmd
+          key: s5cmd-${{ runner.os }}-v2.2.2
+
+      - name: Install s5cmd
+        if: steps.cache-s5cmd.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.local/bin
+          curl -L https://github.com/peak/s5cmd/releases/download/v2.2.2/s5cmd_2.2.2_Linux-64bit.tar.gz | tar -xz -C ~/.local/bin s5cmd
+          chmod +x ~/.local/bin/s5cmd
+
       - name: Update branch list in S3
         run: |
+          # Add s5cmd to PATH
+          export PATH="$HOME/.local/bin:$PATH"
+          
           # Create a file with the list of available branches
           echo "${{ needs.discover-branches.outputs.branches-list }}" | tr ' ' '\n' > available-branches.txt
-          aws s3 cp available-branches.txt s3://nf-core-test-datasets/available-branches.txt
+          s5cmd cp available-branches.txt s3://nf-core-test-datasets/available-branches.txt
 
           # Create a metadata file with sync information
           cat > sync-metadata.json << EOF
@@ -122,7 +153,7 @@ jobs:
           }
           EOF
 
-          aws s3 cp sync-metadata.json s3://nf-core-test-datasets/sync-metadata.json
+          s5cmd cp sync-metadata.json s3://nf-core-test-datasets/sync-metadata.json
 
       - name: Report sync status
         run: |
