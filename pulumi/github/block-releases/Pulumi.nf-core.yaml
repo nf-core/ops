@@ -1,0 +1,4 @@
+environment:
+  - block-releases/nf-core
+config:
+  github:owner: nf-core

@@ -1,0 +1,7 @@
+name: block-releases
+runtime:
+  name: python
+  options:
+    toolchain: uv
+    virtualenv: .venv
+description: Block release tags on all nf-core repos with dev as default branch
