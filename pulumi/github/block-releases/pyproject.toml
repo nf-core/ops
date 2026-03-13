@@ -1,0 +1,10 @@
+[project]
+name = "github-block-releases"
+version = "0.1.0"
+description = "Block release tags on all nf-core repos with dev as default branch"
+requires-python = ">=3.12"
+dependencies = [
+    "pulumi>=3.173.0",
+    "pulumi-github>=6.7.2",
+    "PyGithub>=2.0",
+]
