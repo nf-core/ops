@@ -4,7 +4,7 @@ import {
 }
 
 resource "aws_s3_bucket" "nf_core_awsmegatests" {
-  bucket = "nf-core-awsmegatests"
+  bucket = local.s3_bucket_name
 
   lifecycle {
     prevent_destroy = true

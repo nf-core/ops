@@ -7,11 +7,7 @@ output "megatests_bucket" {
 }
 
 output "compute_env_ids" {
-  value = {
-    cpu = seqera_compute_env.cpu.compute_env_id
-    gpu = seqera_compute_env.gpu.compute_env_id
-    arm = seqera_compute_env.arm.compute_env_id
-  }
+  value = { for k, v in seqera_compute_env.this : k => v.compute_env_id }
 }
 
 output "workspace_id" {

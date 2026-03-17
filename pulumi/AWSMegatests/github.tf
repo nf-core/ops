@@ -1,18 +1,7 @@
-resource "github_actions_organization_variable" "tower_compute_env_cpu_dev" {
-  variable_name = "TOWER_COMPUTE_ENV_CPU_DEV"
-  value         = seqera_compute_env.cpu.compute_env_id
-  visibility    = "all"
-}
-
-resource "github_actions_organization_variable" "tower_compute_env_gpu_dev" {
-  variable_name = "TOWER_COMPUTE_ENV_GPU_DEV"
-  value         = seqera_compute_env.gpu.compute_env_id
-  visibility    = "all"
-}
-
-resource "github_actions_organization_variable" "tower_compute_env_arm_dev" {
-  variable_name = "TOWER_COMPUTE_ENV_ARM_DEV"
-  value         = seqera_compute_env.arm.compute_env_id
+resource "github_actions_organization_variable" "tower_compute_env_dev" {
+  for_each      = local.compute_envs
+  variable_name = "TOWER_COMPUTE_ENV_${upper(each.key)}_DEV"
+  value         = seqera_compute_env.this[each.key].compute_env_id
   visibility    = "all"
 }
 
