@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["requests"]
+# ///
 """
 Add nf-core maintainers to the AWSMegatests workspace as participants with MAINTAIN role.
 

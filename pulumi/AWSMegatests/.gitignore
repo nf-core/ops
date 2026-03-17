@@ -1,8 +1,8 @@
-*.pyc
-venv/
-
-# Auto-generated Seqera SDK
-sdks/
+# OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
 
 # Team data files - contain email addresses (private data)
 scripts/maintainers_data.json
@@ -14,7 +14,7 @@ scripts/best_participants_result.json
 
 # Debug and test scripts - not needed in git
 scripts/debug_*.py
-scripts/discover_*.py  
+scripts/discover_*.py
 scripts/test_*.py
 scripts/get_all_*.py
 scripts/fetch_all_*.py
