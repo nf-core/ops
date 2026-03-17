@@ -25,7 +25,7 @@ def run_script(script_path: str, description: str):
 
     try:
         result = subprocess.run(
-            ["uv", "run", "python", script_path],
+            ["uv", "run", script_path],
             check=True,
             capture_output=True,
             text=True,

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = ["requests"]
+# ///
 """
 Map GitHub usernames to emails using existing Seqera Platform workspace participants.
 
