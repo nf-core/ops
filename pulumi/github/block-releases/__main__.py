@@ -36,7 +36,13 @@ for repo_name in dev_repos:
                 excludes=[],
             ),
         ),
-        bypass_actors=[],
+        bypass_actors=[
+            github.RepositoryRulesetBypassActorArgs(
+                actor_id=1,
+                actor_type="OrganizationAdmin",
+                bypass_mode="always",
+            ),
+        ],
         rules=github.RepositoryRulesetRulesArgs(
             creation=True,
             deletion=True,
