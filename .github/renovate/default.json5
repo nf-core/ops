@@ -57,7 +57,7 @@
   customManagers: [
     {
       customType: "regex",
-      matchFileNames: ["**/.pre-commit*config*.yaml"],
+      managerFilePatterns: ["**/.pre-commit*config*.yaml"],
       matchStrings: ["- (?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"],
       datasourceTemplate: "npm",
       versioningTemplate: "npm",
