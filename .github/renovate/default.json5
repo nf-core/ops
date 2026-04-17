@@ -34,14 +34,6 @@
     },
     {
       matchManagers: ["github-actions"],
-      automerge: true,
-      pinDigest: {
-        enabled: false,
-      },
-      matchPackageNames: ["/^nf-core//", "/^seqera/"],
-    },
-    {
-      matchManagers: ["github-actions"],
       groupName: "GitHub Actions",
       automerge: true,
       schedule: ["before 9am"],
@@ -52,8 +44,12 @@
       matchPackageNames: ["/renovate-config-validator/"],
     },
     {
+      matchManagers: ["pre-commit"],
+      groupName: "pre-commit hooks",
+    },
+    {
       matchManagers: ["custom.regex"],
-      matchFileNames: [".pre-commit-config.yaml"],
+      matchFileNames: ["**/.pre-commit*config*.yaml"],
       groupName: "pre-commit npm dependencies",
       groupSlug: "pre-commit-npm",
     },
@@ -61,7 +57,7 @@
   customManagers: [
     {
       customType: "regex",
-      managerFilePatterns: ["/.pre-commit-config.yaml$/"],
+      matchFileNames: ["**/.pre-commit*config*.yaml"],
       matchStrings: ["- (?<depName>[^@\\s]+)@(?<currentValue>[^\\s#]+)"],
       datasourceTemplate: "npm",
       versioningTemplate: "npm",
